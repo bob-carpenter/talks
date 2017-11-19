@@ -156,7 +156,8 @@ limits at boundaries, e.g., {\small \code{multiply\_log()}}
 %
 \end{itemize}
 
-\sld{Why? (continued)}
+\sld{Why Stan? (cont.)}
+%
 \begin{itemize}
 \item {\slshape Problem}:  Heterogeneous user base
 \item {\slshape Solution}: More interfaces (R, Python, MATLAB, Julia)
@@ -167,6 +168,198 @@ limits at boundaries, e.g., {\small \code{multiply\_log()}}
 (BSD, CC-BY)
 \end{itemize}
 
+
+\mypart{Prerequisite}{MCMC}
+
+
+\sld{Repeated i.i.d. Trials}
+%
+\noindent
+\begin{minipage}[t]{0.69\textwidth}
+\vspace*{-1.9in}
+\begin{itemize}
+\item Suppose we repeatedly generate a random outcome from among
+several potential outcomes
+\item Suppose the outcome chances are the same each time
+\begin{subitemize}
+\item i.e., outcomes are independent and identically distributed (i.i.d.)
+\end{subitemize}
+\item For example, spin a fair spinner (without cheating), such as one from \emph{Family Cricket}.
+\end{itemize}
+\end{minipage}
+%
+\begin{minipage}[t]{0.29\textwidth}
+\hfill \includegraphics[height=2in]{img/family-cricket-spinner.jpg}
+\end{minipage}
+\vfill
+\hfill {\tiny Image source: \url{http://replaycricket.com/2010/10/29/family-cricket/}}
+
+
+\sld{Repeated i.i.d. Binary Trials}
+%
+\begin{itemize}
+\item Suppose the outcome is binary and assigned to 0 or 1; e.g., 
+\begin{subitemize}
+\item 20\% chance of outcome 1: \emph{ball in play}
+\item 80\% chance of outcome 0: \emph{ball \emph{not} in play}
+\end{subitemize}
+\item Consider different numbers of bowls delivered.
+\item How will proportion of successes in sample differ?
+\end{itemize}
+
+
+\sld{Simulating i.i.d. Binary Trials}
+%
+\begin{itemize}
+\item R Code: {\small \code{rbinom(10, N, 0.2) / N}}
+\begin{subitemize}
+\item {\bfseries 10 bowls} \hfill (10\% to 50\% success rate)
+\\[4pt] 2 3 5 2 4 1 2 2 1 1
+\vspace*{3pt}
+%
+\item {\bfseries 100 bowls} \hfill (16\% to 26\% success rate)
+\\[4pt] 26 18 23 17 21 16 21 15 21 26
+\vspace*{3pt}
+%
+\item {\bfseries 1000 bowls} \hfill (18\% to 22\% success rate)
+\\[4pt] 181 212 175 213 216 179 223 198 188 194
+\vspace*{3pt}
+%
+\item {\bfseries 10,000 bowls} \hfill (19.3\% to 20.3\% success rate)
+\\[4pt] 2029 1955 1981 1980 2001 2014 1931 1982 1989 2020
+\end{subitemize}
+\end{itemize}
+
+
+\sld{Simple Point Estimation}
+%
+\begin{itemize}
+\item Estimate chance of success $\theta$ by proportion of successes:
+\[
+\theta^{*} = \frac{\text{successes}}{\text{attempts}}
+\]
+\item Simulation shows accuracy depends on the amount of data.
+\item Statistics is about quantifying uncertainty.
+\item Bayesian statistics is about using uncertainty in inference.
+\end{itemize}
+
+
+\sld{Confidence via Simulation}
+%
+\begin{itemize}
+\item Estimator uncertainty (\emph{not} Bayesian posterior)
+{\small
+\begin{Verbatim}
+num_sims <- 10000
+N <- 100;  
+theta <- 0.2;
+hist(rbinom(num_sims, N, theta) / N,
+     main=sprintf("%d simulations",N), xlab="theta*");
+\end{Verbatim}
+}
+\vspace*{-12pt}
+\begin{center}
+\includegraphics[width=0.8\textwidth]{img/hist-10-100-1000.pdf}
+\end{center}
+\end{itemize}
+
+
+\sld{Example Interval Calculation}
+%
+\begin{itemize}
+\item \emph{$P\%$ confidence interval:}  interval in which $P\%$ of the estimates are
+expected to fall.
+\item Simulation computes intervals to any accuracy.
+\item Simulate, sort, and inspect the central empirical interval.
+{\small
+\begin{Verbatim}
+> sims <- rbinom(10000, 1000, 0.2) / 1000
+> sorted_sims <- sort(sims)
+> sorted_sims[c(250, 9750)]
+[1] 0.176 0.225
+\end{Verbatim}
+}
+\item The 95\% confidence interval is thus $(0.176,0.225)$
+\item i.e., if true $\theta = 0.2$, then 95\% of the samples of
+  size 1000 used will produce estimates in $(0.176,0.225)$
+\end{itemize}
+
+
+\sld{Estimator Bias}
+%
+\begin{itemize}
+\item {\bfseries Bias:} expected difference of estimate from true value
+\item Continuing previous example
+{\small
+\begin{Verbatim}
+> sims <- rbinom(10000, 1000, 0.2) / 1000
+> mean(sims)
+[1] 0.2002536
+\end{Verbatim}
+}
+\item Value of 0.2 is estimate of expectation
+\item Shows this estimator is \emph{unbiased}
+\end{itemize}
+
+
+\sld{Simple Point Estimation (cont.)}
+%
+\begin{itemize}
+\item {\bfseries Central Limit Theorem:}  \emph{expected} error in $\theta^*$ goes down as
+{\Large
+\[
+\frac{1}{\sqrt{N}}
+\]
+}
+\item Each decimal place of accuracy requires $100 \times$ more samples.
+\item Width of confidence intervals shrinks at the same rate.
+\vfill
+\item Can also use theory to show this estimator is unbiased.
+\end{itemize}
+
+
+\sld{Pop Quiz! Cancer Clusters}
+%
+\begin{itemize}
+\item Why do lowest and highest cancer clusters look so similar?
+\end{itemize}
+\vspace*{1pt}
+\begin{center}
+\hfill
+\includegraphics[width=0.45\textwidth]{img/low-cancer.jpg}
+\hfill
+\includegraphics[width=0.45\textwidth]{img/high-cancer.jpg}
+\hfill
+\end{center}
+\vfill
+\hfill {\tiny Image from Gelman et al., {\slshape Bayesian Data Analysis, 3rd Edition} (2013)}
+
+
+\sld{Pop Quiz Answer}
+%
+\begin{itemize}
+\item Hint: mix earlier simulations of repeated i.i.d. trials with 20\% success and sort:
+{\footnotesize
+\begin{center}
+\begin{tabular}{ccccc}
+1/10 &  1/10 &  1/10 &  15/100 &  16/100
+\\
+17/100 &  175/1000 &  179/1000 &  18/100 &  181/1000
+\\
+188/1000 &  194/1000 &  198/1000 & 2/10 &  2/10 
+\\
+2/10 &  2/10 & 21/100 &  21/100 &  21/100 
+\\
+212/1000 &  213/1000 &   216/1000 &   223/1000 &  23/100
+\\
+26/100 &  26/100 &  3/10 &  4/10 &  5/10 
+\end{tabular}
+\end{center}
+}
+\item More variation in observed rates with smaller sample sizes
+\vfill
+\item \emph{Answer}: High cancer and low cancer counties are small populations
+\end{itemize}
 
 
 \mypart{Prerequisite}{Bayesian Inference}
@@ -186,6 +379,7 @@ limits at boundaries, e.g., {\small \code{multiply\_log()}}
 % 
 \vfill\hfill{\footnotesize Gelman et al., {\slshape Bayesian Data Analysis},
   3rd edition, 2013}
+
 
 \sld{Bayesian Methodology}
 % 
@@ -369,7 +563,9 @@ p(\theta|y)
 \item The nasty integral for data marginal $p(y)$ goes away
 \end{itemize}
 
+
 \sld{Posterior Predictive Distribution}
+%
 \begin{itemize}
 \item Predict new data $\tilde{y}$ based on observed data $y$
 \item Marginalize parameters $\theta$ out of posterior and likelihood
@@ -383,6 +579,30 @@ p(\tilde{y} \mid y)
 \item Weights predictions $p(\tilde{y}|\theta)$,
 by posterior $p(\theta|y)$
 \item Integral notation shorthand for sums and/or integrals
+\end{itemize}
+
+
+\sld{Event Probabilities}
+%
+\begin{itemize}
+\item Recall that an event $A$ is a collection of outcomes
+\item Suppose event $A$ is determined by indicator on parameters
+\[
+f(\theta) 
+= 
+\begin{cases}
+1 & \text{if } \theta \in A
+\\
+0 & \text{if } \theta \not\in A
+\end{cases}
+\]
+\item e.g., $f(\theta) = \theta_1 > \theta_2$ 
+\ \ for \ \ $\Prob{\theta_1 > \theta_2 \, | \, y}$
+\item Bayesian event probabilities calculate posterior mass
+\[
+\Prob{A} = \int_{\Theta} f(\theta) \, p(\theta|y) \, d\theta.
+\]
+\item Not frequentist, because involves parameter probabilities
 \end{itemize}
 
 
@@ -424,7 +644,79 @@ by posterior $p(\theta|y)$
 \end{itemize}
 
 
-\mypart{Stan Example}{Repeated Binary Trials}
+\mypart{Part III}{Conjugate Priors}
+
+
+\sld{Conjugate Priors}
+%
+\begin{itemize}
+\item Family $\mathcal{F}$ is a conjugate prior for family
+  $\mathcal{G}$ if
+\begin{subitemize}
+\item prior in $\mathcal{F}$ and
+\item likelihood in $\mathcal{G}$,
+\item entails posterior in $\mathcal{F}$
+\end{subitemize}
+\item Before MCMC techniques became practical, Bayesian analysis
+  mostly involved conjugate priors
+\item Still widely used because analytic solutions are more efficient
+  than MCMC
+\end{itemize}
+
+\sld{Beta is Conjugate to Binomial}
+%
+\vspace*{-2pt}
+\begin{itemize}
+\item Prior: \ \ \ \ \ \ \ \ \ \ \ $p(\theta|\alpha,\beta) =
+  \distro{Beta}(\theta|\alpha,\beta)$
+\item Likelihood: \ \ $p(y|N,\theta) = \distro{Binomial}(y|N,\theta)$
+\item Posterior:
+{\small
+\begin{eqnarray*}
+p(\theta|y,N,\alpha,\beta)
+& \propto & p(\theta|\alpha,\beta) \, p(y|N,\theta)
+\\[6pt]
+& = & \distro{Beta}(\theta|\alpha,\beta) 
+      \, \distro{Binomial}(y|N,\theta)
+\\
+& = & \frac{1}{\Betafun(\alpha,\beta)} 
+      \theta^{\alpha - 1} \, 
+      (1 - \theta)^{\beta-1}
+      \ \
+      \binom{N}{y} \theta^{y} (1 - \theta)^{N-y}
+\\[6pt]
+& \propto & 
+      \theta^{y + \alpha - 1} \, 
+      (1 - \theta)^{N - y + \beta - 1}
+\\[6pt]
+& \propto & \distro{Beta}(\theta|\alpha + y, \ \beta + (N - y))
+\end{eqnarray*}
+}
+\end{itemize}
+
+
+\sld{Chaining Updates}
+%
+\vspace*{-4pt}
+\begin{itemize}
+\item Start with prior $\distro{Beta}(\theta|\alpha,\beta)$
+\item Receive binomial data in $K$ statges $(y_1, N_1), \ldots, (y_K, N_K)$
+\item After $(y_1,N_1)$, posterior is 
+  $\distro{Beta}(\theta|\alpha + y_1, \ \beta + N_1 - y_1)$
+\item Use as prior for $(y_2,N_2)$, with posterior \\[3pt]
+  $\distro{Beta}(\theta|\alpha + y_1 + y_2, \ \ \beta + (N_1 -
+  y_1) + (N_2 - y_2))$
+\item Lather, rinse, repeat, until final posterior
+\[
+\distro{Beta}(\theta|\alpha + y_1 + \cdots + y_K, \ \ \beta + (N_1 +
+\cdots + N_K) - (y_1 + \cdots + y_K))
+\]
+\item Same result as if we'd updated with combined data \\[3pt]
+$\distro{Beta}(y_1 + \cdots + y_K, \ \ N_1 + \cdots + N_K)$
+\end{itemize}
+
+
+\mypart{Example}{Repeated Binary Trials}
 
 
 \sld{Stan Program}
@@ -443,6 +735,7 @@ model {
     y[n] ~ bernoulli(theta);      // likelihood
 }
 \end{stancode}
+
 
 \sld{A Stan Program...}
 %
@@ -513,7 +806,7 @@ theta   0.41    0.00 0.10   0.28   0.55  1580    1
 
 
 \sld{RStan:  Full Bayes}
-
+%
 \begin{minipage}[t]{\textwidth}
 \footnotesize
 \begin{Verbatim}
@@ -545,7 +838,7 @@ lp__  -5.33  0.02  0.80  -7.46  -5.04  -4.78   1201     1
 
 
 \sld{RStan: MAP, penalized MLE}
-
+%
 \begin{itemize}
 \item Stan's optimization for estimation; two views:
 \begin{subitemize}
@@ -573,7 +866,6 @@ theta             [1] -3.4
 \end{subitemize}
 \end{minipage}
 \end{center}
-
 
 
 \sld{Plug in Posterior Draws}
@@ -617,6 +909,7 @@ plot;
 
 
 \sld{Default Priors and Vectorization}
+%
 \begin{itemize}
 \item All parameters are uniform by default
 \item Probability functions can be vectorized (more efficient)
@@ -637,6 +930,181 @@ plot;
       y ~ bernoulli(theta);
 \end{Verbatim}
 }
+\end{itemize}
+
+
+\mypart{Example I}{Male Birth Ratio}
+
+
+\sld{Laplace's Data and Problems}
+%
+\begin{itemize}
+\item Laplace's data on live births in Paris from 1745--1770: 
+\begin{center}\small
+\begin{tabular}{c|c}
+{\slshape sex} & {\slshape live births}
+\\ \hline
+female & 241\,945 
+\\
+male & 251\,527
+\end{tabular}
+\end{center}
+\item Question 1 (Event Probability) 
+\\  
+Is a boy more likely to be born than a girl?
+\item Question 2 (Estimate) 
+\\  
+What is the birth rate of boys vs. girls?
+\item Bayes formulated the basic binomial model
+\item Laplace solved the integral
+\end{itemize}
+
+
+\sld{Binomial Distribution}
+%
+\begin{itemize}
+\item Binomial distribution is number of successes $y$ in $N$ 
+i.i.d. Bernoulli trials with chance of success $\theta$
+\item If $y_1,\ldots,y_N\sim \distro{Bernoulli}(\theta)$, 
+\\[4pt] then $(y_1 + \cdots + y_N) \sim \distro{Binomial}(N,\theta)$
+\item The analytic form is
+\[
+\distro{Binomial}(y|N,\theta) 
+\ = \ \binom{N}{y} \theta^{y} (1 - \theta)^{N-y}
+\]
+where the binomial coefficient normalizes for permutations (i.e.,
+which subset of $n$ has $y_n = 1$),
+\[
+\binom{N}{y} = \frac{N!}{y! \, (N-y)!}
+\]
+\end{itemize}
+
+
+\sld{Bayes's Binomial Model}
+%
+\begin{itemize}
+\item{Data}
+\begin{subitemize}
+\item $y$: total number of male live births (241,945)
+\item $N$ : total number of live births (493,472)
+\end{subitemize}
+\item Parameter
+\begin{subitemize}
+\item $\theta \in (0,1)$: proportion of male live births
+\end{subitemize}
+\item Likelihood
+\[
+p(y|N,\theta) 
+\ = \ \distro{Binomial}(y|N,\theta) 
+\ = \ \binom{N}{y} \theta^{y} (1 - \theta)^{N-y}
+\]
+\item Prior
+\[
+p(\theta) 
+\ = \ \distro{Uniform}(\theta \, | \, 0,1) 
+\ = \ 1
+\]
+\end{itemize}
+
+
+\sld{Beta Distribution}
+%
+\begin{itemize}
+\item Required for analytic posterior of Bayes's model
+\item For parameters $\alpha,\beta > 0$ and $\theta \in (0,1)$,
+\[
+\distro{Beta}(\theta|\alpha,\beta) 
+\ = \ \frac{1}{\Betafun(\alpha,\beta)} 
+      \theta^{\alpha - 1} \, 
+      (1 - \theta)^{\beta-1}
+\] 
+\item Euler's Beta function is used to normalize,
+\[
+\Betafun(\alpha,\beta) 
+\ = \ \int_0^1 u^{\alpha-1}(1-u)^{\beta-1} du
+\ = \ \frac{\Gamma(\alpha)\,\Gamma(\beta)}{\Gamma(\alpha + \beta)}
+\]
+where $\Gamma()$ is continuous generalization of factorial
+\item Note: \ $\distro{Beta}(\theta|1,1) = \distro{Uniform}(\theta|0,1)$
+\end{itemize}
+
+
+\sld{Beta Distribution --- Examples}
+%
+\vspace*{-4pt}
+\begin{itemize}
+\item Unnormalized posterior density assuming uniform prior and $y$
+  successes out of $n$ trials (all with mean 0.6).
+\end{itemize}
+\begin{center}
+\includegraphics[height=1.6in]{img/bda-beta-plots.pdf}
+\end{center}
+\vspace*{-12pt}
+\hfill {\tiny Gelman et al. (2013) {\slshape Bayesian Data Analysis},
+  3rd Edition.}
+
+
+\sld{Laplace Turns the Crank}
+%
+\begin{itemize}
+\item Given Bayes's general formula for the posterior
+\[
+p(\theta|y,N) 
+\ = \ 
+\frac{\distro{Binomial}(y|N,\theta) \, \distro{Uniform}(\theta|0,1)}
+     {\int_{\Theta} \distro{Binomial}(y|N,\theta') \,  p(\theta')
+       d\theta'}
+\]
+\item Laplace used Euler's Beta function (B) to normalize the
+  posterior, with final solution
+\[
+p(\theta|y,N) 
+\ = \ \distro{Beta}(\theta \, | \, y + 1, \ N - y + 1)
+\]
+\end{itemize}
+
+
+\sld{Estimation}
+%
+\begin{itemize}
+\item Posterior is $\distro{Beta}(\theta \, | \, 1 + 241\,945, \ 1 + 251\,527)$
+\item Posterior mean: 
+\[
+\frac{1 + 241\,945}
+     {1 + 241\,945 + 1 + 251\,527}
+\approx 0.490291{\bf3}
+\]
+\item Maximum likelihood estimate same as posterior mode (because
+  of uniform prior) 
+\[
+\frac{241\,945}
+     {241\,945 + 251\,527}
+\approx 0.490291{\bf2}
+\]
+\item As number of observations approaches $\infty$, 
+\\
+MLE approaches posterior mean
+\end{itemize}
+
+
+\sld{Event Probability Inference}
+%
+\begin{itemize}
+\item What is probability that a male live birth is more likely than a
+  female live birth?
+\begin{eqnarray*}
+\Prob{\theta > 0.5} 
+& = &  \int_{\Theta} \indicator{\theta > 0.5} \, p(\theta|y,N) d\theta
+\\[4pt]
+& = &  \int_{0.5}^1 p(\theta|y,N) d\theta
+\\[4pt]
+& = &  1 - F_{\theta|y,N}(0.5)
+\\[4pt]
+& \approx &  10^{-42}
+\end{eqnarray*}
+\item $\indicator{\phi} = 1$ if condition $\phi$ is true and 0 otherwise.
+\item  $F_{\theta|y,N}$ is posterior cumulative distribution
+function (cdf).
 \end{itemize}
 
 
@@ -694,8 +1162,9 @@ generated quantities {
 }
 \end{stancode}
 
-\sld{Results}
 
+\sld{Binomial Comparison Results}
+%
 \begin{codeout}
                    mean    2.5%  97.5%
 theta[1]           0.22    0.12   0.35
@@ -1106,7 +1575,7 @@ model {
 
 
 \sld{Fit Noisy State Measurements}
-
+%
 {\footnotesize
 \begin{Verbatim}
     data {
@@ -1129,6 +1598,304 @@ model {
 }
 
 
+\mypart{Prerequisite}{Maximum Likelihood \\[8pt]\spc Estimation}
+
+
+\sld{Observations, Counterfactuals,\\[6pt] \spc{}and Random Variables}
+%
+\begin{itemize}
+\item Assume we observe data $y = y_1, \ldots, y_N$
+\item Statistical modeling assumes even though $y$ is observed,
+the values could have been different
+\item John Stuart Mill first characterized this {\bfseries counterfactual} nature of statistical modeling in:
+\\[3pt] {\slshape A System of Logic, Ratiocinative and Inductive} (1843)
+\item In measure-theoretic language, $y$ is a {\bfseries random variable}
+\end{itemize}
+
+
+\sld{Likelihood Functions}
+%
+\begin{itemize}
+\item A \myemph{likelihood function} is a probability function (density, mass, or mixed) 
+\[
+p(y|\theta,x),
+\]
+where
+\begin{subitemize}
+\item $\theta$ is a vector of \myemph{parameters}, 
+\item $x$ is some fixed \myemph{unmodeled data} (e.g., regression predictors or
+  ``features''),
+\item $y$ is some fixed \myemph{modeled data} (e.g., observations)
+\end{subitemize}
+\item considered as a function $\mathcal{L}(\theta)$ of $\theta$ for fixed $x$ and $y$.
+\end{itemize}
+
+
+\sld{Maximum Likelihood Estimation}
+%
+\begin{itemize}
+\item \myemph{Estimate} parameters $\theta$ given observations $y$.
+\item Maximum likelihood estimation (MLE) chooses 
+estimate that maximizes the likelihood function, i.e.,
+\[
+\theta^* 
+\ = \ \argmax_{\theta} \ \mathcal{L}(\theta) 
+\ = \ \argmax_{\theta} \ p(y|\theta,x)
+\]
+\item This function of $\mathcal{L}$ and $y$ (and $x$) is called an \myemph{estimator}
+\end{itemize}
+
+
+\sld{Example of MLE}
+%
+\begin{itemize}
+\item The frequency-based estimate 
+\[
+\theta^{*} = \frac{1}{N} \sum_{n=1}^N y_n, 
+\]
+is the observed rate of ``success'' (outcome 1) observations.
+\item This is the MLE for the model
+\[
+p(y|\theta) 
+\ = \ \prod_{n=1}^N p(y_n|\theta) 
+\ = \  \prod_{n=1}^N \distro{Bernoulli}(y_n|\theta) 
+\]
+where for $u \in \setcomp{0,1}$, 
+{\small
+\[
+\distro{Bernoulli}(u|\theta) = 
+\begin{cases}
+\theta & \text{if } u = 1 
+\\
+1 - \theta & \text{if } u = 0
+\end{cases}
+\]
+}
+\end{itemize}
+
+
+\sld{Example of MLE {\normalsize (cont.)}}
+%
+\vspace*{-4pt}
+\begin{itemize}
+\item First modeling \emph{assumption} is that data are i.i.d.,
+\[
+p(y|\theta) = \prod_{n=1}^N p(y_n|\theta)
+\] 
+\item Second modeling \emph{assumption} is form of likelihood,
+\[
+p(y_n|\theta) = \distro{Bernoulli}(y_n|\theta)
+\]
+\end{itemize}
+
+
+\sld{Example of MLE {\normalsize (cont.)}}
+%
+\begin{itemize}
+\item The frequency-based estimate is the MLE
+\item First derivative is zero (indicating min or max),
+\[
+\mathcal{L}'_y(\theta^*) = 0,
+\]
+\item Second derivative is negative (indicating max),
+\[
+\mathcal{L}''_y(\theta^*) < 0.
+\]
+\end{itemize}
+
+
+\sld{MLEs can be Dangerous!}
+%
+\begin{itemize}
+\item Recall the cancer cluster example
+\item Accuracy is low with small counts
+\item What we need are hierarchical models (stay tuned)
+\end{itemize}
+
+
+\mypart{Part II}{(Un-)Bayesian \\[8pt]\spc{}Point Estimation}
+
+
+\sld{MAP Estimator}
+%
+\vspace*{-4pt}
+\begin{itemize}
+\item For a Bayesian model $p(y,\theta) = p(y|\theta) \, p(\theta)$,
+the max a posteriori (MAP) estimate maximizes the posterior,
+\begin{eqnarray*}
+\theta^{*} 
+& = & \argmax_{\theta} \ p(\theta|y)
+\\[3pt]
+& = & \argmax_{\theta} \ \frac{\displaystyle p(y|\theta) p(\theta)}{p(y)}
+\\[3pt]
+& = & \argmax_{\theta} \ p(y|\theta) p(\theta).
+\\[3pt]
+& = & \argmax_{\theta} \ \log p(y|\theta) + \log p(\theta).
+\end{eqnarray*}
+\item \emph{not} Bayesian because it doesn't integrate over uncertainty
+\item \emph{not} frequentist because of distributions over parameters
+\end{itemize}
+
+
+\sld{MAP and the MLE}
+%
+\begin{itemize}
+\item MAP estimate reduces to the MLE if the prior is uniform, i.e.,
+\[
+p(\theta) = c
+\]
+because
+\begin{eqnarray*}
+\theta^{*} & = & \argmax_{\theta} \ p(y|\theta) \, p(\theta)
+\\[4pt]
+& = & \argmax_{\theta} \ p(y|\theta) \, c
+\\[4pt]
+& = & \argmax_{\theta} \ p(y|\theta).
+\end{eqnarray*}
+\end{itemize}
+
+
+\sld{Penalized Maximum Likelihood}
+%
+\begin{itemize}
+\item The MAP estimate can be made palatable to frequentists 
+via philosophical sleight of hand 
+\item Treat the negative log prior $-\log p(\theta)$ as a ``penalty''
+\item e.g., a $\distro{Normal}(\theta|\mu,\sigma)$ prior becomes a penalty function 
+\[
+\lambda_{\theta, \mu,\sigma}
+\  = \ 
+-\left( 
+   \log \sigma + \frac{1}{2}\left(\frac{\theta -  \mu}{\sigma}\right)^2 
+ \right)
+\]
+\item Maximize sum of log likelihood and negative penalty
+\begin{eqnarray*}
+\theta^{*} 
+& = & \argmax_{\theta} \ \log p(y|\theta,x) - \lambda_{\theta,\mu,\sigma}
+\\[4pt]
+& = & \argmax_{\theta} \ \log p(y|\theta,x) + \log p(\theta|\mu,\sigma)
+\end{eqnarray*}
+\end{itemize}
+
+
+\sld{Bayesian Point Estimates}
+%
+\begin{itemize}
+\item Choose estimate to minimize some loss function
+\item To minimize expected squared error (i.e., L2 loss), use
+$\expectation{(\theta - \theta')^2 \, | \, y}$, use the posterior mean
+\[
+\hat{\theta}
+\ = \ \argmin_{\theta'} \expectation{(\theta - \theta')^2 \, | \, y}
+\ = \ \int_{\Theta} \theta \times p(\theta|y) \, d\theta.
+\]
+\item To minimize expected absolute error (L1 loss), $\expectation{|\theta -
+    \theta'|}$, use the posterior median.
+\item Other loss (utility) functions possible, the study of which falls under
+  decision theory
+\item All share property of involving full Bayesian inference.
+\end{itemize}
+
+
+\sld{Point Estimates for Inference?}
+%
+\begin{itemize}
+\item Common in machine learning to generate a point estimate
+  $\theta^*$, then use it for inference, $p(\tilde{y} | \theta^{*})$
+\item This is \emph{defective} because it
+\vspace*{-1pt}
+\begin{center}
+{\Large\bfseries Underestimates Uncertainty}
+\end{center}
+\item To properly estimate uncertainty, apply full Bayes
+\item If not, (probabilistic) Dutch book can be made against you
+\begin{subitemize}
+\item i.e., if you use your strategy to bet, I can beat you 
+in the long run using full Bayes (de Finetti)
+\end{subitemize}
+\end{itemize}
+
+
+\mypart{Part III}{Philosophical Interlude}
+
+
+\sld{Exchangeability}
+%
+\begin{itemize}
+\item Roughly, an exchangeable probability function is such that for
+a sequence of random variables $y = y_1,\ldots,y_N$,
+\[
+p(y) = p(\pi(y))
+\]
+for every $N$-permutation $\pi$ (i.e, a one-to-one mapping of $\setcomp{1,\ldots,N}$)
+\item i.i.d. implies exchangeability, but not vice-versa
+\end{itemize}
+
+
+\sld{Exchangeability Assumptions}
+%
+\begin{itemize}
+\item Models almost always make some kind of exchangeability assumption
+\item Typically when other knowledge is not available
+\begin{subitemize}
+\item e.g., treat voters as conditionally i.i.d. given their age, 
+sex, income, education level, religous affiliation, 
+and state of residence
+\item But voters have many more properties (hair color, height, profession, employment status, marital status, car ownership, gun ownership, etc.)
+\item Missing predictors introduce additional error (on top of measurement error)
+\end{subitemize}
+\end{itemize}
+
+
+\sld{de Finetti's Theorem}
+%
+\begin{itemize}
+\item Given some background variables, every exchangeable sequence is conditionally i.i.d.
+\item So if our i.i.d. assumptions are invalid, 
+\\ condition on more predictors
+\end{itemize}
+
+
+\sld{Bayesian vs.\ Frequentist}
+%
+\begin{itemize}
+\item \emph{Everyone}: Model data $y$ as ``random''
+\item \emph{Everyone}: Parameters have single, true (but unknown) value
+\item \emph{Everyone}: Admit Bayes's rule of probability
+\item \emph{Bayesians Only}: Model parameters $\theta$ as ``random''
+\item \emph{Frequentists Only}: Probabilities are long-run frequencies of observables, which excludes parameters (unobservable)
+\item \emph{Bayesians Only}: Allow probabilities conditioned on parameters
+\end{itemize}
+
+
+\sld{Random Parameters:\\[8pt]\spc{}\!Doxastic or Epistemic?}
+%
+\begin{itemize}
+\item Bayesians treat distributions over parameters as epistemic \\
+(i.e., about knowledge) 
+\item They do \emph{not} \ treat them as being doxastic \\
+(i.e., about beliefs)
+\item Priors encode our knowledge before seeing the data
+\item Posteriors encode our knowledge after seeing the data
+\item Bayes's rule provides the way to update our knowledge
+\item People like to pretend models are ontological \\
+(i.e., about what exists)
+\end{itemize}
+
+\sld{Arbitrariness:\\[8pt]\spc{}\!Priors vs.\ Likelihood}
+%
+\begin{itemize}
+\item Bayesian analyses often criticized as subjective (arbitrary)
+\item Choosing priors is no more arbitrary than choosing a likelihood
+  function (or an exchangeability/i.i.d.\ assumption)
+\item As George Box famously wrote (1987),
+\begin{center}
+\large
+{\bfseries All models are wrong, but some are useful.}
+\end{center}
+\item This is true for frequentists as well as Bayesians
+\end{itemize}
 
 
 \mypart{Overview}{What is Stan?}
@@ -1161,8 +1928,7 @@ model {
 \vspace*{-2pt}
 \begin{itemize}
 \item \myemph{Platforms}:  Linux, Mac OS X, Windows
-\item \myemph{C++ API}: {\small portable, standards compliant (C++03;
-    C++11 soon)}
+\item \myemph{C++ API}: {\small portable, standards compliant (C++11)}
 \item \myemph{Interfaces}
 \begin{subitemize}\footnotesize
   \item \myemph{CmdStan}: Command-line or shell interface (direct executable)
@@ -1572,7 +2338,9 @@ astrophysics, particle physics, molecular biology, oceanography, climatology, bi
 \vfill
 \vfill
 
+
 \sld{Arithmetic and Matrix Operators}
+%
 \vfill
 \noindent\spc
 {\footnotesize
@@ -1834,6 +2602,7 @@ y ~ normal(mu_y, sigma);
 \end{subitemize}
 \end{itemize}
 
+
 \sld{Built-in Diff Eq Solvers}
 %
 \begin{itemize}
@@ -1846,6 +2615,7 @@ y ~ normal(mu_y, sigma);
 \end{subitemize}
 \item specified by suffix \Verb|_bdf| or \Verb|_rk45|
 \end{itemize}
+
 
 \sld{Diff Eq Derivatives}
 %
@@ -2003,21 +2773,17 @@ y ~ normal(mu_y, sigma);
 \sld{``Black Box'' Variational Inference}
 %
 \begin{itemize}
-%
 \item \myemph{Black box} so can fit any Stan model
-%
 \item Multivariate \myemph{normal approx to unconstrained} posterior
 \begin{subitemize}
 \item covariance: diagonal mean-field or full rank
 \item not Laplace approx --- around posterior mean, not mode
 \item transformed back to constrained space (built-in Jacobians)
 \end{subitemize}
-%
 \item Stochastic \myemph{gradient-descent} optimization
 \begin{subitemize}
 \item ELBO gradient estimated via Monte Carlo + autdiff
 \end{subitemize}
-%
 \item Returns \myemph{approximate posterior} mean / covariance
 \item Returns \myemph{sample} transformed to constrained space
 \end{itemize}
@@ -2040,7 +2806,6 @@ y ~ normal(mu_y, sigma);
 \end{itemize}
 
 
-
 \mypart{Diving Deeper}{Stan's Autodiff}
 
 
@@ -2048,19 +2813,16 @@ y ~ normal(mu_y, sigma);
 %
 \begin{itemize}
 \item Easily extensible \myemph{object-oriented} design
-%
 \item \myemph{Code nodes} in expression graph for primitive functions
 \begin{subitemize}
 \item requires \myemph{partial derivatives}
 \item built-in flexible abstract base classes
 \item \myemph{lazy evaluation} of chain rule saves memory
 \end{subitemize}
-%
 \item Autodiff through templated C++ functions
 \begin{subitemize}
 \item templating on each argument avoids excess promotion
 \end{subitemize}
-%
 \end{itemize}
 
 
@@ -2074,6 +2836,7 @@ y ~ normal(mu_y, sigma);
 \end{subitemize}
 \item Nested application to support ODE solver
 \end{itemize}
+
 
 \sld{Diff Eq Derivatives}
 %
@@ -2123,6 +2886,7 @@ y ~ normal(mu_y, sigma);
 \item Autodiff through templated functions (as reverse mode)
 \end{itemize}
 
+
 \sld{Second-Order Derivatives}
 %
 \begin{itemize}
@@ -2156,6 +2920,7 @@ H_{i,j} = \frac{\partial^2}{\partial x_i \partial x_j} f(x)
 \end{subitemize}
 \end{itemize}
 
+
 \sld{Jacobians}
 %
 \begin{itemize}
@@ -2177,6 +2942,7 @@ J_{i,j} = \frac{\partial}{\partial x_i} f_j(x)
 }
 \end{itemize}
 
+
 \sld{Autodiff Functionals}
 %
 \begin{itemize}
@@ -2196,7 +2962,6 @@ J_{i,j} = \frac{\partial}{\partial x_i} f_j(x)
   \item gradient of Hessian: $\bigoh{N^2}$
   \end{itemize}
 \end{itemize}
-
 
 
 \sld{Stan's Autodiff vs.\ Alternatives}
@@ -2277,8 +3042,9 @@ J_{i,j} = \frac{\partial}{\partial x_i} f_j(x)
 \hfill \hfill
 
 
-\mypart{Deepr Still}{Autodiff Coding}
-%
+\mypart{Deep Dive}{Autodiff Coding}
+
+
 \sld{Variable Ptr to Impl}
 \begin{stancode}
 class var {
@@ -2294,7 +3060,9 @@ private:
 };
 \end{stancode}
 
+
 \sld{Chainable Base Class}
+%
 \begin{stancode}
 struct chainable {
   chainable() { }
@@ -2401,7 +3169,9 @@ struct op_v_vari : public vari {
 };
 \end{stancode}
 
+
 \sld{Logarithm Implementation}
+%
 \begin{stancode}
 struct log_vari : public op_v_vari {
   log_vari(vari* avi) :
@@ -2498,7 +3268,6 @@ void gradient(const F& f,  const VectorXd& x,
   recover_memory();
 }
 \end{stancode}
-
 
 
 \mypart{}{Stan for Big(ger) Data}
@@ -2619,7 +3388,6 @@ H_{i,j}
 \end{itemize}
 
 
-
 \sld{VB in a Nutshell}
 %
 \begin{itemize}
@@ -2732,7 +3500,9 @@ for the \myemph{unconstrained posterior}
 \end{subitemize}
 \end{itemize}
 
+
 \sld{Stan's VB: Computation (cont.)}
+%
 \begin{itemize}
 \item To support compatible plug-in inference
 \begin{subitemize}
@@ -2772,7 +3542,7 @@ for the \myemph{unconstrained posterior}
 \end{itemize}
 
 
-\mypart{Part V}{Challenges for Stan}
+\mypart{Challenges}{Modeling and Computing}
 
 
 \sld{Discrete Parameters}
@@ -2832,6 +3602,9 @@ for the \myemph{unconstrained posterior}
 
 
 \mypart{}{The End}
+
+
+\mypart{}{Questions?}
 
 
 \end{document}
