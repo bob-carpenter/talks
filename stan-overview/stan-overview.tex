@@ -362,6 +362,595 @@ expected to fall.
 \end{itemize}
 
 
+\mypart{Warmup Exercise III}{Monte Carlo \\[8pt]\spc Integration}
+
+\sld{Monte Carlo Calculation of $\pi$}
+
+\noindent
+\begin{minipage}[t]{0.65\textwidth}
+\vspace*{2pt}
+\begin{itemize}
+\item Computing $\pi = 3.14\ldots$ via simulation is \emph{the} textbook application
+of Monte Carlo methods.
+\vfill
+\item Generate points uniformly at random within the square
+\item Calculate proportion within circle ($x^2 + y^2 < 1$) and multiply by square's area (4) to produce the area of the circle.
+\item This area is $\pi$ (radius is 1, so area is $\pi r^2 = \pi$)
+\end{itemize}
+\end{minipage}
+%
+\begin{minipage}[t]{0.34\textwidth}
+\vspace*{12pt}
+\hfill \includegraphics[height=1in]{img/mc-integration-wikipedia.png}
+\\
+\end{minipage}
+\vfill
+{ } \hfill {\tiny Plot by Mysid Yoderj courtesy of Wikipedia.}
+
+\sld{Monte Carlo Calculation of $\pi$ {\normalsize (cont.)}}
+%
+\begin{itemize}
+\item R code to calcuate $\pi$ with Monte Carlo simulation:
+\\[-8pt]
+{\small
+\begin{Verbatim}
+> x <- runif(1e6,-1,1)
+> y <- runif(1e6,-1,1)
+
+> prop_in_circle <- sum(x^2 + y^2 < 1) / 1e6
+
+> 4 * prop_in_circle
+[1] 3.144032
+\end{Verbatim}
+}
+\end{itemize}
+
+\sld{Accuracy of Monte Carlo}
+\begin{itemize}
+\item Monte Carlo is \emph{not} an approximation!
+\item It can be made exact to within any $\epsilon$
+\item Monte Carlo draws are i.i.d. by definition
+\item Central limit theorem: expected error decreases at rate of
+{\Large
+\[
+\frac{1}{\sqrt{N}}
+\]
+}
+\item 3 decimal places of accuracy with 
+sample size 1e6
+\item Need $100 \times$ larger sample for each digit of accuracy
+\end{itemize}
+
+\sld{General Monte Carlo Integration}
+\begin{minipage}[t]{0.69\textwidth}
+\vspace*{-0.1in}
+\small
+\begin{itemize}
+\item MC can calculate arbitrary definite integrals,
+\[
+\int_a^b f(x) \, dx
+\]
+\item Let $d$ upper bound $f(x)$ in $(a,b)$;  tightness determines
+computational efficiency
+\item Then generate random points uniformly in the rectangle bounded by $(a,b)$ and $(0,d)$
+\item Multiply proportion of draws $(x,y)$ where $y < f(x)$ by area of rectangle, $d \times (b-a)$.
+\item Can be generalized to multiple dimensions in obvious way
+\end{itemize}
+\end{minipage}
+\begin{minipage}[t]{0.29\textwidth}
+\mbox{ } \\
+\mbox{ } \ \ \ \ 
+\includegraphics[height=0.9in]{img/monte-carlo-integration.png}
+\end{minipage}
+\vfill
+\hfill
+{\tiny Image courtesy of Jeff Cruzan, \url{http://www.drcruzan.com/NumericalIntegration.html}}
+
+\sld{Monte Carlo for Expectations}
+\begin{itemize}
+\item Most quantities of interest are expectations
+\item Suppose $f(\theta)$ is a function of random variable vector $\theta$
+  \[
+  \mathbb{E}[f(\theta)] = \int_{\Theta} f(\theta) \ p(\theta) \ d\theta.
+  \]
+where $\Theta$ is support of $p(\theta)$ (i.e., $\Theta =
+\setcomp{\theta \, | \, p(\theta) > 0}$)
+\item Generate samples $\theta^{(1)}, \theta^{(2)}, \ldots,
+  \theta^{(M)}$ drawn from $p(\theta)$
+\item Monte Carlo Estimator plugs in average for expectation:
+  \[
+  \mathbb{E}[f(\theta)|y] \approx \frac{1}{M} \sum_{m=1}^M f(\theta^{(m)})
+  \]
+\item This technique can be made as accurate as desired, because
+\[
+\mathbb{E}[f(\theta)] 
+= 
+\lim_{M \rightarrow \infty}
+\frac{1}{M} \sum_{m=1}^M f(\theta^{(m)})
+\]
+\end{itemize}
+
+
+\mypart{Part V}{Markov Chain \\[8pt]\spc{}Monte Carlo}
+
+
+\sld{Markov Chain Monte Carlo}
+%
+\begin{itemize}
+\item Standard Monte Carlo draws i.i.d. samples
+\[
+\theta^{(1)}, \ldots, \theta^{(M)}
+\]
+according to a probability function $p(\theta)$
+\item Drawing i.i.d. samples is often impossible when
+  dealing with complex densities like Bayesian posteriors $p(\theta|y)$
+\item So we use Markov chain Monte Carlo (MCMC) in these cases and
+  draw $\theta^{(1)}, \ldots, \theta^{(M)}$ from a Markov chain
+\end{itemize}
+
+
+\sld{Markov Chains}
+%
+\begin{itemize}
+\item A Markov Chain is a sequence of random variables 
+\[
+\theta^{(1)},
+  \theta^{(2)}, \ldots, \theta^{(M)}
+\]
+such that $\theta^{(m)}$ only depends on $\theta^{(m-1)}$, i.e.,
+\[
+p(\theta^{(m)} | y, \theta^{(1)}, \ldots, \theta^{(m-1)})
+\ = \
+p(\theta^{(m)} | y, \theta^{(m-1)})
+\]
+\item Drawing $\theta^{(1)}, \ldots, \theta^{(M)}$ from a Markov chain
+  according to \\ $p(\theta^{(m)} \, | \, \theta^{(m-1)}, y)$ is more tractable
+\item Require marginal of each draw, $p(\theta^{(m)}|y)$,
+  to be equal to true posterior
+\item Otherwise, apply just like ordinary (non-Markov chain) Monte Carlo methods
+\end{itemize}
+
+
+\sld{MCMC for Posterior Mean}
+%
+\begin{itemize}
+\item Standard Bayesian estimator is posterior mean
+\[
+\hat{\theta}  \ =  \ \int_{\Theta} \theta \, p(\theta|y) \, d\theta
+\]
+\begin{subitemize}
+\item Posterior mean minimizes expected square error
+\end{subitemize}
+\item Estimate is a conditional expectation
+\[
+\hat{\theta} = \mathbb{E}[\theta|y]
+\]
+\item Compute by averaging
+\[
+\hat{\theta} \ \approx \ \frac{1}{M} \sum_{m=1}^M \theta
+\]
+\end{itemize}
+
+
+\sld{MCMC for Posterior Variance}
+%
+\begin{itemize}
+\item Posterior variance works the same way, given previous result
+\[
+\expectation{(\theta - \expectation{\theta})^2}
+\approx \frac{1}{M} \sum_{m=1}^M (\theta^{(m)} - \hat{\theta})^2
+\]
+\end{itemize}
+
+
+\sld{MCMC for Posterior Median}
+%
+\begin{itemize}
+\item Alternative Bayesian estimator is posterior median
+\begin{subitemize}
+\item Posterior median minimizes expected absolute error
+\end{subitemize}
+\item Calculate as middle draw of $\theta^{(1)}, \ldots,
+  \theta^{(M)}$
+\begin{subitemize}
+\item just sort and take halfway value
+\item e.g., Stan shows 50\% point (or other quantiles)
+\end{subitemize}
+\end{itemize}
+
+
+\sld{MCMC for Event Probability}
+%
+\begin{itemize}
+\item Event probabilities are also expectations, e.g.,
+\[
+\Prob{\theta_1 > \theta_2}
+\ = \ \expectation{\indicator{\theta_1 > \theta_2}}
+\ = \ \int_{\Theta} \indicator{\theta_1 > \theta_2} \, p(\theta|y) d\theta.
+\]
+\item Estimation via MCMC just another plug-in:
+\[
+\Prob{\theta_1 > \theta_2} \approx 
+\frac{1}{M} \sum_{m=1}^M \indicator{\theta_1^{(m)} > \theta_2^{(m)}}
+\]
+\item Again, can be made as accurate as necessary
+\end{itemize}
+
+
+\sld{Random-Walk Metropolis}
+%
+\begin{itemize}
+\item Draw random initial parameter vector $\theta^{(1)}$ (in
+  support) 
+\item For $m \in \range{2}{M}$
+\hspace*{-8pt}
+\begin{subitemize}
+\item Sample proposal from a (symmetric) jumping distribution, e.g.,
+\[
+\theta^*
+\ \sim \ 
+\distro{MultiNormal}(\theta^{(m-1)}, \ \sigma \mbox{\bfseries I})
+\]
+where {\bfseries I} is the identity matrix
+\item 
+\vspace*{4pt}
+Draw $u^{(m)} \sim \distro{Uniform}(0,1)$ and set
+\[
+\theta^{(m)} 
+\ = \
+\begin{cases}
+\theta^{*} 
+  & \text{if } u^{(m)} < {\displaystyle \frac{p(\theta^{*}|y)}{p(\theta^{(m)}|y)}}
+\\[8pt]
+\theta^{(m-1)}
+  & \text{otherwise}
+\end{cases}
+\]
+\end{subitemize}
+\end{itemize}
+
+
+\sld{Metropolis and Normalization}
+%
+\begin{itemize}
+\item Metropolis only uses posterior in a ratio:
+\[
+\frac{p(\theta^{*} \, | \, y)}
+     {p(\theta^{(m)} \, | \, y)}
+\]
+\item This allows the use of unnormalized densities
+\item Recall Bayes's rule:
+\[
+p(\theta | y) \propto p(y|\theta) \, p(\theta)
+\]
+\item Thus we only need to evaluate sampling (likelihood) and prior
+\item It also sidesteps computing the normalizing term
+\[
+\int_{\Theta} p(y|\theta) \, p(\theta) d\theta
+\]
+\end{itemize}
+
+
+\sld{Metropolis-Hastings}
+%
+\begin{itemize}
+\item Generalizes Metropolis to asymmetric proposals
+\item Acceptance ratio is
+\[
+\frac{J(\theta^{(m)}|\theta^{*}) \ \times \ p(\theta^{*}|y)}
+     {J(\theta^{*}|\theta^{(m-1)}) \ \times \ p(\theta^{(m)}|y)}
+\]
+where $J$ is the (potentially asymmetric) proposal density
+\item i.e., 
+{\small
+\[
+\frac{\mbox{probabilty of being at } \theta^*
+      \mbox{ and jumping to } \theta^{(m-1)}}
+     {\mbox{probability of being at } \theta^{(m-1)}
+      \mbox{ and jumping to } \theta^{*}}
+\]
+}
+\vspace*{3pt}
+\item General form ensures equilibrium 
+  by maintaining \emph{detailed balance}
+\item Like Metropolis, only requires ratios
+\item Many algorithms involve a Metropolis-Hastings ``correction''
+\end{itemize}
+
+
+\sld{Optimal Proposal Scale?}
+%
+\begin{itemize}
+\item Proposal scale $\sigma$ is a free; too low or high is inefficient
+\begin{center}
+\includegraphics[width=0.9\textwidth]{img/roberts-rosenthal-traceplots.jpg}
+\end{center}
+\item \emph{Traceplots} show parameter value on $y$ axis, iterations on $x$
+\item Empirical tuning problem; theoretical optima exist for some
+  cases
+\end{itemize}
+\vfill\hfill
+{\tiny Roberts and Rosenthal (2001) Optimal Scaling for Various
+  Metropolis-Hastings Algorithms. {\slshape Statistical Science}.}
+
+
+\sld{Convergence and Stationarity}
+%
+\begin{itemize}
+\item Imagine releasing a hive of bees in a sealed house
+\begin{subitemize}
+\item they disperse, but eventually reach equilibrium where the same
+  number of bees leave a room as enter it (on average)
+\end{subitemize}
+\item May take many iterations for Markov chain to reach equilibrium
+\vspace*{3pt}
+\begin{center}
+\includegraphics[width=0.8\textwidth]{img/bda-diffuse-converge.png}
+\end{center}
+\item Four chains with different starting points
+\item \emph{Left}) 50 iterations;  \emph{Center}) 1000 iterations;  \emph{Right}) Draws from second half of each chain
+\end{itemize}
+
+
+\sld{Potential Scale Reduction ($\hat{R}$)}
+%
+\begin{itemize}
+\item Gelman \& Rubin recommend $M$ chains of $N$ draws with
+  \myemph{diffuse initializations}
+\item Measure that each chain has same posterior mean and variance
+\item If not, may be stuck in multiple modes or just not converged yet
+\item Define statistic $\hat{R}$ of chains such that \myemph{at convergence},
+$\hat{R} \rightarrow 1$
+\begin{subitemize}
+\item $\hat{R} >\!> 1$ implies non-convergence
+\item $\hat{R} \approx 1$ \myemph{does not guarantee convergence}
+\item Only measures marginals
+\end{subitemize}
+\item \myemph{Split $\hat{R}$}: \ Stan splits each chain into first and
+  second half
+\begin{subitemize}
+\item creates $2M$ chains of $N/2$ draws
+\item splitting diagnoses non-stationarity
+\end{subitemize}
+\end{itemize}
+
+
+\sld{Calculating $\hat{R}$ Statistic}
+%
+\begin{itemize}
+\item \myemph{Between-sample variance} estimate
+\[\textstyle
+B
+= \frac{N}{M-1} \, \sum_{m=1}^M (\bar{\theta}^{(\bullet)}_{m} - \bar{\theta}^{(\bullet)}_{\bullet})^2,
+\]
+%
+where
+%
+\[\textstyle
+\bar{\theta}_m^{(\bullet)}
+= \frac{1}{N} \sum_{n = 1}^N \theta_m^{(n)}
+\ \ \ \ \
+\mbox{and}
+\ \ \ \ \
+\bar{\theta}^{(\bullet)}_{\bullet}
+= \frac{1}{M} \, \sum_{m=1}^M \bar{\theta}_m^{(\bullet)}.
+\]
+\vspace*{6pt}
+\item \myemph{Within-sample variance} estimate:
+\[\textstyle
+W 
+= \frac{1}{M} \, \sum_{m=1}^M s_m^2,
+\]
+where
+\[\textstyle
+s_m^2 = \frac{1}{N-1} \, \sum_{n=1}^N (\theta^{(n)}_m - \bar{\theta}^{(\bullet)}_m)^2.
+\]
+\end{itemize}
+
+
+\sld{Calculating $\hat{R}$ Statistic (cont.)}
+%
+\begin{itemize}
+\item \myemph{Variance} estimate:
+\[\textstyle
+\widehat{\mbox{var}}^{+}\!(\theta|y)
+= \frac{N-1}{N}\, W \, + \, \frac{1}{N} \, B.
+\]
+%
+\vspace*{6pt}
+\item \myemph{Potential scale reduction} statistic (``R hat'')
+\[\textstyle
+\hat{R} 
+\, = \,
+\sqrt{\frac{\widehat{\mbox{var}}^{+}\!(\theta|y)}{W}}.
+\]
+\end{itemize}
+
+
+\sld{Correlations in Posterior Draws}
+%
+\begin{itemize}
+\item Markov chains typically display autocorrelation in the series of
+  draws $\theta^{(1)}, \ldots, \theta^{(m)}$
+\item Without i.i.d. draws, central limit theorem \emph{does not apply}
+\item Effective sample size $N_{\mbox{\footnotesize eff}}$ divides out
+  autocorrelation
+\item $N_{\mbox{\footnotesize eff}}$ must be estimated from sample
+\begin{subitemize}
+\item Fast Fourier transform to efficiently computes correlations at all lags
+\end{subitemize}
+\vspace*{-6pt}
+\item Estimation accuracy proportional to 
+{\Large
+\[
+\frac{1}{\sqrt{N_{\mbox{\normalsize eff}}}}
+\]
+}
+\item Compare previous plots; good choice of $\sigma$ leads to high 
+$N_{\mbox{\footnotesize eff}}$
+\end{itemize}
+
+
+\sld{Effective Sample Size (ESS)}
+%
+\begin{itemize}
+\item Autocorrelation at lag $t$ is correlation between subsequences
+\begin{subitemize}
+\item $(\theta^{(1)},\ldots, \theta^{(N-t)})$ and $(\theta^{(1 + t)}, \ldots, \theta^{(N)})$
+\end{subitemize}
+\item  Suppose chain has density $p(\theta)$ with
+\begin{subitemize}
+\item $\mathbb{E}[\theta] = \mu$ \ \ and \ \ $\mbox{\rm Var}[\theta] = \sigma^2$ 
+\end{subitemize}
+\item Autocorrelation $\rho_t$ at lag $t \geq 0$:
+\[
+\rho_t  =  \frac{1}{\sigma^2} \, \int_{\Theta} (\theta^{(n)} - \mu)
+       (\theta^{(n+t)} - \mu) \, p(\theta) \, d\theta
+\]
+\item Because $p(\theta^{(n)}) = p(\theta^{(n+t)}) = p(\theta)$ at convergence,
+\[
+\rho_t = \frac{1}{\sigma^2} \, \int_{\Theta} \theta^{(n)} \, \theta^{(n+t)} \, p(\theta) \, d\theta
+\]
+\end{itemize}
+
+
+\sld{Estimating Autocorrelations}
+%
+\begin{itemize}
+\item Effective sample size is defined by
+\[\textstyle
+N_{\mbox{\scriptsize eff}}
+\ = \
+\frac{N}{\sum_{t = -\infty}^{\infty} \rho_t}
+\ = \
+\frac{N}{1 + 2 \sum_{t = 1}^{\infty} \rho_t}
+\]
+\item Estimate in terms of variograms at lag $t$,
+\[\textstyle
+V_t = 
+\frac{1}{M}
+\,
+\sum_{m=1}^M 
+\
+\left(
+\frac{1}{N_m - t}
+\sum_{n=t+1}^{N_m}
+\left(
+\theta_m^{(n)} - \theta_m^{(n-t)}
+\right)^2
+\right)
+\]
+\item Estimate autocorrelation at lag $t$ using cross-chain variance
+  as
+\[
+\hat{\rho}_t
+= 1 - \frac{\displaystyle V_t}{
+            \displaystyle 2 \, \widehat{\mbox{var}}^{+}}
+\]
+\item If not converged, $\widehat{\mbox{var}}^{+}$ overestimates variance
+\item Efficiently calculate using fast Fourier transform (w.\ padding)
+\end{itemize}
+
+
+\sld{Estimating $N_{\normalsize eff}$}
+%
+\begin{itemize}
+\item Let $T'$ be first lag s.t.\ $\rho_{T' + 1} < 0$, 
+\item Estimate autocorrelation by
+\[
+\hat{N}_{\mbox{\scriptsize eff}}
+= 
+\frac{MN}
+     {1 + \sum_{t=1}^{T'} \hat{\rho}_t}.
+\]
+\item NUTS avoids negative autocorrelations, so first negative
+  autocorrelation estimate is reasonable
+\vfill
+\item See {\footnotesize Charles Geyer (2013) Introduction to MCMC. In
+    {\slshape Handbook of MCMC}.
+ (free online at \url{http://www.mcmchandbook.net/index.html})}
+\end{itemize}
+
+
+\sld{Gibbs Sampling}
+%
+\begin{itemize}
+\item Draw random initial parameter vector $\theta^{(1)}$ (in
+  support) 
+\item For $m \in \range{2}{M}$
+\begin{subitemize}
+\item For $n \in \range{1}{N}$:
+\begin{itemize}
+\item draw 
+$\theta^{(m)}_n$ according to conditional \\[8pt]
+$p(\theta_n|\theta_1^{(m)},\ldots,\theta_{n-1}^{(m)}, \, \theta_{n+1}^{(m-1)},
+\ldots,\theta_N^{(m-1)},  y)$.
+\end{itemize}
+\end{subitemize}
+\item e.g, with $\theta = (\theta_1,\theta_2,\theta_3)$:
+\begin{subitemize}
+\item draw \ $\theta_1^{(m)}$  \ according to \ $p(\theta_1 | \theta_2^{(m-1)},
+  \theta_3^{(m-1)}, y)$
+\item draw \ $\theta_2^{(m)}$ \ according to \ $p(\theta_2 | \theta_1^{(m)},
+  \theta_3^{(m-1)}, y)$
+\item draw \ $\theta_3^{(m)}$ \ according to \ $p(\theta_3 | \theta_1^{(m)},
+  \theta_2^{(m)}, y)$
+\end{subitemize}
+\end{itemize}
+
+
+\sld{Generalized Gibbs}
+%
+\begin{itemize}
+\item ``Proper'' Gibbs requires the conditional Monte Carlo draws
+\begin{subitemize}
+\item typically works only for conjugate priors
+\end{subitemize}
+\item In general case, may need to use less efficient conditional
+  draws
+\begin{subitemize}
+\item Slice sampling is a popular general technique that works for
+  discrete or continuous $\theta_n$
+\item Adaptive rejection sampling is another alternative
+\item Very difficult in more than one or two dimensions
+\end{subitemize}
+\end{itemize}
+
+
+\sld{Sampling Efficiency}
+%
+\begin{itemize}
+\item We care only about $N_{\mbox{\footnotesize eff}}$ per second
+\item Decompose into
+{\small
+\begin{enumerate}
+\item Iterations per second
+\item Effective samples per iteration
+\end{enumerate}
+}
+\item Gibbs and Metropolis have high iterations per second (especially
+  Metropolis)
+\item But they have low effective samples per iteration (especially
+  Metropolis) 
+\item Both are particular weak when there is high correlation among
+  the parameters in the posterior
+\end{itemize}
+
+
+\sld{Hamiltonian Monte Carlo \& NUTS}
+%
+\begin{itemize}
+\item Slower iterations per second than Gibbs or Metropolis
+\item Much higher number of effective samples per iteration for
+complex posteriors (i.e., high curvature and correlation)
+\item Overall, much higher $N_{\mbox{\footnote eff}}$ per second
+\vfill
+\item Details in the next talk \ldots
+\item Along with details of how Stan implements HMC and NUTS
+\end{itemize}
+
+
+
 \mypart{Prerequisite}{Bayesian Inference}
 
 
@@ -387,7 +976,7 @@ expected to fall.
 \item Set up \myemph{full probability model}
   \vspace*{-4pt}
   \begin{itemize}
-  \item for all observable \& unobservable quantities
+  \item for \myemph{all} observable \& unobservable quantities
   \item consistent w. problem knowledge \& data collection
   \end{itemize}
   % 
@@ -582,11 +1171,41 @@ by posterior $p(\theta|y)$
 \end{itemize}
 
 
-\sld{Event Probabilities}
+\sld{Posterior Event Probabilities}
 %
 \begin{itemize}
 \item Recall that an event $A$ is a collection of outcomes
-\item Suppose event $A$ is determined by indicator on parameters
+\item So $A$ may be defined by an indicator $f$ on parameters
+\[
+f(\theta)
+=
+\begin{cases}
+1 & \text{if } \theta \in A
+\\
+0 & \text{if } \theta \not\in A
+\end{cases}
+\]
+\begin{subitemize}
+\item $f(\theta) = \mathrm{I}(\theta_1 > \theta_2)$
+\ \ for \ \ $\Prob{\theta_1 > \theta_2 \, | \, y}$,
+\item $f(\theta) = \mathrm{I}(\theta \in (0.50, 0.52)$ for $\mathrm{Pr}\left[ \theta \in (0.50, 0.52) \,|\, y \right]$
+\end{subitemize}
+\item Defined by posterior expectation of indicator $f(\theta)$
+\[
+\mathrm{Pr}[A \,|\, y]
+\ = \
+\mathbb{E}\left[ f(\theta) \, | \, y \right]
+\ = \
+\int_{\Theta} f(\theta) \, p(\theta|y) \, d\theta.
+\]
+\end{itemize}
+
+
+\sld{Event Probabilities}
+%
+\begin{itemize}
+\item An \myemph{event} $A$ is a collection of outcomes
+\item So $A$ may be defined by an indicator $f$ on parameters $\theta$,
 \[
 f(\theta) 
 = 
@@ -622,6 +1241,27 @@ f(\theta)
 \end{itemize}
 
 
+\sld{Event Probabilities in Stan}
+%
+\begin{itemize}
+\item MCMC estimates
+\[
+\mathrm{Pr}[A \, | \, y]
+\approx
+\sum_{m=1}^M f(\theta^{(m)})
+\]
+with posterior draws $\theta^{(1)}, \ldots, \theta^{(M)}$.
+\vfill
+\item In Stan, only need to define a variable in generated quantities
+  block for the indicator
+\begin{stancode}
+generated quantities {
+  int<lower=0, upper=1> theta_gt_half = (theta > 0.5);
+}
+\end{stancode}
+\end{itemize}
+
+
 \sld{Event Probabilities, cont.}
 %
 \begin{itemize}
@@ -644,7 +1284,7 @@ f(\theta)
 \end{itemize}
 
 
-\mypart{Part III}{Conjugate Priors}
+\mypart{Interlude}{Conjugate Priors}
 
 
 \sld{Conjugate Priors}
@@ -719,6 +1359,51 @@ $\distro{Beta}(y_1 + \cdots + y_K, \ \ N_1 + \cdots + N_K)$
 \mypart{Example}{Repeated Binary Trials}
 
 
+\sld{Repeated Binary Trial Model}
+%
+\begin{itemize}
+%
+\vspace*{-4pt}
+\item \myemph{Data}
+\begin{subitemize}
+  \item $N \in \setcomp{0, 1, \ldots}$: number of trials (constant)
+  \item $y_n \in \setcomp{0, 1}$: trial $n$ success (known, modeled data)
+\end{subitemize}
+%
+\vspace*{-6pt}
+\item \myemph{Parameter}
+\begin{subitemize}
+\item $\theta \in [0, 1]$ : chance of success (unknown)
+\end{subitemize}
+%
+\vspace*{-6pt}
+\item \myemph{Prior}
+\begin{subitemize}
+\item $p(\theta)
+\ = \
+\distro{Uniform}(\theta \,|\, 0, 1) = 1$
+\end{subitemize}
+%
+\vspace*{-6pt}
+\item \myemph{Likelihood}
+\begin{subitemize}
+\item $p(y \,|\, \theta)
+\ = \ \prod_{n=1}^N \distro{Bernoulli}(y_n \,|\, \theta)
+\ = \ \prod_{n=1}^N \theta^{y_n} \, (1 - \theta)^{1 - y_n}$
+\end{subitemize}
+%
+\vspace*{-6pt}
+\item \myemph{Posterior}
+\begin{subitemize}
+\item
+$p(\theta \, | \, y)
+\propto
+p(\theta) \, p(y \, | \, \theta)$
+\end{subitemize}
+\end{itemize}
+
+
+
 \sld{Stan Program}
 %
 \begin{stancode}
@@ -731,8 +1416,7 @@ parameters {
 }
 model {
   theta ~ uniform(0, 1);          // prior
-  for (n in 1:N)
-    y[n] ~ bernoulli(theta);      // likelihood
+  y ~ bernoulli(theta);           // likelihood
 }
 \end{stancode}
 
@@ -744,13 +1428,12 @@ model {
 \item equivalent to define log density directly:
 \begin{stancode}
 model {
-  increment_log_prob(0);
+  target += 0;
   for (n in 1:N)
-    increment_log_prob(log(theta^y[n])
-                           * (1 - theta)^(1 - y[n])));
+    target += log(y[n] ? theta : (1 - theta));
 }
 \end{stancode}
-\item equivalent to (a) drop constant prior and (b) vectorize
+\item equivalent to drop constant prior and vectorize
   likelihood: 
 \begin{stancode}
 model {
@@ -835,6 +1518,47 @@ lp__  -5.33  0.02  0.80  -7.46  -5.04  -4.78   1201     1
 \hfill\includegraphics[height=0.9in]{img/bernoulli-posterior-histo.pdf}
 \hspace*{24pt}
 \end{minipage}
+
+
+\sld{RStan:  Posterior Sample}
+%
+\begin{codein}
+> theta_draws <- extract(fit)$theta;
+> mean(theta_draws);
+\end{codein}
+\begin{codeout}
+[1] 0.4128373
+\end{codeout}
+%
+\begin{codein}
+> quantile(theta_draws, probs=c(0.10, 0.90));
+\end{codein}
+\begin{codeout}
+      10%       90%
+0.2830349 0.5496858
+\end{codeout}
+
+
+\sld{Marginal Posterior Histograms}
+%
+\begin{codein}
+theta_draws_df <- data.frame(list(theta = theta_draws));
+plot <-
+  ggplot(theta_draws_df, aes(x = theta)) +
+  geom_histogram(bins=20, color = "gray");
+plot;
+\end{codein}
+\vspace*{-9pt}
+\begin{center}
+\includegraphics[height=1.25in]{img/bern-posterior-histogram.pdf}
+\end{center}
+\vspace*{-0.1in}
+\begin{subitemize}
+\item
+Displays the full posterior {\slshape marginal} distribution $p(\theta \,
+| \, y)$
+\end{subitemize}
+
 
 
 \sld{RStan: MAP, penalized MLE}
@@ -936,27 +1660,29 @@ plot;
 \mypart{Example I}{Male Birth Ratio}
 
 
-\sld{Laplace's Data and Problems}
-%
+\sld{Birth Rate by Sex}
 \begin{itemize}
-\item Laplace's data on live births in Paris from 1745--1770: 
+\item \myemph{Laplace}'s data on live births in Paris from 1745--1770:
+\vspace*{-4pt}
 \begin{center}\small
 \begin{tabular}{c|c}
 {\slshape sex} & {\slshape live births}
 \\ \hline
-female & 241\,945 
+female & 241\,945
 \\
 male & 251\,527
 \end{tabular}
 \end{center}
-\item Question 1 (Event Probability) 
-\\  
-Is a boy more likely to be born than a girl?
-\item Question 2 (Estimate) 
-\\  
+\item \myemph{Question 1} (Estimation)
+\\
 What is the birth rate of boys vs. girls?
-\item Bayes formulated the basic binomial model
-\item Laplace solved the integral
+
+\item \myemph{Question 2} (Event Probability)
+\\
+Is a boy more likely to be born than a girl?
+%
+\item Bayes (1763) set up the ``Bayesian'' model
+\item Laplace (1781, 1786) solved for the posterior
 \end{itemize}
 
 
@@ -977,6 +1703,42 @@ which subset of $n$ has $y_n = 1$),
 \[
 \binom{N}{y} = \frac{N!}{y! \, (N-y)!}
 \]
+\end{itemize}
+
+
+\sld{Binomial Distribution}
+%
+\begin{itemize}
+\item Don't know order of births, only total.
+\item If $y_1,\ldots,y_N\sim \distro{Bernoulli}(\theta)$,
+\\[4pt] then $(y_1 + \cdots + y_N) \sim \distro{Binomial}(N,\theta)$
+\item The analytic form is
+\[
+\distro{Binomial}(y|N,\theta)
+\ = \ \binom{N}{y} \theta^{y} (1 - \theta)^{N-y}
+\]
+where the binomial coefficient normalizes for permutations (i.e.,
+which subset of $n$ has $y_n = 1$),
+\[
+\binom{N}{y} = \frac{N!}{y! \, (N-y)!}
+\]
+\end{itemize}
+
+
+\sld{Mathematics vs.\ Simulation}
+%
+\begin{itemize}
+\item Luckily, we don't have to be as good at math as Laplace
+\item Nowadays, we calculate all these integrals by computer using
+  tools like Stan
+\vfill
+\begin{quote}\slshape
+  If you wanted to do foundational research in statistics in the
+  mid-twentieth century, you had to be bit of a mathematician, whether
+  you wanted to or not. \ldots if you want to do statistical research
+  at the turn of the twenty-first century, you have to be a computer
+  programmer.  \\[3pt] \mbox{ } \hfill {\small ---from Andrew's blog}
+\end{quote}
 \end{itemize}
 
 
@@ -1005,6 +1767,9 @@ p(\theta)
 \ = \ 1
 \]
 \end{itemize}
+
+
+
 
 
 \sld{Beta Distribution}
@@ -1061,6 +1826,63 @@ p(\theta|y,N)
 p(\theta|y,N) 
 \ = \ \distro{Beta}(\theta \, | \, y + 1, \ N - y + 1)
 \]
+\end{itemize}
+
+
+\sld{Laplace turns the Crank}
+%
+\begin{itemize}
+\item What is probability that a male live birth is more probable?
+\begin{eqnarray*}
+\Prob{\theta > 0.5}
+& = &  \int_{\Theta} \indicator{\theta > 0.5} \, p(\theta|y,N) d\theta
+\\[4pt]
+& = &  \int_{0.5}^1 p(\theta|y,N) d\theta
+\\[4pt]
+& \approx &  1 - 10^{-42}
+\end{eqnarray*}
+\item  Laplace solved Bayes's integral by
+\begin{subitemize}
+\item determing the posterior was a beta distribution (conjugacy!)
+\item and solving the normalization (gamma functions)
+\end{subitemize}
+\end{itemize}
+
+
+\sld{Calculating Laplace's Answers}
+\begin{stancode}
+transformed data {
+  int male = 251527;
+  int female = 241945;
+}
+parameters {
+  real<lower=0, upper=1> theta;
+}
+model {
+  male ~ binomial(male + female, theta);
+}
+generated quantities {
+  int<lower=0, upper=1> theta_gt_half = (theta > 0.5);
+}
+\end{stancode}
+
+
+\sld{And the Answer is...}
+%
+\begin{codein}
+> fit <- stan("laplace.stan", iter=100000);
+> print(fit, probs=c(0.005, 0.995), digits=3)
+\end{codein}
+\begin{codeout}
+                    mean   0.5%  99.5%
+theta               0.51  0.508  0.512
+theta_gt_half       1.00  1.000  1.000
+\end{codeout}
+%
+\begin{itemize}
+\item Q1: $\theta$ is 99\% certain to lie in $(0.508, 0.512)$
+%
+\item Q2:  Laplace ``morally certain'' boys more prevalent
 \end{itemize}
 
 
@@ -1290,18 +2112,34 @@ generated quantities {
 \end{stancode}
 
 
-\sld{Transforming Precision}
+\sld{Transforming Precision to Scale}
 %
 \begin{stancode}
     parameters {
-      real<lower=0> tau;      // precision
+      real<lower=0> tau;
       ...
     }
     transformed parameters {
-      real<lower=0> sigma;    // scale
-      sigma <- 1 / sqrt(tau);
+      real<lower=0> sigma = tau^(-0.5);
     }
 \end{stancode}
+
+
+\sld{Transforms: Non-Centered Parameterization}
+{\small
+\begin{Verbatim}
+parameters {
+  vector[K] beta_std;  // non-centered
+}
+transformed parameters {
+  vector[K] beta =  mu + sigma * beta_std;
+}
+model {
+  // implies:  beta ~ normal(mu, sigma)
+  beta_std ~ normal(0, 1);
+}
+\end{Verbatim}
+}
 
 
 \sld{Logistic Regression}
@@ -1598,6 +2436,453 @@ model {
 }
 
 
+
+\mypart{Example}{Hierarchical Models}
+
+
+\sld{Baseball At-Bats}
+%
+\begin{itemize}
+\item For example, consider baseball batting ability.
+\begin{subitemize}
+\item
+{\footnotesize Baseball is sort of like cricket, but with round bats, a
+  one-way field, stationary ``bowlers'', four bases, short games,
+  and no draws}
+\end{subitemize}
+\item Batters have a number of ``at-bats'' in a season, out of which they
+  get a number of ``hits'' (hits are a good thing)
+\item Nobody with higher than 40\% success rate since 1950s.
+\item No player (excluding ``bowlers'') bats much less than 20\%.
+\item Same approach applies to hospital pediatric surgery
+  complications (a BUGS example), reviews on Yelp,
+  test scores in multiple classrooms, \ldots
+\end{itemize}
+
+
+\sld{Baseball Data}
+%
+\\
+\begin{minipage}[t]{0.49\textwidth}
+\small
+\begin{itemize}
+\item Hits vs.\ at bats for 2006 AL (no bowlers); line at average
+\item not much variation
+\item variation related to number of trials
+\item success rate increases with number of trials
+\begin{subitemize}
+\item at bats predictively in nuanced models
+\item blue is pooled average, red is +/- 2
+  binomial std devs
+\end{subitemize}
+\end{itemize}
+\end{minipage}
+%
+\begin{minipage}[t]{0.50\textwidth}
+\begin{center}
+\vspace*{-36pt}
+\hfill \includegraphics[height=1.1in]{img/al06hitsvsatbats.png}
+\\[-18pt]
+\hfill \includegraphics[height=1.65in]{img/bball-eda.pdf}
+\end{center}
+\end{minipage}
+
+
+\sld{Pooling Data}
+%
+\begin{itemize}
+\item How do we estimate the ability of a player who we observe
+  getting 6 hits in 10 at-bats?  Or 0 hits in 5 at-bats?  Estimates of
+  60\% or 0\% are absurd!
+\item Same logic applies to players with 40 hits in 131 at bats or 152 hits in 537.
+\item \emph{No pooling}: estimate each player separately
+\item \emph{Complete pooling}: estimate all players together (assume no difference
+  in abilities)
+\item \emph{Partial pooling}: somewhere in the middle
+\begin{subitemize}
+\item use information about other players (i.e., the population)
+to estimate a player's ability
+\end{subitemize}
+\end{itemize}
+
+
+\sld{Complete Pooling Model in Stan}
+%
+\begin{subitemize}
+\item Assume players all have same ability
+\item Assume uniform prior on abilities
+\begin{stancode}
+data {
+  int<lower=0> N;              // items
+  int<lower=0> K[N];           // trials
+  int<lower=0> y[N];           // successes
+}
+parameters {
+  real<lower=0, upper=1> phi;  // chance of success
+}
+model {
+  y ~ binomial(K, phi);        // vectorized likelihood
+}
+\end{stancode}
+\end{subitemize}
+
+
+\sld{No Pooling Model in Stan}
+%
+\begin{subitemize}
+\item Assume each player has independent ability
+\item Assume uniform priors on abilities
+\begin{stancode}
+data {
+  int<lower=0> N;
+  int<lower=0> K[N];
+  int<lower=0> y[N];
+}
+parameters {
+  real<lower=0, upper=1> phi[N];
+}
+model {pp
+  y ~ binomial(K, phi);  // now y[n] matches phi[n]
+}
+\end{stancode}
+\end{subitemize}
+
+
+\sld{Hierarchical Models}
+%
+\begin{itemize}
+\item Hierarchical models are principled way of determining how much
+  pooling to apply.
+\item Pull estimates toward the population mean based on amount of
+  variation in population
+\begin{subitemize}
+\item low variance population: more pooling
+\item high variance population: less pooling
+\end{subitemize}
+\item In limit
+\begin{subitemize}
+\item as variance goes to 0, get complete pooling
+\item as variance goes to $\infty$, get no pooling
+\end{subitemize}
+\end{itemize}
+
+
+\sld{Hierarchical Batting Ability}
+%
+\begin{itemize}
+\item Instead of fixed priors, estimate priors along with other parameters
+\item Still only uses data once for a single model fit
+\item Data: $y_n, K_n$: hits, at-bats for player $n$
+\item Parameters: $\phi_n$: ability for player $n$
+\item Hyperparameters: $\alpha, \beta$: population mean and variance
+\item Hyperpriors: fixed priors on $\alpha$ and $\beta$ (hardcoded)
+\end{itemize}
+
+
+\sld{Hierarchical Batting Model {\small (cont.)}}
+%
+\begin{eqnarray*}
+\theta &  \sim & \distro{Uniform}(0,1)
+\\[4pt]
+\kappa & \sim & \distro{Pareto}(1.5)
+\\[4pt]
+\phi_n & \sim & \distro{Beta}(\kappa, \theta, \ \kappa \, (1 - \theta))
+\\[4pt]
+y_n & \sim & \distro{Binomial}(K_n, \phi_n)
+\end{eqnarray*}
+\begin{itemize}
+\item Pareto provides power law distro on prior count:
+{\small
+\[
+\distro{Pareto}(u \, | \, \alpha)
+\ \propto \
+\frac{\alpha}
+     {u^{\alpha + 1}}
+\]
+}
+\item $\theta$ is prior mean; \ $\kappa$ is prior count (plus 2).
+\item Should use more informative prior on $\theta$.
+\end{itemize}
+
+
+\sld{Partial Pooling Model in Stan}
+%
+\begin{stancode}
+data {
+  int<lower=0> N;
+  int<lower=0> K[N];
+  int<lower=0> y[N];
+}
+parameters {
+  real<lower=0, upper=1> theta;
+  real<lower=0> kappa;
+  vector<lower=0, upper=1>[N] phi;
+}
+model {
+  kappa ~ pareto(1, 1.5);             // hyperprior
+  theta ~ beta(kappa * theta,         // prior
+               kappa * (1 - theta));
+  y ~ binomial(K, theta);             // likelihood
+}
+\end{stancode}
+
+
+\sld{Posterior for Hyperpriors}
+%
+\\[8pt]
+\begin{minipage}[t]{0.55\textwidth}
+\begin{itemize}
+\item Scatterplot of draws
+\item Crosshairs at mean
+\item $\kappa = \alpha +
+  \beta$ \ and \ $\theta = \frac{\alpha}{\alpha + \beta}$
+\item Prior mean est: $\hat{\theta} = 0.271$
+\item Prior count est: $\hat{\kappa} = 400$
+\item Together yield prior std dev of only 0.022
+\end{itemize}
+\end{minipage}
+\begin{minipage}[t]{0.45\textwidth}
+\vfill
+\mbox{ } \ \ \ \ \ \ \includegraphics[height=1.4in]{img/baseball-beta-posterior-scatter.png}
+\vfill
+\end{minipage}
+
+
+\sld{Posterior Ability {\normalsize (High Avg Players)}}
+%
+\vspace*{-8pt}
+\begin{center}
+\includegraphics[height=2.25in]{img/batting-ability-posteriors.png}
+\end{center}
+
+
+\sld{Who's the Best?}
+%
+\vspace*{-2pt}\small
+\begin{itemize}
+\item Posterior probability that player $n$ has highest ability:
+\[
+\mbox{Pr}[\phi_n \geq \max(\phi) \, | \, y]
+\]
+\item Code up with indicator variable in Stan
+\begin{stancode}
+generated quantities {
+  int<lower=0, upper=1> is_best[N];
+  for (n in 1:N)
+    is_best[n] <- (phi[n] >= max(phi));
+}
+\end{stancode}
+\end{itemize}
+
+
+\sld{Multiple Comparisons}
+%
+\begin{itemize}
+\item Hierarchical model \myemph{adjusts for multiple comparisons} by pulling
+  all estimates toward population mean
+\end{itemize}
+
+
+\sld{Results for 2006 AL Season}
+%
+\begin{center}
+{\small
+\begin{tabular}{rrrr}
+\emph{Player} & \emph{Average} & \emph{At-Bats} & $\Prob{\text{best}}$
+\\ \hline
+Mauer & .347 & 521 & 0.12
+\\
+Jeter & .343 & 623 & 0.11
+\\
+& .342 & 482 & 0.08
+\\
+& .330 & 648 & 0.04
+\\
+& .330 & 607 & 0.04
+\\
+& .367 & 60 & 0.02
+\\
+& .322 & 695 & 0.02
+\end{tabular}
+}
+\end{center}
+\begin{itemize}
+\item Posterior probabilities reflect uncertainty in data
+\item {\footnotesize In last game (of 162), Mauer (Minnesota) edged out Jeter (NY)}
+\end{itemize}
+
+
+\sld{Efron \& Morris (1975) Data}
+%
+\begin{itemize}
+\item From their classic analysis for shrinkage/empirical Bayes
+\item Picked batters with 45 at bats on a given day (artificial!)
+\end{itemize}
+\begin{stancode}
+   FirstName   LastName Hits At.Bats Rest.At.Bats Rest.Hits
+1    Roberto   Clemente   18      45          367       127
+2      Frank   Robinson   17      45          426       127
+3      Frank     Howard   16      45          521       144
+4        Jay  Johnstone   15      45          275        61
+5        Ken      Berry   14      45          418       114
+6        Jim    Spencer   14      45          466       126
+7        Don  Kessinger   13      45          586       155
+8       Luis   Alvarado   12      45          138        29
+9        Ron      Santo   11      45          510       137
+10       Ron    Swaboda   11      45          200        46
+11      Rico Petrocelli   10      45          538       142
+\end{stancode}
+
+
+\sld{Pooling vs. No-Pooling Estimates}
+%
+\vspace*{-0.15in}
+\begin{center}
+\includegraphics[height=2.25in]{img/pool-no-pool.png}
+\end{center}
+\vspace*{-0.35in}
+\begin{subitemize}
+\item complete pooling, no pooling, partial pooling, (log odds)
+\end{subitemize}
+
+\sld{Ranking}
+\begin{stancode}
+generated quantities {
+  int<lower=1, upper=N> rnk[N];      // rank of player n
+  {
+    int dsc[N];
+    dsc <- sort_indices_desc(theta);
+    for (n in 1:N)
+      rnk[dsc[n]] <- n;
+  }
+\end{stancode}
+
+
+\sld{Posterior Ranks}
+%
+\begin{center}
+\includegraphics[height=2.0in]{img/rankings-pool.png}
+\end{center}
+
+\sld{Who is Best? {\normalsize better Stan code}}
+\begin{stancode}
+generated quantities {
+  ...
+  int<lower=0, upper=1> is_best[N];
+  ...
+  for (n in 1:N)
+    is_best[n] <- (rnk[n] == 1);  // more efficient
+  ...
+\end{stancode}
+
+\sld{Who is Best? Posterior}
+\begin{center}
+\includegraphics[height=2.0in]{img/who-is-best.png}
+\end{center}
+
+
+\sld{Posterior Predictive Inference}
+%
+\begin{itemize}
+\item How do we predict new outcomes (e.g., rest of season)?
+\begin{stancode}
+data {
+  int<lower=0> K_new[N];       // new trials
+  int<lower=0> y_new[N];       // new successes
+  ...
+generated quantities {
+  int<lower=0> z[N];  // posterior prediction
+  for (n in 1:N)
+    z[n] <- binomial_rng(K_new[n], theta[n]);
+\end{stancode}
+\item Full Bayes accounts for two sources of uncertainty
+\begin{subitemize}
+\item estimation uncertainty (built into posterior)
+\item sampling uncertainty (explicit RNG function)
+\end{subitemize}
+\end{itemize}
+
+\sld{Posterior Predictions}
+\begin{center}
+\includegraphics[height=2in]{img/posterior-predictions.png}
+\end{center}
+
+
+\sld{Posterior Predictive Check}
+%
+\begin{itemize}
+\item Replicate data from paraemters
+\end{itemize}
+\begin{stancode}
+generated quantities {
+  ...
+  for (n in 1:N)
+    y_rep[n] <- binomial_rng(K[n], theta[n]);
+  for (n in 1:N)
+    y_pop_rep[n] <- binomial_rng(K[n],
+                                 beta_rng(phi * kappa,
+                                          (1 - phi) * kappa));
+  min_y_rep <- min(y_rep);
+  sd_y_rep <- sd(to_vector(y_rep));
+  p_min <- (min_y_rep >= min_y);
+  p_sd <- (sd_y_rep >= sd_y);
+}
+\end{stancode}
+
+\sld{Posterior $p$-Values}
+\begin{center}
+\includegraphics[height=2in]{img/posterior-p-values.png}
+\end{center}
+
+
+\sld{Calibration and Sharpness}
+%
+\begin{itemize}
+\item \myemph{Calibration}:  A model is calibrated if the 50\% intervals
+  contain roughly 50\% of the true intervals
+\begin{subitemize}
+\item technically, we expect $\mbox{Binomial}(N, 0.5)$ of $N$
+  parameters to fall in their 50\% intervals
+\item we can evaluate with held-out data using cross-validation
+\end{subitemize}
+%
+\item \myemph{Sharpness}: One posterior is sharper than another if it
+  concentrates more posterior mass around the true value
+\begin{subitemize}
+\item e.g., central posterior intervals of interest are narrower
+\vfill
+\item \footnotesize{see: Gneiting, Balabdaoui, and Raftery (2007) Probabilistic
+    forecasts, calibration and sharpness. {\slshape JRSS B}.}
+\end{subitemize}
+\end{itemize}
+
+
+\sld{More in the Case Study}
+%
+\begin{itemize}
+%
+\item This talk roughly followed my Stan case study:
+\begin{subitemize}
+\item Hierarchical Partial Pooling for Repeated Binary Trials
+\end{subitemize}
+%
+\item Available under case studies at
+\begin{subitemize}
+\item \url{http://mc-stan.org/documentation}.
+\end{subitemize}
+%
+\item Contribute case studies in knitr or Jupyter
+\begin{subitemize}
+\item Chris Fonnesbeck (of PyMC3 fame) wrote a great PyStan case study
+  on hierarchical modeling for continuous data as a Python Jupyter
+  notebook (follow above link)
+\item Many more case studies, including new ones by Michael Betancourt
+  on core Stan computational issues
+\end{subitemize}
+\end{itemize}
+
+
+
 \mypart{Prerequisite}{Maximum Likelihood \\[8pt]\spc Estimation}
 
 
@@ -1795,6 +3080,36 @@ $\expectation{(\theta - \theta')^2 \, | \, y}$, use the posterior mean
 \item Other loss (utility) functions possible, the study of which falls under
   decision theory
 \item All share property of involving full Bayesian inference.
+\end{itemize}
+
+
+\sld{Bayesian Point Estimates}
+%
+\begin{itemize}
+\item \myemph{Posterior Mean Estimate} (min expected square error)
+\[
+\hat{\theta}
+\ = \
+\mathbb{E}\left[\theta \, | \, y \right]
+\ = \
+\int_{\Theta} \theta \, p(\theta \, | \, y) \, \mathrm{d}\theta
+\ \approx \
+\frac{1}{M} \sum_{m=1}^M \theta^{(m)}.
+\]
+%
+\item \myemph{Posterior Median Estimate} (min expected absolute error)
+\[
+\bar{\theta} \ \mbox{solves} \ \mbox{Pr}[\theta > \bar{\theta}] = 0.5
+\]
+\[
+\bar{\theta} \ \approx \ \mbox{median}(\{ \theta^{(1)}, \ldots
+\theta^{(M)} \})
+\]
+\vspace*{-12pt}
+\begin{subitemize}
+\item other quantiles also estimated with posterior draws
+\item need a lot of draws for accurate tail estimates
+\end{subitemize}
 \end{itemize}
 
 
@@ -2067,6 +3382,23 @@ astrophysics, particle physics, molecular biology, oceanography, climatology, bi
 \end{subitemize}
 
 
+\sld{Stan's Autodiff vs.\ Alternatives}
+
+\begin{subitemize}
+\item Among \myemph{C++ open-source} offerings: 
+Stan is \myemph{fastest} (for gradients), 
+\myemph{most general} (functions supported), 
+and \myemph{most easily extensible} (simple OO)
+\end{subitemize}
+\vspace*{-8pt}
+\hfill
+\includegraphics[width=0.45\textwidth]{img/autodiff-eval-matrix-product-eigen.pdf}
+\hfill
+\includegraphics[width=0.45\textwidth]{img/autodiff-eval-normal-density.pdf}
+\hfill
+
+
+
 \mypart{Overview}{Stan Language}
 
 
@@ -2082,19 +3414,6 @@ astrophysics, particle physics, molecular biology, oceanography, climatology, bi
 \end{subitemize}
 \item With automatic ``black-box'' inference on top (though even that is tunable)
 \item Programs computing same thing may have different efficiency
-\end{itemize}
-
-
-\sld{Parsing and Compilation}
-%
-\begin{itemize}
-\item Stan code \myemph{parsed} to abstract syntax tree (AST)
-  \\ {\footnotesize (Boost Spirit Qi, recursive descent, lazy semantic
-    actions)}
-\item C++ model class \myemph{code generation} from AST
-  \\ {\footnotesize (Boost Variant)}
-\item C++ code \myemph{compilation}
-\item \myemph{Dynamic linking} for RStan, PyStan
 \end{itemize}
 
 
@@ -2283,7 +3602,7 @@ astrophysics, particle physics, molecular biology, oceanography, climatology, bi
 \end{itemize}
 
 
-\sld{Integers vs. Reals}
+\sld{Integers vs.\ Reals}
 %
 \begin{itemize}
 \item Different types (conflated in BUGS, JAGS, and R)
@@ -2696,6 +4015,21 @@ y ~ normal(mu_y, sigma);
 \item All dimensions must be scalars or having matching sizes
 \item Scalars are broadcast (repeated)
 \end{itemize}
+
+
+\sld{Parsing and Compilation}
+%
+\begin{itemize}
+\item Stan code \myemph{parsed} to abstract syntax tree (AST)
+  \\ {\footnotesize (Boost Spirit Qi, recursive descent, lazy semantic
+    actions)}
+\item C++ model class \myemph{code generation} from AST
+  \\ {\footnotesize (Boost Variant)}
+\item C++ code \myemph{compilation}
+\item \myemph{Dynamic linking} for RStan, PyStan
+\end{itemize}
+
+
 
 
 \mypart{Part II}{What Stan Does}
@@ -3304,6 +4638,20 @@ void gradient(const F& f,  const VectorXd& x,
 \end{subsubitemize}
 \vfill
 \item merged with develop branch
+\end{itemize}
+
+
+\sld{Adiabatic Sampling}
+%
+\begin{itemize}
+\item Physically motivated alternative to ``simulated''
+  \myemph{annealing and tempering} (not really simulated!)
+\item Supplies external \myemph{heat bath}
+\item Operates through \myemph{contact manifold}
+\item System relaxes more naturally between energy levels
+\item Betancourt paper on {\slshape arXiv}
+  \vfill
+\item Prototype complete
 \end{itemize}
 
 
