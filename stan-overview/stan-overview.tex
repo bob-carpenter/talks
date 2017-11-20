@@ -61,7 +61,7 @@
 \sld{Why Stan?}
 %
 \begin{itemize}
-\item {\slshape\bfseries Application}: Fit rich Bayesian statistical models
+\item {\slshape\bfseries Goal}: Robust, fully Bayesian inference.
 \end{itemize}
 %
 \vspace*{2pt}
@@ -169,7 +169,7 @@ limits at boundaries, e.g., {\small \code{multiply\_log()}}
 \end{itemize}
 
 
-\mypart{Prerequisite}{MCMC}
+\mypart{}{MCMC}
 
 
 \sld{Repeated i.i.d. Trials}
@@ -362,7 +362,7 @@ expected to fall.
 \end{itemize}
 
 
-\mypart{Warmup Exercise III}{Monte Carlo \\[8pt]\spc Integration}
+\mypart{}{Monte Carlo \\[8pt]\spc Integration}
 
 \sld{Monte Carlo Calculation of $\pi$}
 
@@ -405,9 +405,11 @@ of Monte Carlo methods.
 }
 \end{itemize}
 
+
 \sld{Accuracy of Monte Carlo}
+%
 \begin{itemize}
-\item Monte Carlo is \emph{not} an approximation!
+\item Monte Carlo is \emph{not} that kind of an approximation!
 \item It can be made exact to within any $\epsilon$
 \item Monte Carlo draws are i.i.d. by definition
 \item Central limit theorem: expected error decreases at rate of
@@ -421,7 +423,9 @@ sample size 1e6
 \item Need $100 \times$ larger sample for each digit of accuracy
 \end{itemize}
 
+
 \sld{General Monte Carlo Integration}
+%
 \begin{minipage}[t]{0.69\textwidth}
 \vspace*{-0.1in}
 \small
@@ -446,7 +450,75 @@ computational efficiency
 \hfill
 {\tiny Image courtesy of Jeff Cruzan, \url{http://www.drcruzan.com/NumericalIntegration.html}}
 
+
+\sld{Expectations of Function of R.V.}
+%
+\begin{itemize}
+\item Suppose $f(\theta)$ is a function of random variable vector
+  $\theta$
+\item Suppose the density of $\theta$ is $p(\theta)$
+\begin{subitemize}
+\item {\slshape Warning}: $\theta$ overloaded as random and bound variable
+\end{subitemize}
+\item Then $f(\theta)$ is also random variable, with expectation
+  \[
+  \mathbb{E}[f(\theta)] = \int_{\Theta} f(\theta) \ p(\theta) \ d\theta.
+  \]
+\begin{subitemize}
+\item
+where $\Theta$ is support of $p(\theta)$ (i.e., $\Theta =
+\setcomp{\theta \, | \, p(\theta) > 0}$
+\end{subitemize}
+\end{itemize}
+
+
+\sld{QoI as Expectations}
+%
+\begin{itemize}
+\item Most Bayesian quantities of interest (QoI) are expectations
+  over the posterior $p(\theta \, | \, y)$ of functions $f(\theta)$
+\item \myemph{Bayesian parameter estimation}: $\hat{\theta}$
+\begin{subitemize}
+\item $f(\theta) = \theta$
+\item $\hat{\theta} = \mathbb{E}[\theta | y]$ minimizes expected
+  square error
+\end{subitemize}
+\item \myemph{Bayesian parameter (co)variance estimation}:
+  $\mathrm{var}[\theta \, | \, y]$
+\begin{subitemize}
+\item $f(\theta) = (\theta - \hat{\theta})^2$
+\end{subitemize}
+\item \myemph{Bayesian event probability}:  $\mbox{Pr}[A \, | \, y]$
+\begin{subitemize}
+  \item $f(\theta) = \mathrm{I}(\theta \in A)$
+\end{subitemize}
+\end{itemize}
+
+
+\sld{Expectations via Monte Carlo}
+%
+\begin{itemize}
+\item Generate draws $\theta^{(1)}, \theta^{(2)}, \ldots,
+  \theta^{(M)}$ drawn from $p(\theta)$
+\item Monte Carlo Estimator \myemph{plugs in average} for expectation:
+  \[
+  \mathbb{E}[f(\theta)|y] \approx \frac{1}{M} \sum_{m=1}^M f(\theta^{(m)})
+  \]
+\item Can be made \myemph{as accurate as desired}, because
+\[
+\mathbb{E}[f(\theta)] 
+= 
+\lim_{M \rightarrow \infty} \
+\frac{1}{M} \sum_{m=1}^M f(\theta^{(m)})
+\]
+\vfill
+\item {\slshape Reminder}:  By CLT, error goes down as
+$1 \, / \, \sqrt{M}$
+\end{itemize}
+
+
 \sld{Monte Carlo for Expectations}
+%
 \begin{itemize}
 \item Most quantities of interest are expectations
 \item Suppose $f(\theta)$ is a function of random variable vector $\theta$
@@ -471,7 +543,7 @@ where $\Theta$ is support of $p(\theta)$ (i.e., $\Theta =
 \end{itemize}
 
 
-\mypart{Part V}{Markov Chain \\[8pt]\spc{}Monte Carlo}
+\mypart{}{Markov Chain \\[8pt]\spc{}Monte Carlo}
 
 
 \sld{Markov Chain Monte Carlo}
@@ -482,10 +554,11 @@ where $\Theta$ is support of $p(\theta)$ (i.e., $\Theta =
 \theta^{(1)}, \ldots, \theta^{(M)}
 \]
 according to a probability function $p(\theta)$
-\item Drawing i.i.d. samples is often impossible when
-  dealing with complex densities like Bayesian posteriors $p(\theta|y)$
-\item So we use Markov chain Monte Carlo (MCMC) in these cases and
+\item Drawing i.i.d. samples typically impossible for
+  complex densities like Bayesian posteriors $p(\theta|y)$
+\item Instead, use Markov chain Monte Carlo (MCMC) to
   draw $\theta^{(1)}, \ldots, \theta^{(M)}$ from a Markov chain
+  with appropriate stationary distribution $p(\theta | y)$.
 \end{itemize}
 
 
@@ -508,6 +581,14 @@ p(\theta^{(m)} | y, \theta^{(m-1)})
 \item Require marginal of each draw, $p(\theta^{(m)}|y)$,
   to be equal to true posterior
 \item Otherwise, apply just like ordinary (non-Markov chain) Monte Carlo methods
+\end{itemize}
+
+
+\sld{Applying MCMC}
+%
+\begin{itemize}
+\item Plug in just like ordinary (non-Markov chain) Monte Carlo
+\item Adjust standard errors for dependence in Markov chain
 \end{itemize}
 
 
@@ -575,6 +656,31 @@ p(\theta^{(m)} | y, \theta^{(m-1)})
 \]
 \item Again, can be made as accurate as necessary
 \end{itemize}
+
+
+\sld{MCMC for Quantiles (incl.\ median)}
+%
+\begin{itemize}
+\item These are not expectations, but still plug in
+\item Alternative Bayesian estimator is posterior median
+\begin{subitemize}
+\item Posterior median minimizes expected absolute error
+\end{subitemize}
+\item Estimate as median draw of $\theta^{(1)}, \ldots,
+  \theta^{(M)}$
+\begin{subitemize}
+\item just sort and take halfway value
+\item e.g., Stan shows 50\% point (or other quantiles)
+\end{subitemize}
+\item Other quantiles including interval bounds similar
+\begin{subitemize}
+\item estimate with quantile of draws
+\item estimation error goes up in tail (based on fewer draws)
+\end{subitemize}
+\end{itemize}
+
+
+\mypart{}{MCMC Algorithms}
 
 
 \sld{Random-Walk Metropolis}
@@ -658,6 +764,28 @@ where $J$ is the (potentially asymmetric) proposal density
 \end{itemize}
 
 
+\sld{Detailed Balance \& Reversibility}
+%
+\begin{itemize}
+\item Definition is measure theoretic, but applies to densities
+\begin{subitemize}
+\item just like Bayes's rule
+\end{subitemize}
+\item Assume Markov chain has stationary density $p(a)$
+\item Suppose $\pi(a | b)$ is density of
+  transitioning from $b$ to $a$
+\begin{subitemize}
+\item use of $\pi$ to indicates different measure on $\Theta$ than $p$
+\end{subitemize}
+\item Detailed balance is a reversibility equilibrium condition
+\[
+p(a) \,\pi(b | a)
+\ = \
+p(b) \, \pi(a | b)
+\]
+\end{itemize}
+
+
 \sld{Optimal Proposal Scale?}
 %
 \begin{itemize}
@@ -706,11 +834,21 @@ $\hat{R} \rightarrow 1$
 \item $\hat{R} \approx 1$ \myemph{does not guarantee convergence}
 \item Only measures marginals
 \end{subitemize}
+\end{itemize}
+
+
+\sld{Split $\hat{R}$}
+\begin{itemize}
+\item Vanilla $\hat{R}$ may not diagnose non-stationarity
+\begin{subitemize}
+\item e.g., a sequence of chains with an increasing parameter
+\end{subitemize}
 \item \myemph{Split $\hat{R}$}: \ Stan splits each chain into first and
   second half
 \begin{subitemize}
-\item creates $2M$ chains of $N/2$ draws
-\item splitting diagnoses non-stationarity
+\item start with $M$ Markov chains of $N$ draws each
+\item split each in half to creates $2M$ chains of $N/2$ draws
+\item then apply $\hat{R}$ to the $2M$ chains
 \end{subitemize}
 \end{itemize}
 
@@ -951,7 +1089,7 @@ complex posteriors (i.e., high curvature and correlation)
 
 
 
-\mypart{Prerequisite}{Bayesian Inference}
+\mypart{}{Bayesian Inference}
 
 
 \sld{Bayesian Data Analysis}
@@ -1284,7 +1422,7 @@ generated quantities {
 \end{itemize}
 
 
-\mypart{Interlude}{Conjugate Priors}
+\mypart{}{Conjugate Priors}
 
 
 \sld{Conjugate Priors}
@@ -1356,7 +1494,7 @@ $\distro{Beta}(y_1 + \cdots + y_K, \ \ N_1 + \cdots + N_K)$
 \end{itemize}
 
 
-\mypart{Example}{Repeated Binary Trials}
+\mypart{}{Repeated Binary Trials}
 
 
 \sld{Repeated Binary Trial Model}
@@ -1657,7 +1795,7 @@ plot;
 \end{itemize}
 
 
-\mypart{Example I}{Male Birth Ratio}
+\mypart{}{Male Birth Ratio}
 
 
 \sld{Birth Rate by Sex}
@@ -1930,7 +2068,7 @@ function (cdf).
 \end{itemize}
 
 
-\mypart{Example}{Fisher "Exact" Test}
+\mypart{}{Fisher "Exact" Test}
 
 
 \sld{Bayesian ``Fisher Exact Test''}
@@ -2018,7 +2156,7 @@ $\mathrm{Pr}\left[
 \end{itemize}
 
 
-\mypart{Example}{More Stan Models}
+\mypart{}{More Stan Models}
 
 
 \sld{Posterior Predictive Distribution}
@@ -2437,7 +2575,7 @@ model {
 
 
 
-\mypart{Example}{Hierarchical Models}
+\mypart{}{Hierarchical Models}
 
 
 \sld{Baseball At-Bats}
@@ -2883,7 +3021,7 @@ generated quantities {
 
 
 
-\mypart{Prerequisite}{Maximum Likelihood \\[8pt]\spc Estimation}
+\mypart{}{Maximum Likelihood \\[8pt]\spc Estimation}
 
 
 \sld{Observations, Counterfactuals,\\[6pt] \spc{}and Random Variables}
@@ -2998,7 +3136,7 @@ p(y_n|\theta) = \distro{Bernoulli}(y_n|\theta)
 \end{itemize}
 
 
-\mypart{Part II}{(Un-)Bayesian \\[8pt]\spc{}Point Estimation}
+\mypart{}{(Un-)Bayesian \\[8pt]\spc{}Point Estimation}
 
 
 \sld{MAP Estimator}
@@ -3132,7 +3270,7 @@ in the long run using full Bayes (de Finetti)
 \end{itemize}
 
 
-\mypart{Part III}{Philosophical Interlude}
+\mypart{}{Philosophy of Probability}
 
 
 \sld{Exchangeability}
@@ -3213,7 +3351,7 @@ and state of residence
 \end{itemize}
 
 
-\mypart{Overview}{What is Stan?}
+\mypart{}{What is Stan?}
 
 
 \sld{What is Stan?}
@@ -3399,7 +3537,7 @@ and \myemph{most easily extensible} (simple OO)
 
 
 
-\mypart{Overview}{Stan Language}
+\mypart{}{Stan Language}
 
 
 \sld{Stan is a Programming Language}
@@ -4032,7 +4170,7 @@ y ~ normal(mu_y, sigma);
 
 
 
-\mypart{Part II}{What Stan Does}
+\mypart{}{What Stan Does}
 
 
 \sld{Full Bayes: No-U-Turn Sampler}
@@ -4140,7 +4278,423 @@ y ~ normal(mu_y, sigma);
 \end{itemize}
 
 
-\mypart{Diving Deeper}{Stan's Autodiff}
+
+\mypart{}{Under Stan's Hood}
+
+
+\sld{Euclidean Hamiltonian Monte Carlo}
+%
+\begin{itemize}
+\item \myemph{Phase space}: $q$ position (parameters); \ $p$ momentum
+\item \myemph{Posterior density}: $\pi(q)$
+\item \myemph{Mass matrix}: $M$
+\item \myemph{Potential energy}: $V(q) = -\log \pi(q)$
+\item \myemph{Kinetic energy}: $T(p) = \frac{1}{2} p^{\top} M^{-1} p$
+\item \myemph{Hamiltonian}:  $H(p,q) = V(q) + T(p)$
+\item \myemph{Diff eqs}:
+  \[
+  \frac{dq}{dt} \ = \  + \frac{\partial H}{\partial p}
+  \hspace*{48pt}
+  \frac{dp}{dt} \ = \ - \frac{\partial H}{\partial q}
+  \]
+\end{itemize}
+
+
+\sld{Leapfrog Integrator Steps}
+%
+\begin{itemize}
+\item Solves Hamilton's equations by \myemph{simulating dynamics}
+  \\
+  {\footnotesize (symplectic [volume preserving]; $\epsilon^3$ error per step, $\epsilon^2$ total error)}
+\item Given: \myemph{step size} $\epsilon$, \myemph{mass matrix} $M$, \myemph{parameters} $q$
+\item \myemph{Initialize kinetic} energy, $p \sim {\sf
+    Normal}(0,\mbox{\bf I})$
+\item \myemph{Repeat} for $L$ leapfrog steps:
+  \begin{eqnarray*}
+    p & \leftarrow &
+    p - \frac{\epsilon}{2} \, \frac{\partial V(q)}{\partial q}
+    \ \ \ \ \ \ \mbox{[half step in momentum]}
+    \\[6pt]
+    q & \leftarrow &
+    q + \epsilon \, M^{-1} \, p
+    \ \ \ \ \ \ \ \  \mbox{[full step in position]}
+    \\[6pt]
+    p & \leftarrow &
+    p - \frac{\epsilon}{2} \, \frac{\partial V(q)}{\partial q}
+    \ \ \ \ \ \ \mbox{[half step in momentum]}
+  \end{eqnarray*}
+\end{itemize}
+
+
+\sld{Reverse-Mode Auto Diff}
+%
+\begin{itemize}
+\item Eval gradient in (usually small) multiple of function eval time
+\begin{subitemize}
+\item independent of dimensionality
+\item time proportional to number of expressions evaluated
+\end{subitemize}
+%
+\item Result accurate to machine precision (cf. finite diffs)
+\item Function evaluation builds up \myemph{expression tree}
+\item Dynamic program propagates \myemph{chain rule} in reverse pass
+\item Reverse mode computes $\nabla g$ in one
+  pass for a function $f : \mathbb{R}^N \rightarrow \mathbb{R}$
+\end{itemize}
+
+
+\sld{Autodiff Expression Graph}
+%
+\\
+\hspace*{6pt}
+\begin{minipage}{0.56\textwidth}
+\includegraphics[width=\textwidth]{img/agrad-expression-graph.pdf}
+\end{minipage}
+\hspace*{-24pt}
+\begin{minipage}{0.44\textwidth}
+%
+\footnotesize
+\[
+\begin{array}{l}
+f(y, \mu, \sigma) 
+\\[4pt]
+\mbox{ } \ = \ \log \left( \distro{Normal}(y|\mu,\sigma) \right)
+\\[4pt]
+\mbox{ } \ = \ -\frac{1}{2} \left( \frac{y - \mu}{\sigma} \right)^2
+    - \log \sigma
+    - \frac{1}{2} \log (2 \pi)
+\end{array}
+\]
+\\
+%
+\[
+\begin{array}{l}
+\mbox{ } \hspace*{24pt}
+\frac{\partial}{\partial y} f(y,\mu,\sigma)
+\\[2pt]
+\mbox{ } \hspace*{48pt} = \  -(y - \mu) \sigma^{-2}
+\\[8pt]
+\mbox{ } \hspace*{24pt} \frac{\partial}{\partial \mu} f(y,\mu,\sigma)
+\\[2pt]
+\mbox{ } \hspace*{48pt} = \ (y - \mu) \sigma^{-2}
+\\[8pt]
+\mbox{ } \hspace*{24pt} \frac{\partial}{\partial \sigma} f(y,\mu,\sigma)
+\\[2pt]
+\mbox{ } \hspace*{48pt} = \ (y - \mu)^2 \sigma^{-3} - \sigma^{-1}
+\end{array}
+\]
+\end{minipage}
+
+
+\sld{Autodiff Partials}
+%
+\begin{center}\footnotesize
+\begin{tabular}{c||c|cc}
+{\it var} & {\it value} & \multicolumn{2}{|c}{\it partials}
+\\ \hline \hline
+$v_1$ & $y$ 
+\\[2pt]
+$v_2$ & $\mu$
+\\[2pt]
+$v_3$ & $\sigma$
+\\[2pt]
+$v_4$ & $v_1 - v_2$ & $\partial v_4 / \partial v_1 = 1$ 
+                   & $\partial v_4 / \partial v_2 = -1$
+\\[4pt]
+$v_5$ & $v_4 / v_3$ & $\partial v_5 / \partial v_4 = 1/v_3$
+                    & $\partial v_5 / \partial v_3 = -v_4 v_3^{-2}$
+\\[4pt]
+$v_6$ & $\left(v_5\right)^2$
+      & \multicolumn{2}{c}{$\partial v_6 / \partial v_5 = 2 v_5$}
+\\[4pt]
+$v_7$ & $(-0.5) v_6$ & \multicolumn{2}{c}{$\partial v_7 / \partial v_6
+                                          = -0.5$}
+\\[4pt]
+$v_8$ & $\log v_3$ & \multicolumn{2}{c}{$\partial v_8 / \partial v_3 = 1/v_3$}
+\\[4pt]
+$v_9$ & $v_7 - v_8$ & $\partial v_9 / \partial v_7 = 1$
+                    & $\partial v_9 / \partial v_8 = -1$
+\\[4pt]
+$v_{10}$ & $v_9 - (0.5 \log 2\pi)$ 
+         & \multicolumn{2}{c}{$\partial v_{10} / \partial v_9 = 1$}
+\end{tabular}
+\end{center}
+
+\sld{Autodiff: Reverse Pass}
+%
+{\small
+\[
+\begin{array}{rcl|l}
+{\it var} & {\it operation} & {\it adjoint} & {\it result}
+\\ \hline \hline
+a_{1:9} & = & 0 & a_{1:9} = 0
+\\
+a_{10} & = & 1 & a_{10} = 1
+\\ \hline
+a_{9} & {+}{=} & a_{10} \times (1) & a_9 = 1
+\\
+a_{7} & {+}{=} & a_9 \times (1) & a_7 = 1
+\\
+a_{8} & {+}{=} & a_9 \times (-1) & a_8 = -1
+\\
+a_{3} & {+}{=} & a_8 \times (1 / v_3) & a_3 = -1 / v_3
+\\
+a_{6} & {+}{=} & a_7 \times (-0.5) & a_6 = -0.5
+\\
+a_{5} & {+}{=} & a_6 \times (2 v_5) & a_5 = -v_5
+\\
+a_{4} & {+}{=} & a_5 \times (1 / v_3) & a_4 = -v_5 / v_3
+\\
+a_{3} & {+}{=} & a_5 \times (-v_4 v_3^{-2}) & a_3 = -1 / v_3 + v_5 v_4 v_3^{-2}
+\\
+a_{1} & {+}{=} & a_4 \times (1) & a_1 = -v_5 / v_3
+\\
+a_{2} & {+}{=} & a_4 \times (-1) & a_2 = v_5 / v_3
+\end{array}
+\]
+}
+
+
+\sld{Stan's Reverse-Mode}
+%
+\begin{itemize}
+\item Easily extensible \myemph{object-oriented} design
+%
+\item \myemph{Code nodes} in expression graph for primitive functions
+\begin{subitemize}
+\item requires \myemph{partial derivatives}
+\item built-in flexible abstract base classes
+\item \myemph{lazy evaluation} of chain rule saves memory
+\end{subitemize}
+%
+\item Autodiff through templated C++ functions
+\begin{subitemize}
+\item templating on each argument avoids excess promotion
+\end{subitemize}
+%
+\end{itemize}
+
+
+\sld{Stan's Reverse-Mode (cont.)}
+%
+\begin{itemize}
+\item Arena-based \myemph{memory management}
+\begin{subitemize}
+\item specialized C++ \code{operator~new} for reverse-mode variables
+\item custom functions inherit memory management through base
+\end{subitemize}
+\item Nested application to support ODE solver
+\end{itemize}
+
+
+\sld{Stan's Autodiff vs.\ Alternatives}
+%
+\vspace*{-4pt}
+\begin{itemize}
+\item Stan is \myemph{fastest} (and uses least memory)
+\begin{subitemize}
+\item among open-source C++ alternatives
+\end{subitemize}
+\end{itemize}
+\vspace*{-8pt}
+\hfill \hfill
+\includegraphics[width=0.48\textwidth]{img/autodiff-eval-matrix-product-eigen.pdf}
+\hfill
+\includegraphics[width=0.48\textwidth]{img/autodiff-eval-normal-density.pdf}
+\hfill \hfill
+
+
+\sld{Forward-Mode Auto Diff}
+%
+\begin{itemize}
+\item Evaluates expression graph forward from one independent variable
+to any number of dependent variables
+\item Function evaluation propagates \myemph{chain rule} forward
+\item In one pass, computes $\frac{\partial}{\partial x} f(x)$
+for a function $f : \mathbb{R} \rightarrow \mathbb{R}^N$ 
+\begin{subitemize}
+\item derivative of $N$ outputs with respect to a single input
+\end{subitemize}
+\end{itemize}
+
+
+\sld{Stan's Forward Mode}
+%
+\begin{itemize}
+\item Templated scalar type for value and tangent
+\begin{subitemize}
+\item allows higher-order derivatives
+\end{subitemize}
+\item Primitive functions propagate derivatives
+\item No need to build expression graph in memory
+\begin{subitemize}
+\item much less memory intensive than reverse mode
+\end{subitemize}
+\item Autodiff through templated functions (as reverse mode)
+\end{itemize}
+
+\sld{Second-Order Derivatives}
+%
+\begin{itemize}
+\item Compute Hessian (matrix of second-order partials)  
+\[
+H_{i,j} = \frac{\partial^2}{\partial x_i \partial x_j} f(x)
+\]
+\item Required for Laplace covariance approximation (MLE)
+\item Required for curvature (Riemannian HMC)
+\item Nest reverse-mode in forward for \myemph{second order} 
+\item $N$ forward passes: takes gradient of derivative
+\end{itemize}
+
+
+\sld{Third-Order Derivatives}
+%
+\begin{itemize}
+\item Required for Riemannian HMC
+\item Graadients of Hessians (tensor of third-order partials)
+\[
+\frac{\partial^3}{\partial x_i \partial x_j \partial x_k} f(x)
+\]
+\vspace*{-12pt}
+\begin{subitemize}
+\item $N^2$ forward passes: gradient of derivative of derivative
+\end{subitemize}
+\end{itemize}
+
+
+\sld{Third-order Derivatives (cont.)}
+%
+\begin{itemize}
+\item Gradient of trace of Hessian times matrix
+\begin{subitemize}
+\item $\nabla \mathrm{tr}(H \, M)$, or
+\item needed for Riemannian Hamiltonian Monte Carlo
+\item computable in quadratic time for fixed $M$
+\end{subitemize}
+\end{itemize}
+
+
+\sld{Jacobians}
+%
+\begin{itemize}
+\item Assume function $f:\mathbb{R}^N \rightarrow \mathbb{R}^M$
+\item Partials for multivariate function (matrix of first-order partials)
+\[
+J_{i,j} = \frac{\partial}{\partial x_i} f_j(x)
+\]
+\item Required for stiff ordinary differential equations
+\begin{subitemize}
+\item differentiate is coupled sensitivity autodiff for ODE system
+\end{subitemize}
+\item Two execution strategies
+{\small
+\begin{enumerate}
+  \item Multiple reverse passes for rows
+  \item Forward pass per column (required for stiff ODE)
+\end{enumerate}
+}
+%
+%\vfill
+%
+%\item Order of magnitude faster higher-order autodiff in progress
+%\begin{subitemize}
+%\item reuse single expression graph
+%\item build-in higher-order analytic gradients
+%\end{subitemize}
+\end{itemize}
+
+
+\sld{Autodiff Functionals}
+%
+\begin{itemize}
+\item Functionals map templated functors to derivatives 
+\begin{subitemize}
+\item fully encapsulates and hides all autodiff types
+\end{subitemize}
+\item Autodiff functionals supported
+  \begin{itemize}\small
+  \item gradients: $\bigoh{1}$
+  \item Jacobians: $\bigoh{N}$
+  \item gradient-vector product (i.e., directional derivative): $\bigoh{1}$
+  \item Hessian-vector product: $\bigoh{N}$
+  \item Hessian: $\bigoh{N}$
+  \item gradient of trace of matrix-Hessian product: $\bigoh{N^2}$
+    \\ {\footnotesize (for SoftAbs RHMC)}
+  \end{itemize}
+\end{itemize}
+
+
+\sld{Variable Transforms}
+%
+\begin{itemize}
+\item Code HMC and optimization with $\mathbb{R}^n$ \myemph{support}
+\item Transform constrained parameters to unconstrained
+  \vspace*{-2pt}
+  {\small
+    \begin{itemize}
+    \item lower (upper) bound: offset (negated) log transform
+    \item lower and upper bound: scaled, offset logit transform
+    \item simplex: centered, stick-breaking logit transform
+    \item ordered: free first element, log transform offsets
+    \item unit length: spherical coordinates
+    \item covariance matrix: Cholesky factor positive diagonal 
+    \item correlation matrix: rows unit length via quadratic stick-breaking
+    \end{itemize}
+  }
+\end{itemize}
+
+
+\sld{Variable Transforms (cont.)}
+%
+\begin{itemize}
+\item Inverse transform from unconstrained $\mathbb{R}^n$
+\item Evaluate log probability in model block on natural scale
+\item Optionally adjust log probability for change of variables
+\begin{subitemize}
+\item adjustment for MCMC and variational, not MLE
+\item add log determinant of inverse transform Jacobian
+\item automatically differentiable
+\end{subitemize}
+\end{itemize}
+
+\sld{Parsing and Compilation}
+%
+\begin{itemize}
+\item Stan code \myemph{parsed} to abstract syntax tree (AST)
+  \\ {\footnotesize (Boost Spirit Qi, recursive descent, lazy semantic
+    actions)}
+\item C++ model class \myemph{code generation} from AST
+  \\ {\footnotesize (Boost Variant)}
+\item C++ code \myemph{compilation}
+\item \myemph{Dynamic linking} for RStan, PyStan
+\end{itemize}
+
+
+\sld{Coding Probability Functions}
+%
+\begin{itemize}
+\item \myemph{Vectorized} to allow scalar or container arguments
+  \\ {\footnotesize (containers all same shape; scalars broadcast as necessary)}
+\item Avoid \myemph{repeated computations}, e.g. $\log \sigma$ in
+  \hspace*{-18pt}
+  {\small
+    \begin{eqnarray*}
+      \textstyle \log \, \mbox{\sf Normal}(y | \mu, \sigma)
+      & = & \textstyle \sum_{n=1}^N \log \, \mbox{\sf Normal}(y_n | \mu,\sigma)
+      \\[4pt]
+      & = & \textstyle \sum_{n=1}^N  - \log \sqrt{2\pi} \ - \log \sigma \ -
+      \frac{\textstyle y_n - \mu}{\textstyle 2\sigma^2}
+    \end{eqnarray*}
+  }
+\item recursive \myemph{expression templates} to broadcast and cache scalars,
+  generalize containers (arrays, matrices, vectors)
+\item \myemph{traits} metaprogram to \myemph{drop constants} (e.g., $-\log
+  \sqrt{2 \pi}$ or $\log \sigma$ if constant) 
+  and calculate intermediate and return types
+\end{itemize}
+
+
+\mypart{}{Stan's Autodiff}
 
 
 \sld{Stan's Reverse-Mode}
@@ -4221,83 +4775,6 @@ y ~ normal(mu_y, sigma);
 \end{itemize}
 
 
-\sld{Second-Order Derivatives}
-%
-\begin{itemize}
-\item Compute Hessian (matrix of second-order partials)  
-\[
-H_{i,j} = \frac{\partial^2}{\partial x_i \partial x_j} f(x)
-\]
-\item Required for Laplace covariance approximation (MLE)
-\item Required for curvature (Riemannian HMC)
-\item Nest reverse-mode in forward for \myemph{second order} 
-\item $N$ forward passes: takes gradient of derivative
-\end{itemize}
-
-
-\sld{Third-Order Derivatives}
-%
-\begin{itemize}
-\item Graadients of Hessians (tensor of third-order partials)
-\[
-\frac{\partial^3}{\partial x_i \partial x_j \partial x_k} f(x)
-\]
-\vspace*{-12pt}
-\begin{subitemize}
-\item $N^2$ forward passes: gradient of derivative of derivative
-\end{subitemize}
-\item Gradient of trace of Hessian times matrix
-\begin{subitemize}
-\item $\nabla \mathrm{tr}(H \, M)$
-\item needed for Riemannian Hamiltonian Monte Carlo
-\item Computable in quadratic time for fixed $M$
-\end{subitemize}
-\end{itemize}
-
-
-\sld{Jacobians}
-%
-\begin{itemize}
-\item Assume function $f:\mathbb{R}^N \rightarrow \mathbb{R}^M$
-\item Partials for multivariate function (matrix of first-order partials)
-\[
-J_{i,j} = \frac{\partial}{\partial x_i} f_j(x)
-\]
-\item Required for stiff ordinary differential equations
-\begin{subitemize}
-\item differentiate is coupled sensitivity autodiff for ODE system
-\end{subitemize}
-\item Two execution strategies
-{\small
-\begin{enumerate}
-  \item Multiple reverse passes for rows
-  \item Forward pass per column (required for stiff ODE)
-\end{enumerate}
-}
-\end{itemize}
-
-
-\sld{Autodiff Functionals}
-%
-\begin{itemize}
-\item Functionals map templated functors to derivatives 
-\begin{subitemize}
-\item fully encapsulates and hides all autodiff types
-\end{subitemize}
-\item Autodiff functionals supported: cost \myemph{relative to function}
-  \begin{itemize}\small
-  \item gradients: $\bigoh{1}$
-  \item Jacobians: $\bigoh{M}$
-  \item gradient-vector product (i.e., directional derivative): $\bigoh{1}$
-  \item Hessian-vector product: $\bigoh{1}$
-  \item Hessian: $\bigoh{N}$
-  \item gradient of trace of matrix-Hessian product: $\bigoh{N}$
-    \\ {\footnotesize (for SoftAbs RHMC)}
-  \item gradient of Hessian: $\bigoh{N^2}$
-  \end{itemize}
-\end{itemize}
-
-
 \sld{Stan's Autodiff vs.\ Alternatives}
 %
 \vspace*{-4pt}
@@ -4339,30 +4816,6 @@ J_{i,j} = \frac{\partial}{\partial x_i} f_j(x)
 \hfill \hfill
 
 
-\sld{Coding Probability Functions}
-%
-\begin{itemize}
-\item \myemph{Vectorized} to allow scalar or container arguments
-  \\ {\footnotesize (containers all same shape; scalars broadcast as necessary)}
-\item Avoid \myemph{repeated computations}, e.g. $\log \sigma$ in
-  \hspace*{-18pt}
-  {\small
-    \begin{eqnarray*}
-      \textstyle \log \, \mbox{\sf Normal}(y | \mu, \sigma)
-      & = & \textstyle \sum_{n=1}^N \log \, \mbox{\sf Normal}(y_n | \mu,\sigma)
-      \\[4pt]
-      & = & \textstyle \sum_{n=1}^N  - \log \sqrt{2\pi} \ - \log \sigma \ -
-      \frac{\textstyle y_n - \mu}{\textstyle 2\sigma^2}
-    \end{eqnarray*}
-  }
-\item recursive \myemph{expression templates} to broadcast and cache scalars,
-  generalize containers (arrays, matrices, vectors)
-\item \myemph{traits} metaprogram to \myemph{drop constants} (e.g., $-\log
-  \sqrt{2 \pi}$ or $\log \sigma$ if constant) 
-  and calculate intermediate and return types
-\end{itemize}
-
-
 \sld{Stan's Density Calculations}
 %
 \begin{itemize}
@@ -4376,7 +4829,7 @@ J_{i,j} = \frac{\partial}{\partial x_i} f_j(x)
 \hfill \hfill
 
 
-\mypart{Deep Dive}{Autodiff Coding}
+\mypart{}{Autodiff Coding}
 
 
 \sld{Variable Ptr to Impl}
@@ -4890,7 +5343,44 @@ for the \myemph{unconstrained posterior}
 \end{itemize}
 
 
-\mypart{Challenges}{Modeling and Computing}
+\sld{``Black Box'' EP}
+%
+\begin{itemize}
+\item Fast, approximate inference (like VB)
+\begin{subitemize}
+\item VB and EP minimize divergence in opposite directions
+\item especially useful for Gaussian processes
+\end{subitemize}
+%
+\item Asynchronous, data-parallel \myemph{expectation propagation}
+  (EP)
+\item Cavity distributions control subsample variance
+%
+\vfill
+%
+\item Prototypte stage
+\item {\small collaborating with Seth Flaxman, Aki Vehtari, Pasi
+    Jyl\"anki, John Cunningham, Nicholas Chopin, Christian Robert}
+\end{itemize}
+
+\sld{The Cavity Distribution}
+%
+\vspace*{-6pt}
+\begin{center}
+\includegraphics[width=0.25\textwidth]{img/ep-cavity.pdf}
+\end{center}
+\vspace*{-8pt}
+\begin{subitemize}
+\item Two parameters, with data split into $y_1, \ldots, y_5$
+\item Contours of likelihood $p(y_k | \theta)$ for $k \in 1{:}5$
+\item $g_{-k}(\theta)$ is \myemph{cavity distribution} (current
+  approx. without $y_k$)
+\item Separately computing for $y_k$ reqs each partition to cover its area
+\item Combining likelihood with cavity \myemph{focuses on overlap}
+\end{subitemize}
+
+
+\mypart{}{Modeling and Computing\\[8pt]Challenges}
 
 
 \sld{Discrete Parameters}
