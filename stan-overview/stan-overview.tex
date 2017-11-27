@@ -681,7 +681,6 @@ pi_div_4 0.786   0.001
 \item predicted accuracy is 0.004 (four times standard error)
 \end{subitemize}
 \end{itemize}
-\end{document}
 
 \sld{Accuracy of Monte Carlo}
 %
@@ -2162,7 +2161,7 @@ which subset of $n$ has $y_n = 1$),
 \begin{itemize}
 \item{Data}
 \begin{subitemize}
-\item $y$: total number of male live births (241,945)
+\item $y$: total number of male live births (251,527)
 \item $N$ : total number of live births (493,472)
 \end{subitemize}
 \item Parameter
@@ -2307,16 +2306,16 @@ theta_gt_half       1.00  1.000  1.000
 \item Posterior is $\distro{Beta}(\theta \, | \, 1 + 241\,945, \ 1 + 251\,527)$
 \item Posterior mean:
 \[
-\frac{1 + 241\,945}
+\frac{1 + 251\,527}
      {1 + 241\,945 + 1 + 251\,527}
-\approx 0.490291{\bf3}
+\approx 0.5097087{\bf3}
 \]
 \item Maximum likelihood estimate same as posterior mode (because
   of uniform prior)
 \[
-\frac{241\,945}
+\frac{251\,527}
      {241\,945 + 251\,527}
-\approx 0.490291{\bf2}
+\approx 0.5097088{\bf2}
 \]
 \item As number of observations approaches $\infty$,
 \\
@@ -2956,7 +2955,7 @@ data {
 parameters {
   real<lower=0, upper=1> phi[N];
 }
-model {pp
+model {
   y ~ binomial(K, phi);  // now y[n] matches phi[n]
 }
 \end{stancode}
@@ -3001,7 +3000,7 @@ model {pp
 \\[4pt]
 \kappa & \sim & \distro{Pareto}(1.5)
 \\[4pt]
-\phi_n & \sim & \distro{Beta}(\kappa, \theta, \ \kappa \, (1 - \theta))
+\phi_n & \sim & \distro{Beta}(\kappa \, \theta, \ \kappa \, (1 - \theta))
 \\[4pt]
 y_n & \sim & \distro{Binomial}(K_n, \phi_n)
 \end{eqnarray*}
@@ -3030,7 +3029,7 @@ data {
 }
 parameters {
   real<lower=0, upper=1> theta;
-  real<lower=0> kappa;
+  real<lower=1> kappa;
   vector<lower=0, upper=1>[N] phi;
 }
 model {
@@ -3203,7 +3202,7 @@ generated quantities {
 \begin{stancode}
 data {
   int<lower=0> K_new[N];       // new trials
-  int<lower=0> y_new[N];       // new successes
+  int<lower=0> y_new[N];       // new outcomes
   ...
 generated quantities {
   int<lower=0> z[N];  // posterior prediction
