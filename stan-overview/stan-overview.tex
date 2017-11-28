@@ -47,6 +47,92 @@
 \includegraphics[width=0.45in]{img/new-logo.png}
 
 
+\mypart{}{The Curse of\\[8pt]{\spc}Dimensionality}
+
+\sld{The Curse}
+%
+\begin{itemize}
+\item In high dimensions, \myemph{everything is far away}
+\item Intuitions formed in low dimensions do not generalize to high
+  dimensions
+\item Sampling algorithms that work in low dimensions often \myemph{fail
+  in high dimensions}
+\end{itemize}
+
+\sld{Volume of Ball in Cube}
+%
+% need newline here
+
+\noindent
+\begin{minipage}[t]{0.58\textwidth}
+\vspace*{-1in}
+\begin{subitemize}
+\item If $x, y, z \sim \mathsf{Uniform}(-1, 1)$,
+\item then $\mbox{Pr}[(x,y,z) \in \mbox{unit ball}]$ \hfill
+\\ is unit ball's fraction of volume.
+\item Analytic calc is triple integral
+\item Monte Carlo solution:
+\begin{subsubitemize}
+\item simulate multiple $(x, y, z)$ uniformly in cube
+\item count proportion in ball, i.e., \\[4pt]
+$\sqrt{x^2 + y^2 + z^2} \leq 1$
+\item equivalent test: $x^2 + y^2 + z^2 \leq 1$
+\end{subsubitemize}
+\end{subitemize}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.3\textwidth}
+\includegraphics[width=\textwidth]{img/ball-in-cube.pdf}
+
+{\footnotesize\slshape 4000 simulations; those in unit ball shown in blue.}
+\end{minipage}
+
+% Key R for that plot:
+% X = runif(4000, -1, 1)
+% pcolor = rep("gray", 4000)
+% pcolor[X * X + Y * Y + Z * Z <= 1] = "blue"
+% scatterplot3d(X, Y, Z, pch=19, color=pcolor)
+
+\sld{Ball in Cube in Stan}
+%
+\begin{stancode}
+generated quantities {
+  int<lower = 0, upper = 1> in_ball;
+  {
+    real x = uniform_rng(-1, 1);
+    real y = uniform_rng(-1, 1);
+    real z = uniform_rng(-1, 1);
+    in_ball = (x^2 + y^2 + z^2 <= 1);
+  }
+}
+\end{stancode}
+\begin{subitemize}
+\item \code{in\_ball} is value of indicator function.
+\item indicator function implicit in comparison (\code{<=}).
+\item Posterior mean of \code{in\_ball} estimates
+$\mbox{Pr}[x^2 + y^2 + z^2 \leq 1]$.
+\end{subitemize}
+
+\sld{Ball in Cube in R}
+%
+\begin{itemize}
+\item To run in R, use \code{Fixed\_param} option.
+
+\begin{stancode}
+> fit <- stan("ball-in-cube.stan", algorithm="Fixed_param",
+              iter=10000)
+> print(fit, probs=c(), digits=3)
+
+        mean se_mean  sd n_eff Rhat
+in_ball 0.52   0.004 0.5 19780    1
+\end{stancode}
+\item 0.52 is our estimate of $\mbox{Pr}[x^2 + y^2 + z^2 \leq 1]$
+\item The standard error of 0.004 indicates the 95\% interval is
+  roughly $0.52 \pm 0.008$
+\end{itemize}
+
+\end{document}
+
 \sld{Stan's Namesake}
 %
 \begin{itemize}
@@ -179,6 +265,8 @@ limits at boundaries, e.g., {\small \code{multiply\_log()}}
 
 \sld{Repeated i.i.d. Trials}
 %
+% need space to allow noindent to function
+
 \noindent
 \begin{minipage}[t]{0.69\textwidth}
 \vspace*{-1.9in}
@@ -683,6 +771,12 @@ pi_div_4 0.786   0.001
 \item predicted accuracy is 0.004 (four times standard error)
 \end{subitemize}
 \end{itemize}
+
+
+
+
+
+
 
 \sld{Accuracy of Monte Carlo}
 %
