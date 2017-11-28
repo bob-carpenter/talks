@@ -687,8 +687,8 @@ pi_div_4 0.786   0.001
 \sld{Accuracy of Monte Carlo}
 %
 \begin{itemize}
-\item Monte Carlo Integration is \emph{not} an approximation algorithm!
-\item It can be made exact to within any $\epsilon$
+\item Monte Carlo Integration computes the exact posterior to within any $\epsilon$
+(\emph{not} like variational Bayes which yields an approximation of the posterior)
 \item Monte Carlo draws are i.i.d. by definition
 \item Central limit theorem: expected error decreases at rate of
 {\Large
