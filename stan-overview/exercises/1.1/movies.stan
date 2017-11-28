@@ -1,13 +1,16 @@
 data {
-  int<lower=1> numMovies;
-  vector<lower=0, upper=5>[numMovies] ratings;
+  int<lower=1> num_movies;
+  vector<lower=0, upper=5>[num_movies] ratings;
 
-  int<lower=1> numGenres;
-  matrix<lower=0, upper=1>[numMovies, numGenres] genres;
+  int<lower=1> num_genres;
+  matrix[num_movies, num_genres] genres;
+
+  int<lower=1> num_to_predict;
+  matrix[num_to_predict, num_genres] to_predict;
 }
 
 parameters {
-  vector[numGenres] genre_coeff;
+  vector[num_genres] genre_coeff;
   real base_rating;
   real<lower=0> rating_variability;
 }
@@ -15,7 +18,6 @@ parameters {
 model {
   // XXX explain genres * genre_coeff
   // XXX add year of movie?
-  // XXX
   ratings ~ normal(genres * genre_coeff + base_rating, rating_variability);
 
   // priors
@@ -26,17 +28,20 @@ model {
 
   // hierarchical
   // prune number of genres down to a reasonable number
-  Buser ~ multi_normal(u, E);
+  //Buser ~ multi_normal(u, E);
 }
 
 
 // ============================================================================
 generated quantities {
-  vector[numMovies] y_ppc;
-  for (i in 1:numMovies)
+  vector[num_movies] y_ppc;
+  vector[num_to_predict] y_pred;
+
+  for (i in 1:num_movies)
     y_ppc[i] = normal_rng(genres[i] * genre_coeff + base_rating, rating_variability);
 
-  // XXX Add predictions for the unseen movies.
+  for (i in 1:num_to_predict)
+    y_pred[i] = normal_rng(to_predict[i] * genre_coeff + base_rating, rating_variability);
 
   // XXX loo package, cross validation
 
