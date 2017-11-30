@@ -199,12 +199,113 @@ in_ball[10] 0.00       0 0.05 20000    1
 \end{stancode}
 
 \sld{Proportion Volume in Hyperball}
-
+%
+\\
 \spc
 \includegraphics[width=0.825\textwidth]{img/volume-hyperball.png}
 
 
+\mypart{}{Typical Sets}
+
+
+\sld{Typical Set}
+%
+\begin{itemize}
+\item Goal is to \myemph{evaluate posterior expectations using draws}
+\begin{eqnarray*}
+\mathbb{E}\left[ f(\theta) \mid y \right]
+& = & \int_{\Theta} \, f(\theta) \, p(\theta | y) \, \mathrm{d}\theta
+\\[4pt]
+& \approx & \frac{1}{M} \, \sum_{m=1}^M f(\theta^{(m)})
+\end{eqnarray*}
+\item A \myemph{typical set} $A_{\epsilon}$ (at some level) is the set
+\begin{subitemize}
+\item of values with typical log density (near distribution entropy)
+\item containing $1 - \epsilon$ of the probability mass
+\end{subitemize}
+\item A typical set $A_{\epsilon}$ \myemph{suffices for integration}
+\[
+\int_{\Theta} \, f(\theta) \, p(\theta | y) \, \mathrm{d}\theta
+\ = \
+\int_{A_{\epsilon}} \, f(\theta) \, p(\theta | y) \, \mathrm{d}\theta
+\]
+\end{itemize}
+
+\sld{Typical Draws from Multi-Normal}
+%
+\begin{itemize}
+\item Suppose $Y \in \mathbb{R}^N$ is drawn according to
+\[
+Y \sim \mathsf{MultiNormal}(0, \mathrm{I}_N)
+\]
+so
+\[
+p_Y(y) = \mathsf{MultiNormal}(y \mid 0, \mathrm{I}_N)
+\]
+\item Mean, median, and mode (max) of $p_Y(y)$ at $y = 0$
+\item How far do we expect $Y$ to be from the mode?
+\item What do we expect the log density $Y$'s value to be?
+\end{itemize}
+
+\sld{Multi-Normal Draws in Stan}
+%
+\vspace*{-4pt}
+\begin{stancode}
+generated quantities {
+  real dist_to_origin[256];
+  real log_lik[256];
+  real log_lik_mean[256];
+  {
+    real sq_dist = 0;  real ll = 0;  real llm = 0;
+    for (n in 1:256) {
+      real y = normal_rng(0, 1);
+      ll = ll + normal_lpdf(y | 0, 1);
+      llm = llm + normal_lpdf(0 | 0, 1);
+      sq_dist = sq_dist + y^2;
+      dist_to_origin[n] = sqrt(sq_dist);
+      log_lik[n] = ll;
+      log_lik_mean[n] = llm;
+    }
+  }
+}
+\end{stancode}
+
+
+\sld{Normal Variate Distance to Mode}
+%
+\\
+\spc
+\includegraphics[width=0.825\textwidth]{img/normal-curse-value.png}
+
+\sld{Normal Variate Log Density}
+%
+\\
+\spc
+\includegraphics[width=0.825\textwidth]{img/normal-curse-density.png}
+
+
+\sld{Normal Mode not in Typical Set}
+%
+\begin{itemize}
+\item Plots show that in a standard normal of \myemph{more than 5 dimensions},
+  that the \myemph{mode is not in the typical set}
+\item An \myemph{Asimov data set} uses an average member of a set
+  represent the whole set
+\begin{subitemize}
+\item based on Isaac Asimov's short story ``Franchise'' in
+  which a single average voter represented everyone
+\item the average member of a multiviate normal is the mean
+\item thus no members of the typical set are average in this sense
+\item popular in physics
+\item \myemph{very poor} solution for most inferential purposes
+\end{subitemize}
+\end{itemize}
+
+
 \end{document}
+
+
+
 
 \sld{Stan's Namesake}
 %
