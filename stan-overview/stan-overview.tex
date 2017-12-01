@@ -64,8 +64,8 @@
 % need newline here
 
 \noindent
-\begin{minipage}[t]{0.58\textwidth}
-\vspace*{-1in}
+\begin{minipage}[t]{0.59\textwidth}
+\vspace*{-1.7in}
 \begin{subitemize}
 \item If $x, y, z \sim \mathsf{Uniform}(-1, 1)$,
 \item then $\mbox{Pr}[(x,y,z) \in \mbox{unit ball}]$ \hfill
@@ -81,10 +81,11 @@ $\sqrt{x^2 + y^2 + z^2} \leq 1$
 \end{subitemize}
 \end{minipage}
 \hfill
-\begin{minipage}[t]{0.3\textwidth}
-\includegraphics[width=\textwidth]{img/ball-in-cube.pdf}
-
-{\footnotesize\slshape 4000 simulations; those in unit ball shown in blue.}
+\begin{minipage}[t]{0.4\textwidth}
+\includegraphics[width=1.2\textwidth]{img/ball-in-cube.pdf}
+\\[-12pt]
+{\footnotesize\slshape \hspace*{0.5in}4000 simulations;
+\\\hspace*{0.5in}blue inside unit ball.}
 \end{minipage}
 
 % Key R for that plot:
@@ -107,29 +108,199 @@ generated quantities {
 }
 \end{stancode}
 \begin{subitemize}
-\item \code{in\_ball} is value of indicator function.
-\item indicator function implicit in comparison (\code{<=}).
-\item Posterior mean of \code{in\_ball} estimates
-$\mbox{Pr}[x^2 + y^2 + z^2 \leq 1]$.
+\item \code{in\_ball} is value of indicator (implicit in \code{<=}).
+\item Posterior mean of \code{in\_ball} is fraction draws in ball.
+\item Posterior mean estimates $\mbox{Pr}[x^2 + y^2 + z^2 \leq 1]$.
 \end{subitemize}
 
-\sld{Ball in Cube in R}
+\sld{Ball in Cube in Stan from RStan}
 %
 \begin{itemize}
-\item To run in R, use \code{Fixed\_param} option.
+\item Use the \code{Fixed\_param} algorithm:
 
 \begin{stancode}
-> fit <- stan("ball-in-cube.stan", algorithm="Fixed_param",
+> fit <- stan("ball-in-cube.stan",
+               algorithm="Fixed_param",
               iter=10000)
+
 > print(fit, probs=c(), digits=3)
 
-        mean se_mean  sd n_eff Rhat
-in_ball 0.52   0.004 0.5 19780    1
+         mean se_mean    sd n_eff Rhat
+in_ball 0.528   0.004 0.499 19400    1
 \end{stancode}
-\item 0.52 is our estimate of $\mbox{Pr}[x^2 + y^2 + z^2 \leq 1]$
-\item The standard error of 0.004 indicates the 95\% interval is
-  roughly $0.52 \pm 0.008$
+\item Thus $\mbox{Pr}[X^2 + Y^2 + Z^2 \leq 1] \approx 0.53$
+\item with standard error of 0.004, yielding a 95\% interval of $\pm
+  0.008$, i.e., roughly (0.52, 0.54)
 \end{itemize}
+
+\sld{Hyperballs in Hypercubes}
+%
+\begin{itemize}
+\item \myemph{sample uniformly} from container (square, cube, ...)
+\item 2 dimensions $(x, y)$: compute $\mbox{Pr}[X^2 + Y^2 \leq 1]$
+  \begin{subitemize}
+  \item unit \myemph{disc} inscribed in square
+  \item calculate $\pi$ given known area of circle ($2 \pi$)
+  \end{subitemize}
+\item 3 dimensions $(x, y, z)$: compute $\mbox{Pr}[X^2 + Y^2 + Z^2 \leq 1]$
+  \begin{subitemize}
+  \item unit \myemph{ball} inscribed in cube
+  \end{subitemize}
+\item $N$-dimensions $(x_1, \ldots, x_N)$: compute $\mbox{Pr}[X_1^2 +
+  \cdots X_N^2 \leq 1]$
+  \begin{subitemize}
+  \item unit \myemph{hyperball} inscribed in hypercube
+  \end{subitemize}
+\item Code event probability as \myemph{expectation of indicator}
+\end{itemize}
+
+\sld{Hyperballs in Hypercubes in Stan}
+\vspace*{-8pt}
+\begin{stancode}
+generated quantities {
+  int<lower=0, upper=1> in_ball[10];
+  {
+    real len = 0;
+    for (n in 1:10) {
+      len = len + uniform_rng(-1, 1)^2;
+      in_ball[n] = (len <= 1);
+    }
+  }
+}
+\end{stancode}
+%
+\begin{subitemize}
+\item draw $x_1, \ldots, x_N$ is implicit in \code{uniform\_rng}
+\item \code{in\_ball[n]} is 1 iff $x_1^2 + \cdots + x_n^2 \leq 1$; \
+  coded as indicator \Verb|(len <= 1)|
+\item sum of squares accumulation reduces quadratic time to linear
+\end{subitemize}
+
+\sld{Hyperballs in Hypercubes in RStan}
+\begin{stancode}
+> fit <- stan("hyperballs.stan", algorithm="Fixed_param",
+              iter=1e4)
+
+> print(fit, probs=c())
+
+            mean se_mean   sd n_eff Rhat
+in_ball[1]  1.00       0 0.00 20000  NaN
+in_ball[2]  0.78       0 0.41 20000    1
+in_ball[3]  0.52       0 0.50 20000    1
+in_ball[4]  0.31       0 0.46 20000    1
+in_ball[5]  0.17       0 0.38 20000    1
+in_ball[6]  0.08       0 0.27 20000    1
+in_ball[7]  0.04       0 0.19 18460    1
+in_ball[8]  0.02       0 0.12 19370    1
+in_ball[9]  0.01       0 0.08 20000    1
+in_ball[10] 0.00       0 0.05 20000    1
+\end{stancode}
+
+\sld{Proportion Volume in Hyperball}
+%
+\\
+\spc
+\includegraphics[width=0.825\textwidth]{img/volume-hyperball.png}
+
+
+\mypart{}{Typical Sets}
+
+
+\sld{Typical Set}
+%
+\begin{itemize}
+\item Goal is to \myemph{evaluate posterior expectations using draws}
+\begin{eqnarray*}
+\mathbb{E}\left[ f(\theta) \mid y \right]
+& = & \int_{\Theta} \, f(\theta) \, p(\theta | y) \, \mathrm{d}\theta
+\\[4pt]
+& \approx & \frac{1}{M} \, \sum_{m=1}^M f(\theta^{(m)})
+\end{eqnarray*}
+\item A \myemph{typical set} $A_{\epsilon}$ (at some level) is the set
+\begin{subitemize}
+\item of values with typical log density (near distribution entropy)
+\item containing $1 - \epsilon$ of the probability mass
+\end{subitemize}
+\item A typical set $A_{\epsilon}$ \myemph{suffices for integration}
+\[
+\int_{\Theta} \, f(\theta) \, p(\theta | y) \, \mathrm{d}\theta
+\ = \
+\int_{A_{\epsilon}} \, f(\theta) \, p(\theta | y) \, \mathrm{d}\theta
+\]
+\end{itemize}
+
+\sld{Typical Draws from Multi-Normal}
+%
+\begin{itemize}
+\item Suppose $Y \in \mathbb{R}^N$ is drawn according to
+\[
+Y \sim \mathsf{MultiNormal}(0, \mathrm{I}_N)
+\]
+so
+\[
+p_Y(y) = \mathsf{MultiNormal}(y \mid 0, \mathrm{I}_N)
+\]
+\item Mean, median, and mode (max) of $p_Y(y)$ at $y = 0$
+\item How far do we expect $Y$ to be from the mode?
+\item What do we expect the log density $Y$'s value to be?
+\end{itemize}
+
+\sld{Multi-Normal Draws in Stan}
+%
+\vspace*{-4pt}
+\begin{stancode}
+generated quantities {
+  real dist_to_origin[256];
+  real log_lik[256];
+  real log_lik_mean[256];
+  {
+    real sq_dist = 0;  real ll = 0;  real llm = 0;
+    for (n in 1:256) {
+      real y = normal_rng(0, 1);
+      ll = ll + normal_lpdf(y | 0, 1);
+      llm = llm + normal_lpdf(0 | 0, 1);
+      sq_dist = sq_dist + y^2;
+      dist_to_origin[n] = sqrt(sq_dist);
+      log_lik[n] = ll;
+      log_lik_mean[n] = llm;
+    }
+  }
+}
+\end{stancode}
+
+
+\sld{Normal Variate Distance to Mode}
+%
+\\
+\spc
+\includegraphics[width=0.825\textwidth]{img/normal-curse-value.png}
+
+\sld{Normal Variate Log Density}
+%
+\\
+\spc
+\includegraphics[width=0.825\textwidth]{img/normal-curse-density.png}
+
+
+\sld{Normal Mode not in Typical Set}
+%
+\begin{itemize}
+\item Plots show that in a standard normal of \myemph{more than 5 dimensions},
+  that the \myemph{mode is not in the typical set}
+\item An \myemph{Asimov data set} uses an average member of a set
+  represent the whole set
+\begin{subitemize}
+\item based on Isaac Asimov's short story ``Franchise'' in
+  which a single average voter represented everyone
+\item the average member of a multiviate normal is the mean
+\item thus no members of the typical set are average in this sense
+\item popular in physics
+\item \myemph{very poor} solution for most inferential purposes
+\end{subitemize}
+\end{itemize}
+
+
+\end{document}
 
 
 \sld{Stan's Namesake}

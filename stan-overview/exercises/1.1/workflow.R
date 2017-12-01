@@ -1,30 +1,29 @@
 library(dplyr)
 library(tidyr)
 library(rstan)
+library(bayesplot)
 rstan_options(auto_write = TRUE)
 options(mc.cores = parallel::detectCores())
 
 
 #model = stan_model("movies.stan")
-genres = read.csv("movies.csv")
-ratings = read.csv("ratings.csv")
+genres = read.csv("movies.csv") %>% arrange(movieId) %>%
+  mutate(genre = strsplit(as.character(genres), "\\|")) %>% 
+  unnest(genre) %>% mutate(lol=1) %>% spread(genre, lol, fill=0) %>%
+  select(-genres, -title)
+ratings = read.csv("ratings.csv") %>% arrange(movieId)
 head(ratings)
-user = 547
-user_ratings = ratings %>% filter(userId == user) %>% arrange(movieId)
-rated_genres = genres %>% filter(movieId %in% user_ratings$movieId) %>% 
-  mutate(genre = strsplit(as.character(genres), "\\|")) %>% unnest(genre) %>% arrange(movieId) %>%
-  select(movieId, genre) %>% mutate(lol=1) %>% spread(genre, lol, fill=0) %>% select(-movieId)
+user = 253
+user_ratings = ratings %>% filter(userId == user)
+rated_movies = genres %>% filter(movieId %in% user_ratings$movieId) %>% select(-movieId)
 
+head(rated_movies)
 y = user_ratings$rating
 
-data = list(numMovies=nrow(user_ratings), numGenres=ncol(rated_genres), 
-            ratings=user_ratings$rating, genres = rated_genres)
-fit = sampling(stan_model("movies.stan"), data)
+fit = sampling(stan_model("movies.stan"),
+               list(num_movies=nrow(rated_movies), num_genres=ncol(rated_movies),
+                    ratings=user_ratings$rating, genres = rated_movies,
+                    num_to_predict=nrow(genres), to_predict = select(genres, -movieId)))
 samples = rstan::extract(fit)
 
-plot_ppc = function(index) {
-  hist(samples$y_ppc[,index], main=filter(genres, movieId == user_ratings[index,]$movieId)$title)
-  abline(v=y[index])
-}
-
-plot_ppc(4)
+ppc_dens_overlay(y, samples$y_ppc[1:100,])
