@@ -47,6 +47,290 @@
 \includegraphics[width=0.45in]{img/new-logo.png}
 
 
+
+\mypart{}{Predator-Prey Dyanmics}
+
+
+\sld{Lynxes and Hares}
+
+\begin{center}
+\includegraphics[height=1in]{img/lynx.jpg}
+\hspace*{0.25in}
+\includegraphics[height=1in]{img/hare.jpg}
+\end{center}
+\begin{itemize}
+\item \myemph{Snowshoe hare} (prey): herbivorous cousin of rabbits
+\item \myemph{Canadian lynx} (predator): feline eating primarily hares
+\end{itemize}
+\vfill
+{\tiny
+\mbox{ } \hfill
+Lynx image copyright 2009, Keith Williams, CC-BY 2.0.
+\\[-2pt]
+\mbox{ } \hfill
+Hare image copyright 2013 D. Gordon E. Robonson, CC-BY SA 2.0}
+
+
+\sld{Hudson Bay Co. Pelts, 1900--20}
+%
+\\[-4pt] \spc
+\includegraphics[width=0.85\textwidth]{img/hare-lynx-pelts-1.png}
+
+
+\sld{Pelts, Phase Space}
+%
+\\[-4pt] \spc
+\includegraphics[width=0.85\textwidth]{img/hare-lynx-pelts-2.png}
+
+
+\sld{Volterra's (1927) Model}
+%
+
+\begin{minipage}[t]{0.65\textwidth}
+\vspace*{-1in}
+\begin{subitemize}
+\item population: $u(t)$ \myemph{prey}, \ $v(t)$ \myemph{predator}
+%
+\begin{eqnarray*}
+\frac{\mathrm{d}}{\mathrm{d}t} u
+& = &  (\alpha - \beta v) u
+\\[6pt]
+\frac{\mathrm{d}}{\mathrm{d}t} v
+& = &  (-\gamma + \delta \, u) \, v
+\end{eqnarray*}
+%
+\begin{subsubitemize}
+\item $\alpha$: prey growth, intrinsic
+\item $\beta$: prey shrinkage due to predation
+\item $\gamma$: predator shrinkage, intrinsic
+\item $\delta$: predator growth from predation
+\end{subsubitemize}
+\vspace*{-8pt}
+\item \footnotesize dynamics lead to \myemph{oscillation} as observed
+\end{subitemize}
+\end{minipage}
+%
+\hfill
+%
+\begin{minipage}[t]{0.3\textwidth}
+\mbox{ }
+\vspace*{0.5in}
+\hfill \includegraphics[width=0.8\textwidth]{img/volterra-orbit.jpg}
+\end{minipage}
+\vfill
+\hfill
+{\tiny
+Volterra, V., 1927. {\slshape Variazioni
+e fluttuazioni del numero d'individui in specie animali
+conviventi}. C.~Ferrari.
+}
+
+\sld{\Large Lotka-Volterra in Stan (dynamics)}
+%
+\vspace*{-2pt}
+{\footnotesize
+\begin{stancode}
+  real[] dz_dt(real t,          // time (unused)
+               real[] z,        // system state
+               real[] theta,    // parameters
+               real[] x_r,      // real data (unused)
+               int[] x_i) {     // integer data (unused)
+    real u = z[1];              // extract state
+    real v = z[2];
+
+    real alpha = theta[1];
+    real beta = theta[2];
+    real gamma = theta[3];
+    real delta = theta[4];
+
+    real du_dt = (alpha - beta * v) * u;
+    real dv_dt = (-gamma + delta * u) * v;
+    return { du_dt, dv_dt };
+  }
+\end{stancode}
+}
+
+\sld{Data-Generating Model}
+%
+\vspace*{-2pt}
+\begin{itemize}
+\item \myemph{Known} variables are observed
+\begin{subitemize}
+\item  $y_{n,k}$: pelts for species $k$ at times $t_n$ for $n \in 0:N$
+\end{subitemize}
+\item \myemph{Unknown} variables must be inferred (\myemph{inverse problem})
+\begin{subitemize}
+\item initial state: $z^{\mathrm{init}}_k$: initial population for $k$
+\item subsequent states $z_{n,k}$: population $k$ at time $t_n$
+\item parameters $\alpha, \beta, \gamma, \delta, \sigma > 0$
+\end{subitemize}
+\item \myemph{Likelihood} assumes errors are proportional (not additive)
+\vspace*{-4pt}
+\[
+y_{n, k} \sim \mathsf{LogNormal}(\hat{z}_{n,k}, \sigma_k),
+\]
+\vspace*{-4pt}
+{\small where $\hat{z}_n$ is \myemph{solution} at $t_n$ to diff eqs for initial
+$z^{\mathrm{init}}$}
+\\[-3pt]
+\vfill
+{\small equivalently: \ $\log y_{n,k} = \log \hat{z}_{n,k} + \epsilon_{n,k}$, \ \ with
+$\epsilon_{n,k} \sim \mathsf{Normal}(0, \sigma_k)$}
+\end{itemize}
+
+\sld{L-V in Stan (data, parameters)}
+\begin{itemize}
+\item Variables for known constants, observed data
+{\footnotesize
+\begin{stancode}
+data {
+  int<lower = 0> N;         // num measurements
+  real ts[N];               // measurement times > 0
+  real y0[2];               // initial pelts
+  real<lower = 0> y[N, 2];  // subsequent pelts
+}
+\end{stancode}
+}
+\item Variables for unknown parameters
+{\footnotesize
+\begin{stancode}
+parameters {
+  real<lower = 0> theta[4];  // alpha, beta, gamma, delta
+  real<lower = 0> z0[2];     // initial population
+  real<lower = 0> sigma[2];  // scale of prediction error
+}
+\end{stancode}
+}
+\end{itemize}
+
+\sld{L-V in Stan (solution to ODE)}
+%
+\begin{itemize}
+\item Define variables for populations predicted by ode, given
+\begin{subitemize}
+\item system function (\code{dz\_dt}), initial populations (\code{z0})
+\item initial time (\code{0}), solution times (\code{ts})
+\item parameters (\code{theta}), data arrays (unused)
+\item tolerances (\code{1e-6}, \code{1-e5}), iterations (\code{1e3})
+\end{subitemize}
+\end{itemize}
+{\small
+\begin{stancode}
+transformed parameters {
+  real z[N, 2]
+    = integrate_ode_rk45(dz_dt, z0, 0, ts, theta,
+                         rep_array(0.0, 0), rep_array(0, 0),
+                         1e-6, 1e-5, 1e3);
+}
+\end{stancode}
+}
+
+
+\sld{\Large Lotka-Volterra Fit (vs. training data)}
+%
+\\
+\spc \hfill \includegraphics[width=0.8\textwidth]{img/lotka-volterra-predict.png}
+
+
+
+\end{document}
+
+
+\sld{StanCon 2018}
+%
+\begin{itemize}
+\item 10--12 January 2018
+\item Asilomar (Pacific Grove, CA --- 2 hrs south of SFO)
+\item Early registration still available
+\item Tutorials by Stan developers at all levels
+\item 6 keynotes from science and business
+\item Breakout ``unconference'' sessions
+\vfill
+\item \url{http://mc-stan.org/events/stancon2018/}
+\end{itemize}
+
+
+\mypart{Stan}{Who, What, and Why?}
+
+
+\sld{Who is Stan?}
+%
+\begin{itemize}
+\item Stan is named in honor of \myemph{Stanislaw Ulam} (1909--1984)
+\item Co-inventor of the \myemph{Monte Carlo method}
+\item[]
+\vspace*{4pt}
+  \includegraphics[width=0.25\textwidth]{img/ulam-fermiac.jpg}
+\\[2pt] \footnotesize Ulam holding the Fermiac, Enrico Fermi's physical Monte Carlo simulator
+  for random neutron diffusion; \hfill
+\\[4pt]
+{\tiny \mbox{ } \hfill image from G.~C.~Geisler (2000) Los Alamos report LA-UR-2532}
+\end{itemize}
+
+\sld{What is Stan?}
+%
+\begin{itemize}
+\item Stan is an \myemph{imperative probabilistic programming language}
+  \begin{subitemize}
+  \item  cf., BUGS: declarative; \ Church: functional; \ PyMC3: ?
+  \end{subitemize}
+\item Stan \myemph{program}: defines a probability model
+  \begin{subitemize}
+  \item declares data and (constrained) parameter variables
+  \item defines log posterior (or penalized likelihood)
+  \end{subitemize}
+\item Stan \myemph{inference}: fits model to data \& makes predictions
+  \begin{subitemize}
+  \item MCMC for full Bayesian inference
+  \item VB for approximate Bayesian inference
+  \item MLE for penalized maximum likelihood estimation
+  \end{subitemize}
+\end{itemize}
+
+
+\sld{Why Choose Stan?}
+%
+\begin{itemize}
+\item \myemph{Expressive}
+\begin{subitemize}
+\item Stan is a full imperative programming language
+\item continuously differentiable log densities
+\end{subitemize}
+\item \myemph{Robust}
+\begin{subitemize}
+\item usually works; signals when it doesn't
+\end{subitemize}
+\item \myemph{Efficient}
+\begin{subitemize}
+\item effective sample size / time (i.e., information)
+\item multi-core and GPU code complete on branches
+\end{subitemize}
+\item \myemph{Ongoing open source development}
+\item \myemph{Community support!}
+\end{itemize}
+
+
+\sld{Coming Attractions}
+%
+\begin{itemize}
+\item Distributed likelihoods: \myemph{multi-CPU} (MPI)
+\item Big matrix operations: \myemph{GPU} (OpenCL)
+\item Sparse matrix operations
+% \item Streaming data: \myemph{stochastic variational} inference
+\item Distributed data: asynchronous \myemph{expectation propagation}
+\item Approximations: parallel \myemph{max marginal mode}
+\item \myemph{Coursera} specialization
+\begin{subitemize}
+\item Gelman: Bayesian data analysis, Multilevel regression
+\item Carpenter: Monte Carlo methods, Stan
+\item Fall 2018
+\end{subitemize}
+\end{itemize}
+
+
+
+
+
 \mypart{}{The Curse of\\[8pt]{\spc}Dimensionality}
 
 \sld{The Curse}
@@ -64,19 +348,23 @@
 % need newline here
 
 \noindent
-\begin{minipage}[t]{0.59\textwidth}
+\begin{minipage}[t]{0.6\textwidth}
 \vspace*{-1.7in}
 \begin{subitemize}
-\item If $x, y, z \sim \mathsf{Uniform}(-1, 1)$,
-\item then $\mbox{Pr}[(x,y,z) \in \mbox{unit ball}]$ \hfill
+\item Assume $x, y, z \sim \mathsf{Uniform}(-1, 1)$,
+\item $\mbox{Pr}[(x,y,z) \in \mbox{unit ball}]$ \hfill
 \\ is unit ball's fraction of volume.
-\item Analytic calc is triple integral
+\item Analytic solution:
+\\[4pt]\hspace*{-1em}
+$\int_{-1}^1 \int_{-1}^1 \int_{-1}^1 \,
+\mathrm{I}[ x^2 + y^2 + z^2 \leq 1 ] \,
+\mathrm{d} x \, \mathrm{d} y \, \mathrm{d} z$
+
 \item Monte Carlo solution:
 \begin{subsubitemize}
 \item simulate multiple $(x, y, z)$ uniformly in cube
 \item count proportion in ball, i.e., \\[4pt]
-$\sqrt{x^2 + y^2 + z^2} \leq 1$
-\item equivalent test: $x^2 + y^2 + z^2 \leq 1$
+$x^2 + y^2 + z^2 \leq 1$
 \end{subsubitemize}
 \end{subitemize}
 \end{minipage}
@@ -203,6 +491,8 @@ in_ball[10] 0.00       0 0.05 20000    1
 \includegraphics[width=0.825\textwidth]{img/volume-hyperball.png}
 
 
+
+
 \mypart{}{Typical Sets}
 
 
@@ -300,22 +590,7 @@ generated quantities {
 \end{itemize}
 
 
-\end{document}
 
-
-\sld{Stan's Namesake}
-%
-\begin{itemize}
-\item \myemph{Stanislaw Ulam} (1909--1984)
-\item Co-inventor of the \myemph{Monte Carlo method}
-\item[]
-\vspace*{4pt}
-  \includegraphics[width=0.25\textwidth]{img/ulam-fermiac.jpg}
-\\[2pt] \footnotesize Ulam holding the Fermiac, Enrico Fermi's physical Monte Carlo simulator
-  for random neutron diffusion; \hfill
-\\[4pt]
-{\tiny \mbox{ } \hfill image from G.~C.~Geisler (2000) Los Alamos report LA-UR-2532}
-\end{itemize}
 
 
 \sld{Why Stan?}
@@ -706,8 +981,8 @@ var():  return sum_sq_err / (N - 1)
 \end{subitemize}
 \item Largest number less than one
 \begin{subitemize}
-\item single precision: $1 - 10^{-16}$
-\item double precision: $1 - 10^{-7.2}$
+\item single precision: $1 - 10^{-7.2}$
+\item double precision: $1 - 10^{-16}$
 \end{subitemize}
 \item Gap size \myemph{depends on scale}
 \end{itemize}
@@ -1634,6 +1909,37 @@ complex posteriors (i.e., high curvature and correlation)
 \mypart{}{Bayesian Inference}
 
 
+\sld{Probability is Epistemic}
+%
+\begin{itemize}
+\item \myemph{John Stuart Mill} ({\slshape Logic} 1882, Part III, Ch. 2):
+\begin{subitemize}
+\item ... the probability of an event is not a quality of the event itself, but a mere name for the degree of ground which we, or some one else, have for expecting it.
+\item Every event is \myemph{in itself certain}, not probable; if we knew all, we should either know positively that it will happen, or positively that it will not.
+\item ... its probability to us means the \myemph{degree of expectation of its occurrence}, which we are warranted in entertaining by our present evidence.
+\end{subitemize}
+\item Probabilities \myemph{quantify uncertainty}
+\item Statistical reasoning is \myemph{counterfactual}
+\end{itemize}
+
+\sld{Random Variables}
+%
+\begin{itemize}
+\item Random variables are the currency of probability theory
+\item Random variables typically take numbers as values
+\item Imagine a bin filled with balls represneting the way the world might be
+\item A ball records the value of every random variable
+\item Examples
+\begin{subitemize}
+\item the sum of the three best among a roll of four dice (d6)
+\item time before the next traffic accident on a given highway
+\item prevalence of a disease in a population
+\end{subitemize}
+\end{itemize}
+
+
+
+
 \sld{Bayesian Data Analysis}
 %
 \begin{itemize}
@@ -2169,7 +2475,6 @@ theta   0.41    0.00 0.10   0.28   0.55  1580    1
 
 
 \sld{RStan:  Full Bayes}
-%
 \begin{minipage}[t]{\textwidth}
 \footnotesize
 \begin{Verbatim}
@@ -2250,9 +2555,8 @@ Displays the full posterior {\slshape marginal} distribution $p(\theta \,
 \item max penalized likelihood (MLE)
 \end{subitemize}
 \end{itemize}
-\begin{center}
-\begin{minipage}[t]{0.8\textwidth}\small
-\begin{Verbatim}
+\vspace*{-6pt}
+\begin{stancode}
 > library(rstan);
 > N <- 5;
 > y <- c(0,1,1,0,0);
@@ -2263,12 +2567,11 @@ Displays the full posterior {\slshape marginal} distribution $p(\theta \,
 $par              $value  (log density)
 theta             [1] -3.4
   0.4
-\end{Verbatim}
-\begin{subitemize}
-\item Posterior: $\distro{Beta}(1+2, 1+3)$;  mode $0.40$; mean $0.43$
-\item Density: MLE w/o Jacobian;  MCMC with Jacobian
-\end{subitemize}
-\end{minipage}
+\ened{stancode}
+% \begin{subitemize}
+% \item Posterior: $\distro{Beta}(1+2, 1+3)$;  mode $0.40$; mean $0.43$
+% \item Density: MLE w/o Jacobian;  MCMC with Jacobian
+% \end{subitemize}
 \end{center}
 
 
@@ -2530,6 +2833,7 @@ p(\theta|y,N)
 
 
 \sld{Calculating Laplace's Answers}
+%
 \begin{stancode}
 transformed data {
   int male = 251527;
@@ -3895,21 +4199,20 @@ and state of residence
 
 \mypart{}{What is Stan?}
 
-
+% duplicate from top-level intro
 \sld{What is Stan?}
 %
 \begin{itemize}
 \item Stan is an \myemph{imperative} probabilistic programming language
-\vspace*{-12pt}
   \begin{subitemize}
-  \item  cf., BUGS: declarative; \ Church: functional; \ Figaro: object-oriented
+  \item  cf., BUGS: declarative; \ Church: functional
   \end{subitemize}
-\item Stan \myemph{program}
+\item Stan \myemph{program} defines a probability model
   \begin{subitemize}
   \item declares data and (constrained) parameter variables
   \item defines log posterior (or penalized likelihood)
   \end{subitemize}
-\item Stan \myemph{inference}
+\item Stan \myemph{inference} fits model \& makes predictions
   \begin{subitemize}
   \item MCMC for full Bayesian inference
   \item VB for approximate Bayesian inference
