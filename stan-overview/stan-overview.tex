@@ -227,184 +227,18 @@ e fluttuazioni del numero d'individui in specie animali
 conviventi}. C.~Ferrari.
 }
 
-\sld{\Large Lotka-Volterra in Stan (dynamics)}
-%
-\vspace*{-2pt}
-{\footnotesize
-\begin{stancode}
-  real[] dz_dt(real t,          // time (unused)
-               real[] z,        // system state
-               real[] theta,    // parameters
-               real[] x_r,      // real data (unused)
-               int[] x_i) {     // integer data (unused)
-    real u = z[1];              // extract state
-    real v = z[2];
-
-    real alpha = theta[1];
-    real beta = theta[2];
-    real gamma = theta[3];
-    real delta = theta[4];
-
-    real du_dt = (alpha - beta * v) * u;
-    real dv_dt = (-gamma + delta * u) * v;
-    return { du_dt, dv_dt };
-  }
-\end{stancode}
-}
-
-\sld{Data-Generating Model}
-%
-\vspace*{-2pt}
-\begin{itemize}
-\item \myemph{Known} variables are observed
-\begin{subitemize}
-\item  $y_{n,k}$: pelts for species $k$ at times $t_n$ for $n \in 0:N$
-\end{subitemize}
-\item \myemph{Unknown} variables must be inferred (\myemph{inverse problem})
-\begin{subitemize}
-\item initial state: $z^{\mathrm{init}}_k$: initial population for $k$
-\item subsequent states $z_{n,k}$: population $k$ at time $t_n$
-\item parameters $\alpha, \beta, \gamma, \delta, \sigma > 0$
-\end{subitemize}
-\item \myemph{Likelihood} assumes errors are proportional (not additive)
-\vspace*{-8pt}
-\[
-y_{n, k} \sim \mathsf{LogNormal}(\hat{z}_{n,k}, \sigma_k),
-\]
-\vspace*{-4pt}%
-{\small where $\hat{z}_n$ is \myemph{solution} at $t_n$ to L-V diff eqs for initial
-$z^{\mathrm{init}}$}
-\\[-3pt]
-\vfill
-{\small equivalently: \ $\log y_{n,k} = \log \hat{z}_{n,k} + \epsilon_{n,k}$, \ \ with
-$\epsilon_{n,k} \sim \mathsf{Normal}(0, \sigma_k)$}
-\end{itemize}
-
-
-\sld{L-V in Stan (solution to ODE)}
-%
-\begin{itemize}
-\item Define variables for populations predicted by ode, given
-\begin{subitemize}
-\item system function (\code{dz\_dt}), initial populations (\code{z0})
-\item initial time (\code{0.0}), solution times (\code{ts})
-\item parameters (\code{theta}), data arrays (unused: \code{rep\_array(...)})
-\item tolerances (\code{1e-6}, \code{1-e4}), max iterations (\code{1e3})
-\end{subitemize}
-\end{itemize}
-{\small
-\begin{stancode}
-transformed parameters {
-  real z[N, 2]
-    = integrate_ode_rk45(dz_dt, z0, 0.0, ts, theta,
-                         rep_array(0.0, 0), rep_array(0, 0),
-                         1e-6, 1e-4, 1e3);
-}
-\end{stancode}
-}
-
-\sld{L-V in Stan (data, parameters)}
-\begin{itemize}
-\item Variables for known constants, observed data
-{\footnotesize
-\begin{stancode}
-data {
-  int<lower = 0> N;         // num measurements
-  real ts[N];               // measurement times > 0
-  real y0[2];               // initial pelts
-  real<lower = 0> y[N, 2];  // subsequent pelts
-}
-\end{stancode}
-}
-\item Variables for unknown parameters
-{\footnotesize
-\begin{stancode}
-parameters {
-  real<lower = 0> theta[4];  // alpha, beta, gamma, delta
-  real<lower = 0> z0[2];     // initial population
-  real<lower = 0> sigma[2];  // scale of prediction error
-}
-\end{stancode}
-}
-\end{itemize}
-
-\sld{L-V in Stan (priors, likelihood)}
-%
-\\
-\spc
-\begin{stancode}
-model {
-  // priors
-  sigma ~ lognormal(0, 0.5);
-  theta[{1, 3}] ~ normal(1, 0.5);
-  theta[{2, 4}] ~ normal(0.05, 0.05);
-
-  z0[1] ~ lognormal(log(30), 5);
-  z0[2] ~ lognormal(log(5), 5);
-
-  // likelihood (lognormal)
-  for (k in 1:2) {
-    y0[k] ~ lognormal(log(z0[k]), sigma[k]);
-    y[ , k] ~ lognormal(log(z[, k]), sigma[k]);
-  }
-}
-\end{stancode}
-
-\sld{Lotka-Volterra Parameter Estimates}
-%
-\vspace*{-12pt}
-%
-{\small
-\begin{stancode}
-> print(fit, c("theta", "sigma"), probs=c(0.1, 0.5, 0.9))
-\end{stancode}
-\vspace*{-2pt}
-\begin{stancode}
-         mean se_mean    sd   10%   50%   90%  n_eff Rhat
-theta[1] 0.55       0  0.07  0.46  0.54  0.64   1168    1
-theta[2] 0.03       0  0.00  0.02  0.03  0.03   1305    1
-theta[3] 0.80       0  0.10  0.68  0.80  0.94   1117    1
-theta[4] 0.02       0  0.00  0.02  0.02  0.03   1230    1
-sigma[1] 0.29       0  0.05  0.23  0.28  0.36   2673    1
-sigma[2] 0.29       0  0.06  0.23  0.29  0.37   2821    1
-\end{stancode}
-}
-\vspace*{4pt}
-\begin{subitemize}
-\item \code{Rhat} near 1 signals convergence;
- \code{n\_eff} is effective sample size
-\vspace*{-3pt}
-\item 10\%, ... posterior quantiles; \ e.g., $\mbox{Pr}[\alpha \in
-  (0.46, 0.64) \mid y] = 0.8$
-\vspace*{-3pt}
-\item posterior mean is Bayesian point estimate: $\hat{\alpha} =
-  \theta_1 = 0.55$
-% \item posterior median (50\%) is alternative point estimate: $0.54$
-\vspace*{-3pt}
-\item standard error in posterior mean estimate is 0 (with rounding)
-\vspace*{-3pt}
-\item posterior standard deviation of $\alpha$ estimated as 0.07
-\end{subitemize}
-
-\sld{\Large Lotka-Volterra Posterior Predictions}
-%
-\\[4pt]
-\spc \ \ \ \includegraphics[width=0.8\textwidth]{img/lotka-volterra-predict.pdf}
-\vspace*{-4pt}
-\begin{subsubitemize}
-\item training data (1900-1920); \ future predictions (1921+)
-\end{subsubitemize}
-
-
-
 \mypart{}{The Curse of\\[8pt]{\spc}Dimensionality}
 
 \sld{The Curse}
 %
 \begin{itemize}
+\item Intuitions formed in low dimensions break down \myemph{do not
+    generalize}
 \item In high dimensions, \myemph{everything is far away}
-\item Intuitions formed in low dimensions do not generalize to high
-  dimensions
+\begin{subitemize}
+\item random draws are far away from each other
+\item random draws are far away from the mode or meaan
+\end{subitemize}
 \item Sampling algorithms that work in low dimensions often \myemph{fail
   in high dimensions}
 \end{itemize}
@@ -651,69 +485,18 @@ $\binom{100}{80} \ = \ \frac{100!}{80! \ \times \ 20!} \ > \ 10^{20}$
 \]
 \end{itemize}
 
-\mypart{}{Concentration\\[8pt]\spc of Measure}
-
-\sld{Concentration of Measure}
-\begin{itemize}
-\item We care about probability \myemph{mass}, not \myemph{density}
-\item Events with non-zero probability have probability mass, e.g.,
-  $\mbox{Pr}[\theta_0 > \theta_1 \mid y]$
-\item Mass ariss from integrating over density
-\end{itemize}
-
-\sld{Binomial Concentration, $n = 25$}
-%
-\\[-12pt]
-\begin{center}
-\includegraphics[width=0.8\textwidth]{img/binomial-concentration-25.png}
-\end{center}
-
-\sld{Binomial Concentration, $n = 100$}
-%
-\\[-12pt]
-\begin{center}
-\includegraphics[width=0.8\textwidth]{img/binomial-concentration-100.png}
-\end{center}
-
-\sld{Binomial Concentration, $n = 400$}
-%
-\\[-12pt]
-\begin{center}
-\includegraphics[width=0.8\textwidth]{img/binomial-concentration-400.png}
-\end{center}
-
-\end{document}
-
-\sld{Continuous Hypervolumes}
-%
-\begin{itemize}
-\item Generalize discrete to continuous
-\begin{subitemize}
-\item discrete: combinations times probability mass
-\item continuous: volume times probabilty density
-\end{subitemize}
-\item Volume of ball at given radius ($r$) grows exponentially with
-  dimension ($d$):
-\[
-\mbox{volume} \propto r^d
-\]
-a disc is ${} \propto r^2$, a ball ${} \propto r^3$, etc.
-\end{itemize}
 
 \sld{Typical Draws from Multi-Normal}
 %
 \begin{itemize}
-\item Suppose $Y \in \mathbb{R}^N$ is drawn according to
-\[
-Y \sim \mathsf{MultiNormal}(0, \mathrm{I}_N)
-\]
-so
-\[
-p_Y(y) = \mathsf{MultiNormal}(y \mid 0, \mathrm{I}_N)
-\]
+\item $Y \sim \mathsf{MultiNormal}(0, \mathrm{I}_N)$ is
+  standard multivariate normal
+\item $Y_n \sim \mathsf{Normal}(0, 1)$ is thus independently standard normal
+\item Joint density:  $p_Y(y) = \prod_{n=1}^N \mathsf{Normal}(y_n \mid 0, 1)$
 \item Mean, median, and mode (max) of $p_Y(y)$ at $y = 0$
+\vfill
 \item How far do we expect $Y$ to be from the mode?
-\item What do we expect the log density $Y$'s value to be?
+\item What is the log density of a typical draw of $Y$?
 \end{itemize}
 
 \sld{Multi-Normal Draws in Stan}
@@ -746,6 +529,7 @@ generated quantities {
 \spc
 \includegraphics[width=0.825\textwidth]{img/normal-curse-value.png}
 
+
 \sld{Normal Variate Log Density}
 %
 \\
@@ -770,6 +554,64 @@ generated quantities {
 \end{subitemize}
 \end{itemize}
 
+
+\mypart{}{Concentration\\[8pt]\spc of Measure}
+
+
+\sld{Concentration of Measure}
+%
+\begin{itemize}
+\item We care about probability \myemph{mass}, not \myemph{density}
+\item Events with non-zero probability have probability mass, e.g.,
+  $\mbox{Pr}[\theta_0 > \theta_1 \mid y]$
+\item Mass arises from integrating over density
+\end{itemize}
+
+\sld{Binomial Concentration, $n = 25$}
+%
+\\[-12pt]
+\begin{center}
+\includegraphics[width=0.8\textwidth]{img/binomial-concentration-25.png}
+\end{center}
+
+\sld{Binomial Concentration, $n = 100$}
+%
+\\[-12pt]
+\begin{center}
+\includegraphics[width=0.8\textwidth]{img/binomial-concentration-100.png}
+\end{center}
+
+\sld{Binomial Concentration, $n = 400$}
+%
+\\[-12pt]
+\begin{center}
+\includegraphics[width=0.8\textwidth]{img/binomial-concentration-400.png}
+\end{center}
+
+
+\sld{Continuous Hypervolumes}
+%
+\begin{itemize}
+\item Generalize discrete to continuous
+\begin{subitemize}
+\item discrete: combinations times probability mass
+\item continuous: volume times probabilty density
+\end{subitemize}
+\item Volume of ball at given radius ($r$) grows exponentially with
+  dimension ($d$):
+{\large
+\[
+\mbox{volume} \propto r^d
+\]
+}
+\vspace*{-18pt}
+\begin{subitemize}
+\item line has length ${} \propto r$
+\item disc has area ${} \propto r^2$
+\item ball has volume ${} \propto r^3$
+\item 4-dimensional hyperball has volume ${} \propto r^4$
+\end{subitemize}
+\end{itemize}
 
 
 
@@ -6465,6 +6307,180 @@ for the \myemph{unconstrained posterior}
 \item initial (\code{stepsize}) and target acceptance (\code{adapt\_delta})
 \end{subsubitemize}
 \end{itemize}
+
+
+
+\sld{\Large Lotka-Volterra in Stan (dynamics)}
+%
+\vspace*{-2pt}
+{\footnotesize
+\begin{stancode}
+  real[] dz_dt(real t,          // time (unused)
+               real[] z,        // system state
+               real[] theta,    // parameters
+               real[] x_r,      // real data (unused)
+               int[] x_i) {     // integer data (unused)
+    real u = z[1];              // extract state
+    real v = z[2];
+
+    real alpha = theta[1];
+    real beta = theta[2];
+    real gamma = theta[3];
+    real delta = theta[4];
+
+    real du_dt = (alpha - beta * v) * u;
+    real dv_dt = (-gamma + delta * u) * v;
+    return { du_dt, dv_dt };
+  }
+\end{stancode}
+}
+
+\sld{Data-Generating Model}
+%
+\vspace*{-2pt}
+\begin{itemize}
+\item \myemph{Known} variables are observed
+\begin{subitemize}
+\item  $y_{n,k}$: pelts for species $k$ at times $t_n$ for $n \in 0:N$
+\end{subitemize}
+\item \myemph{Unknown} variables must be inferred (\myemph{inverse problem})
+\begin{subitemize}
+\item initial state: $z^{\mathrm{init}}_k$: initial population for $k$
+\item subsequent states $z_{n,k}$: population $k$ at time $t_n$
+\item parameters $\alpha, \beta, \gamma, \delta, \sigma > 0$
+\end{subitemize}
+\item \myemph{Likelihood} assumes errors are proportional (not additive)
+\vspace*{-8pt}
+\[
+y_{n, k} \sim \mathsf{LogNormal}(\hat{z}_{n,k}, \sigma_k),
+\]
+\vspace*{-4pt}%
+{\small where $\hat{z}_n$ is \myemph{solution} at $t_n$ to L-V diff eqs for initial
+$z^{\mathrm{init}}$}
+\\[-3pt]
+\vfill
+{\small equivalently: \ $\log y_{n,k} = \log \hat{z}_{n,k} + \epsilon_{n,k}$, \ \ with
+$\epsilon_{n,k} \sim \mathsf{Normal}(0, \sigma_k)$}
+\end{itemize}
+
+
+\sld{L-V in Stan (solution to ODE)}
+%
+\begin{itemize}
+\item Define variables for populations predicted by ode, given
+\begin{subitemize}
+\item system function (\code{dz\_dt}), initial populations (\code{z0})
+\item initial time (\code{0.0}), solution times (\code{ts})
+\item parameters (\code{theta}), data arrays (unused: \code{rep\_array(...)})
+\item tolerances (\code{1e-6}, \code{1-e4}), max iterations (\code{1e3})
+\end{subitemize}
+\end{itemize}
+{\small
+\begin{stancode}
+transformed parameters {
+  real z[N, 2]
+    = integrate_ode_rk45(dz_dt, z0, 0.0, ts, theta,
+                         rep_array(0.0, 0), rep_array(0, 0),
+                         1e-6, 1e-4, 1e3);
+}
+\end{stancode}
+}
+
+\sld{L-V in Stan (data, parameters)}
+\begin{itemize}
+\item Variables for known constants, observed data
+{\footnotesize
+\begin{stancode}
+data {
+  int<lower = 0> N;         // num measurements
+  real ts[N];               // measurement times > 0
+  real y0[2];               // initial pelts
+  real<lower = 0> y[N, 2];  // subsequent pelts
+}
+\end{stancode}
+}
+\item Variables for unknown parameters
+{\footnotesize
+\begin{stancode}
+parameters {
+  real<lower = 0> theta[4];  // alpha, beta, gamma, delta
+  real<lower = 0> z0[2];     // initial population
+  real<lower = 0> sigma[2];  // scale of prediction error
+}
+\end{stancode}
+}
+\end{itemize}
+
+\sld{L-V in Stan (priors, likelihood)}
+%
+\vspace*{-6pt}
+\begin{itemize}
+\item Sampling statements for priors and likelihood
+\begin{stancode}
+model {
+  // priors
+  sigma ~ lognormal(0, 0.5);
+  theta[{1, 3}] ~ normal(1, 0.5);
+  theta[{2, 4}] ~ normal(0.05, 0.05);
+
+  z0[1] ~ lognormal(log(30), 5);
+  z0[2] ~ lognormal(log(5), 5);
+
+  // likelihood (lognormal)
+  for (k in 1:2) {
+    y0[k] ~ lognormal(log(z0[k]), sigma[k]);
+    y[ , k] ~ lognormal(log(z[, k]), sigma[k]);
+  }
+}
+\end{stancode}
+\end{itemize}
+
+\sld{Lotka-Volterra Parameter Estimates}
+%
+\vspace*{-12pt}
+%
+{\small
+\begin{stancode}
+> print(fit, c("theta", "sigma"), probs=c(0.1, 0.5, 0.9))
+\end{stancode}
+\vspace*{-2pt}
+\begin{stancode}
+         mean se_mean    sd   10%   50%   90%  n_eff Rhat
+theta[1] 0.55       0  0.07  0.46  0.54  0.64   1168    1
+theta[2] 0.03       0  0.00  0.02  0.03  0.03   1305    1
+theta[3] 0.80       0  0.10  0.68  0.80  0.94   1117    1
+theta[4] 0.02       0  0.00  0.02  0.02  0.03   1230    1
+sigma[1] 0.29       0  0.05  0.23  0.28  0.36   2673    1
+sigma[2] 0.29       0  0.06  0.23  0.29  0.37   2821    1
+\end{stancode}
+}
+\vspace*{4pt}
+\begin{subitemize}
+\item \code{Rhat} near 1 signals convergence;
+ \code{n\_eff} is effective sample size
+\vspace*{-3pt}
+\item 10\%, ... posterior quantiles; \ e.g., $\mbox{Pr}[\alpha \in
+  (0.46, 0.64) \mid y] = 0.8$
+\vspace*{-3pt}
+\item posterior mean is Bayesian point estimate: $\hat{\alpha} =
+  \theta_1 = 0.55$
+% \item posterior median (50\%) is alternative point estimate: $0.54$
+\vspace*{-3pt}
+\item standard error in posterior mean estimate is 0 (with rounding)
+\vspace*{-3pt}
+\item posterior standard deviation of $\alpha$ estimated as 0.07
+\end{subitemize}
+
+\sld{\Large Lotka-Volterra Posterior Predictions}
+%
+\\[4pt]
+\spc \ \ \ \includegraphics[width=0.8\textwidth]{img/lotka-volterra-predict.pdf}
+\vspace*{-4pt}
+\begin{subsubitemize}
+\item training data (1900-1920); \ future predictions (1921+)
+\end{subsubitemize}
+
+
 
 
 \mypart{}{The End}
