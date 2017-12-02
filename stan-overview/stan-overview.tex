@@ -627,7 +627,6 @@ $\binom{100}{80} \ = \ \frac{100!}{80! \ \times \ 20!} \ > \ 10^{20}$
 \end{eqnarray*}
 \end{itemize}
 
-\end{document}
 
 \sld{Typical Set}
 %
@@ -652,6 +651,54 @@ $\binom{100}{80} \ = \ \frac{100!}{80! \ \times \ 20!} \ > \ 10^{20}$
 \]
 \end{itemize}
 
+\mypart{}{Concentration\\[8pt]\spc of Measure}
+
+\sld{Concentration of Measure}
+\begin{itemize}
+\item We care about probability \myemph{mass}, not \myemph{density}
+\item Events with non-zero probability have probability mass, e.g.,
+  $\mbox{Pr}[\theta_0 > \theta_1 \mid y]$
+\item Mass ariss from integrating over density
+\end{itemize}
+
+\sld{Binomial Concentration, $n = 25$}
+%
+\\[-12pt]
+\begin{center}
+\includegraphics[width=0.8\textwidth]{img/binomial-concentration-25.png}
+\end{center}
+
+\sld{Binomial Concentration, $n = 100$}
+%
+\\[-12pt]
+\begin{center}
+\includegraphics[width=0.8\textwidth]{img/binomial-concentration-100.png}
+\end{center}
+
+\sld{Binomial Concentration, $n = 400$}
+%
+\\[-12pt]
+\begin{center}
+\includegraphics[width=0.8\textwidth]{img/binomial-concentration-400.png}
+\end{center}
+
+\end{document}
+
+\sld{Continuous Hypervolumes}
+%
+\begin{itemize}
+\item Generalize discrete to continuous
+\begin{subitemize}
+\item discrete: combinations times probability mass
+\item continuous: volume times probabilty density
+\end{subitemize}
+\item Volume of ball at given radius ($r$) grows exponentially with
+  dimension ($d$):
+\[
+\mbox{volume} \propto r^d
+\]
+a disc is ${} \propto r^2$, a ball ${} \propto r^3$, etc.
+\end{itemize}
 
 \sld{Typical Draws from Multi-Normal}
 %
@@ -724,16 +771,9 @@ generated quantities {
 \end{itemize}
 
 
-\mypart{}{Concentration of Measure}
 
-\sld{Concentration of Measure}
-\begin{itemize}
-\item We care about probability \myemph{mass}, not \myemph{density}
-\item Events with non-zero probability have probability mass, e.g.,
-  $\mbox{Pr}[\theta_0 > \theta_1 \mid y]$
-\item Mass ariss from integrating over density
-\end{itemize}
 
+\end{document}
 
 
 \sld{Why Stan?}
