@@ -253,12 +253,43 @@ model {
 }
 \end{stancode}
 
-
-\sld{\Large Lotka-Volterra Fit (vs. training data)}
+\sld{Lotka-Volterra Parameter Estimates}
 %
-\\
-\spc \hfill \includegraphics[width=0.8\textwidth]{img/lotka-volterra-predict.png}
+\vspace*{-12pt}
+%
+\begin{stancode}
+> print(fit, c("theta", "sigma"), probs=c(0.1, 0.5, 0.9))
+\end{stancode}
+\vspace*{-8pt}
+\begin{stancode}
+         mean se_mean   sd  10%  50%  90% n_eff Rhat
+theta[1] 0.55       0 0.07 0.46 0.54 0.64  1168    1
+theta[2] 0.03       0 0.00 0.02 0.03 0.03  1305    1
+theta[3] 0.80       0 0.10 0.68 0.80 0.94  1117    1
+theta[4] 0.02       0 0.00 0.02 0.02 0.03  1230    1
+sigma[1] 0.29       0 0.05 0.23 0.28 0.36  2673    1
+sigma[2] 0.29       0 0.06 0.23 0.29 0.37  2821    1
+\end{stancode}
+\vfill
+{\small
+\begin{subitemize}
+\item posterior mean is Bayesian point estimate: $\hat{\alpha} = 0.55$
+\item posterior standard deviation of $\alpha$ is 0.07
+\item standard error in mean estimate is 0 (with rounding)
+\item \code{Rhat} near 1 signals convergence;
+ \code{n\_eff} is effective sample size
+\item 10\%, 50\%, 90\% quantiles; \ e.g., $\mbox{Pr}[\alpha \in (0.46, 0.64)] = 0.8$
+\end{subitemize}
+}
 
+\sld{\Large Lotka-Volterra Posterior Predictions}
+%
+\\[4pt]
+\spc \ \ \ \includegraphics[width=0.75\textwidth]{img/lotka-volterra-predict.pdf}
+\vspace*{-4pt}
+\begin{subsubitemize}
+\item training data (1900-1920), future predictions (1921+)
+\end{subsubitemize}
 
 
 \end{document}
