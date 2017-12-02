@@ -48,11 +48,108 @@
 
 
 
+
+
+
+
+
+\sld{StanCon 2018}
+%
+\begin{itemize}
+\item 10--12 January 2018
+\item Asilomar (Pacific Grove, CA --- 2 hrs south of SFO)
+\item Early registration still available
+\item Tutorials by Stan developers at all levels
+\item 6 keynotes from science and business
+\item Breakout ``unconference'' sessions
+\vfill
+\item \url{http://mc-stan.org/events/stancon2018/}
+\end{itemize}
+
+
+\mypart{Stan}{Who, What, and Why?}
+
+
+\sld{Who is Stan?}
+%
+\begin{itemize}
+\item Stan is named in honor of \myemph{Stanislaw Ulam} (1909--1984)
+\item Co-inventor of the \myemph{Monte Carlo method}
+\item[]
+\vspace*{4pt}
+  \includegraphics[width=0.25\textwidth]{img/ulam-fermiac.jpg}
+\\[2pt] \footnotesize Ulam holding the Fermiac, Enrico Fermi's physical Monte Carlo simulator
+  for random neutron diffusion; \hfill
+\\[4pt]
+{\tiny \mbox{ } \hfill image from G.~C.~Geisler (2000) Los Alamos report LA-UR-2532}
+\end{itemize}
+
+\sld{What is Stan?}
+%
+\begin{itemize}
+\item Stan is an \myemph{imperative probabilistic programming language}
+  \begin{subitemize}
+  \item  cf., BUGS: declarative; \ Church: functional; \ PyMC3: ?
+  \end{subitemize}
+\item Stan \myemph{program}: defines a probability model
+  \begin{subitemize}
+  \item declares data and (constrained) parameter variables
+  \item defines log posterior (or penalized likelihood)
+  \end{subitemize}
+\item Stan \myemph{inference}: fits model to data \& makes predictions
+  \begin{subitemize}
+  \item MCMC for full Bayesian inference
+  \item VB for approximate Bayesian inference
+  \item MLE for penalized maximum likelihood estimation
+  \end{subitemize}
+\end{itemize}
+
+
+\sld{Why Choose Stan?}
+%
+\begin{itemize}
+\item \myemph{Expressive}
+\begin{subitemize}
+\item Stan is a full imperative programming language
+\item continuously differentiable log densities
+\end{subitemize}
+\item \myemph{Robust}
+\begin{subitemize}
+\item usually works; signals when it doesn't
+\end{subitemize}
+\item \myemph{Efficient}
+\begin{subitemize}
+\item effective sample size / time (i.e., information)
+\item multi-core and GPU code complete on branches
+\end{subitemize}
+\item \myemph{Ongoing open source development}
+\item \myemph{Community support!}
+\end{itemize}
+
+
+\sld{Coming Attractions}
+%
+\begin{itemize}
+\item Distributed likelihoods: \myemph{multi-CPU} (MPI)
+\item Big matrix operations: \myemph{GPU} (OpenCL)
+\item Sparse matrix operations
+% \item Streaming data: \myemph{stochastic variational} inference
+\item Distributed data: asynchronous \myemph{expectation propagation}
+\item Approximations: parallel \myemph{max marginal mode}
+\item \myemph{Coursera} specialization
+\begin{subitemize}
+\item Gelman: Bayesian data analysis, Multilevel regression
+\item Carpenter: Monte Carlo methods, Stan
+\item Fall 2018
+\end{subitemize}
+\end{itemize}
+
+
 \mypart{}{Predator-Prey Dynamics}
 
 
 \sld{Lynxes and Hares}
-
+%
 \begin{center}
 \includegraphics[height=1in]{img/lynx.jpg}
 \hspace*{0.25in}
@@ -170,12 +267,12 @@ conviventi}. C.~Ferrari.
 \item parameters $\alpha, \beta, \gamma, \delta, \sigma > 0$
 \end{subitemize}
 \item \myemph{Likelihood} assumes errors are proportional (not additive)
-\vspace*{-4pt}
+\vspace*{-8pt}
 \[
 y_{n, k} \sim \mathsf{LogNormal}(\hat{z}_{n,k}, \sigma_k),
 \]
-\vspace*{-4pt}
-{\small where $\hat{z}_n$ is \myemph{solution} at $t_n$ to diff eqs for initial
+\vspace*{-4pt}%
+{\small where $\hat{z}_n$ is \myemph{solution} at $t_n$ to L-V diff eqs for initial
 $z^{\mathrm{init}}$}
 \\[-3pt]
 \vfill
@@ -190,18 +287,18 @@ $\epsilon_{n,k} \sim \mathsf{Normal}(0, \sigma_k)$}
 \item Define variables for populations predicted by ode, given
 \begin{subitemize}
 \item system function (\code{dz\_dt}), initial populations (\code{z0})
-\item initial time (\code{0}), solution times (\code{ts})
-\item parameters (\code{theta}), data arrays (unused)
-\item tolerances (\code{1e-6}, \code{1-e5}), iterations (\code{1e3})
+\item initial time (\code{0.0}), solution times (\code{ts})
+\item parameters (\code{theta}), data arrays (unused: \code{rep\_array(...)})
+\item tolerances (\code{1e-6}, \code{1-e4}), max iterations (\code{1e3})
 \end{subitemize}
 \end{itemize}
 {\small
 \begin{stancode}
 transformed parameters {
   real z[N, 2]
-    = integrate_ode_rk45(dz_dt, z0, 0, ts, theta,
+    = integrate_ode_rk45(dz_dt, z0, 0.0, ts, theta,
                          rep_array(0.0, 0), rep_array(0, 0),
-                         1e-6, 1e-5, 1e3);
+                         1e-6, 1e-4, 1e3);
 }
 \end{stancode}
 }
@@ -257,136 +354,46 @@ model {
 %
 \vspace*{-12pt}
 %
+{\small
 \begin{stancode}
 > print(fit, c("theta", "sigma"), probs=c(0.1, 0.5, 0.9))
 \end{stancode}
-\vspace*{-8pt}
+\vspace*{-2pt}
 \begin{stancode}
-         mean se_mean   sd  10%  50%  90% n_eff Rhat
-theta[1] 0.55       0 0.07 0.46 0.54 0.64  1168    1
-theta[2] 0.03       0 0.00 0.02 0.03 0.03  1305    1
-theta[3] 0.80       0 0.10 0.68 0.80 0.94  1117    1
-theta[4] 0.02       0 0.00 0.02 0.02 0.03  1230    1
-sigma[1] 0.29       0 0.05 0.23 0.28 0.36  2673    1
-sigma[2] 0.29       0 0.06 0.23 0.29 0.37  2821    1
+         mean se_mean    sd   10%   50%   90%  n_eff Rhat
+theta[1] 0.55       0  0.07  0.46  0.54  0.64   1168    1
+theta[2] 0.03       0  0.00  0.02  0.03  0.03   1305    1
+theta[3] 0.80       0  0.10  0.68  0.80  0.94   1117    1
+theta[4] 0.02       0  0.00  0.02  0.02  0.03   1230    1
+sigma[1] 0.29       0  0.05  0.23  0.28  0.36   2673    1
+sigma[2] 0.29       0  0.06  0.23  0.29  0.37   2821    1
 \end{stancode}
-\vfill
-{\small
+}
+\vspace*{4pt}
 \begin{subitemize}
-\item posterior mean is Bayesian point estimate: $\hat{\alpha} = 0.55$
-\item posterior standard deviation of $\alpha$ is 0.07
-\item standard error in mean estimate is 0 (with rounding)
 \item \code{Rhat} near 1 signals convergence;
  \code{n\_eff} is effective sample size
-\item 10\%, 50\%, 90\% quantiles; \ e.g., $\mbox{Pr}[\alpha \in (0.46, 0.64)] = 0.8$
+\vspace*{-3pt}
+\item 10\%, ... posterior quantiles; \ e.g., $\mbox{Pr}[\alpha \in
+  (0.46, 0.64) \mid y] = 0.8$
+\vspace*{-3pt}
+\item posterior mean is Bayesian point estimate: $\hat{\alpha} =
+  \theta_1 = 0.55$
+% \item posterior median (50\%) is alternative point estimate: $0.54$
+\vspace*{-3pt}
+\item standard error in posterior mean estimate is 0 (with rounding)
+\vspace*{-3pt}
+\item posterior standard deviation of $\alpha$ estimated as 0.07
 \end{subitemize}
-}
 
 \sld{\Large Lotka-Volterra Posterior Predictions}
 %
 \\[4pt]
-\spc \ \ \ \includegraphics[width=0.75\textwidth]{img/lotka-volterra-predict.pdf}
+\spc \ \ \ \includegraphics[width=0.8\textwidth]{img/lotka-volterra-predict.pdf}
 \vspace*{-4pt}
 \begin{subsubitemize}
-\item training data (1900-1920), future predictions (1921+)
+\item training data (1900-1920); \ future predictions (1921+)
 \end{subsubitemize}
-
-
-\end{document}
-
-
-\sld{StanCon 2018}
-%
-\begin{itemize}
-\item 10--12 January 2018
-\item Asilomar (Pacific Grove, CA --- 2 hrs south of SFO)
-\item Early registration still available
-\item Tutorials by Stan developers at all levels
-\item 6 keynotes from science and business
-\item Breakout ``unconference'' sessions
-\vfill
-\item \url{http://mc-stan.org/events/stancon2018/}
-\end{itemize}
-
-
-\mypart{Stan}{Who, What, and Why?}
-
-
-\sld{Who is Stan?}
-%
-\begin{itemize}
-\item Stan is named in honor of \myemph{Stanislaw Ulam} (1909--1984)
-\item Co-inventor of the \myemph{Monte Carlo method}
-\item[]
-\vspace*{4pt}
-  \includegraphics[width=0.25\textwidth]{img/ulam-fermiac.jpg}
-\\[2pt] \footnotesize Ulam holding the Fermiac, Enrico Fermi's physical Monte Carlo simulator
-  for random neutron diffusion; \hfill
-\\[4pt]
-{\tiny \mbox{ } \hfill image from G.~C.~Geisler (2000) Los Alamos report LA-UR-2532}
-\end{itemize}
-
-\sld{What is Stan?}
-%
-\begin{itemize}
-\item Stan is an \myemph{imperative probabilistic programming language}
-  \begin{subitemize}
-  \item  cf., BUGS: declarative; \ Church: functional; \ PyMC3: ?
-  \end{subitemize}
-\item Stan \myemph{program}: defines a probability model
-  \begin{subitemize}
-  \item declares data and (constrained) parameter variables
-  \item defines log posterior (or penalized likelihood)
-  \end{subitemize}
-\item Stan \myemph{inference}: fits model to data \& makes predictions
-  \begin{subitemize}
-  \item MCMC for full Bayesian inference
-  \item VB for approximate Bayesian inference
-  \item MLE for penalized maximum likelihood estimation
-  \end{subitemize}
-\end{itemize}
-
-
-\sld{Why Choose Stan?}
-%
-\begin{itemize}
-\item \myemph{Expressive}
-\begin{subitemize}
-\item Stan is a full imperative programming language
-\item continuously differentiable log densities
-\end{subitemize}
-\item \myemph{Robust}
-\begin{subitemize}
-\item usually works; signals when it doesn't
-\end{subitemize}
-\item \myemph{Efficient}
-\begin{subitemize}
-\item effective sample size / time (i.e., information)
-\item multi-core and GPU code complete on branches
-\end{subitemize}
-\item \myemph{Ongoing open source development}
-\item \myemph{Community support!}
-\end{itemize}
-
-
-\sld{Coming Attractions}
-%
-\begin{itemize}
-\item Distributed likelihoods: \myemph{multi-CPU} (MPI)
-\item Big matrix operations: \myemph{GPU} (OpenCL)
-\item Sparse matrix operations
-% \item Streaming data: \myemph{stochastic variational} inference
-\item Distributed data: asynchronous \myemph{expectation propagation}
-\item Approximations: parallel \myemph{max marginal mode}
-\item \myemph{Coursera} specialization
-\begin{subitemize}
-\item Gelman: Bayesian data analysis, Multilevel regression
-\item Carpenter: Monte Carlo methods, Stan
-\item Fall 2018
-\end{subitemize}
-\end{itemize}
-
-
 
 
 
@@ -555,6 +562,73 @@ in_ball[10] 0.00       0 0.05 20000    1
 \mypart{}{Typical Sets}
 
 
+\sld{Typical Set Example (1)}
+%
+\begin{itemize}
+\item Consider a game of chance with an 80\% chance of winning
+\item Play the game 100 times independently
+\vfill
+\item What is most likely outcome?
+\end{itemize}
+
+\sld{Typical Set Example (2)}
+%
+\begin{itemize}
+\item For each trial, there is a 80\% chance of success
+\item For each trial, most likely outcome is success
+\item Overall, the single \myemph{most likely outcome} is all successes
+\vfill
+\item What's the \myemph{most likely number of successes}?
+\end{itemize}
+
+\sld{Typical Set Example (3)}
+%
+\begin{itemize}
+\item Let $y_n \sim \mathsf{Bernoulli}(0.9)$ for $n \in 1:100$ be the trials
+\item Expected number of successes
+\begin{eqnarray*}
+\textstyle
+\mbox{\large $\mathbb{E}$}\!\left[ \sum_{n=1}^{100} y_n \right]
+& = & \textstyle \sum_{n = 1}^{100} \mathbb{\large E}\!\left[ y_n \right]
+\\[4pt]
+& = & \textstyle \sum_{n=1}^{100} 0.8
+\\[4pt]
+& = & 0.8 \times 100
+\\[2pt]
+& = & 80
+\end{eqnarray*}
+\item \myemph{most likely outcome} (all successes) \myemph{is an
+    outlier}!
+\[
+\mbox{Pr}[100 \ \mbox{successes}] = 0.8^{100} < 10^{-10}
+\]
+\end{itemize}
+
+\sld{Typical Set Example (4)}
+%
+\begin{itemize}
+\item Maximum likelihood (most likely) outcome is \myemph{atypical}
+\item Expectations involve count times probability
+\item 100 success sequences:
+$\binom{100}{100} \ = \ \frac{100!}{100! \ \times \ 1!} \ = \ 1$
+\item 80 success sequences:
+$\binom{100}{80} \ = \ \frac{100!}{80! \ \times \ 20!} \ > \ 10^{20}$
+\item Thus chance of 80 success is much higher than 100
+\begin{eqnarray*}
+\mathsf{Binomial}(80 \mid 100, 0.8)
+& = &
+  \textstyle \binom{100}{20} \times 0.8^{80} \times 0.2^{20}
+\\[4pt]
+& \gg &
+\textstyle \binom{100}{1} \times 0.8^{100}
+\\[4pt]
+& = &
+\mathsf{Binomial}(100 \mid 100, 0.8)
+\end{eqnarray*}
+\end{itemize}
+
+\end{document}
+
 \sld{Typical Set}
 %
 \begin{itemize}
@@ -577,6 +651,7 @@ in_ball[10] 0.00       0 0.05 20000    1
 \int_{A_{\epsilon}} \, f(\theta) \, p(\theta | y) \, \mathrm{d}\theta
 \]
 \end{itemize}
+
 
 \sld{Typical Draws from Multi-Normal}
 %
@@ -649,6 +724,15 @@ generated quantities {
 \end{itemize}
 
 
+\mypart{}{Concentration of Measure}
+
+\sld{Concentration of Measure}
+\begin{itemize}
+\item We care about probability \myemph{mass}, not \myemph{density}
+\item Events with non-zero probability have probability mass, e.g.,
+  $\mbox{Pr}[\theta_0 > \theta_1 \mid y]$
+\item Mass ariss from integrating over density
+\end{itemize}
 
 
 
