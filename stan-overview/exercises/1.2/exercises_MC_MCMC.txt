@@ -1,20 +1,20 @@
-lecture: MC & MCMC
-exercises: Generative Story / Stan Workflow
-
 ***********************************************
-lecture:
+lecture: MC & MCMC
 
 * law of large numbers and central limit theorem
 * estimators
+* curse of dimensionality
+* concentration of measure - volume vs. density
 
 ***********************************************
-exercises:
+exercises: Generative Story / Stan Workflow
+
+MC simulation in Stan
 
 - example: Stan program to generate Magic 8-Ball responses.
   1000 draws == pre-generated script
   answer shows up in stanfit
   print statements on console
-  
 
 - class exercise part 1: program the generative process in Stan
 
@@ -27,15 +27,12 @@ exercises:
   A. model to fit outcomes from 1 roll of D6
   B. model to fit best 3 out of 4 rolls from a fair D6
 
-***********************************************
-lecture:
-
-* curse of dimensionality
-* concentration of measure - volume vs. density
-
-***********************************************
-exercises: checking model fit using simulated data
+- class exercise part 3: predictive posterior
 
   A. add post predictive to model, log_lik to model
   B. run Bayesplot
 
+- class exercise part 4:  checking model fit
+
+http://mc-stan.org/bayesplot/articles/plotting-mcmc-draws.html
+R code: library("bayesplot")
