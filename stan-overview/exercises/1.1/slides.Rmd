@@ -1,6 +1,8 @@
 ---
 title: "Exercise 1.1"
-output: ioslides_presentation
+output: 
+  ioslides_presentation:
+    widescreen: true
 ---
 
 ```{r setup, include=FALSE}
@@ -33,7 +35,7 @@ writeLines(readLines("heights1.stan")[1:4])
 parameters { ??? }
 model { ??? }
 ```
-## A full model
+## A first draft
 
 ```{r}
 writeLines(readLines("heights1.stan"))
@@ -49,7 +51,7 @@ fit1 = sampling(model1, list(num_people=nrow(hdata),
                              heights=hdata$height))
 ```
 ```{r}
-fit1
+print(fit1, prob = c(0.025, .50, 0.975))
 ```
 
 ## Let's see if we can get a better fit
@@ -71,12 +73,12 @@ fit2 = sampling(model2, list(num_people = nrow(hdata), heights = hdata$height,
                              weights = hdata$weight))
 ```
 ```{r}
-fit2
+print(fit2, probs = c(0.025, 0.975))
 ```
 
 ## Interpretation
 
-- height_mean_avg_weight
+- height_location_avg_weight
 - weight_coeff
 ```{r, echo=T}
 sd(height_data$weight) #kg
@@ -84,6 +86,5 @@ sd(height_data$weight) #kg
 
 ## Unidentified models have correlations
 ```{r, echo=T}
-pairs(fit2, pars = c("height_mean_avg_weight", "weight_coeff"))
+pairs(fit2, pars = c("height_location_avg_weight", "weight_coeff"))
 ```
-

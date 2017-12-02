@@ -4,10 +4,10 @@ data {
 }
 parameters {
   real height_location;
-  real<lower=0> height_stdev;
+  real<lower=0> height_scale;
 }
 model {
-  heights ~ normal(height_location, height_stdev);
+  heights ~ normal(height_location, height_scale);
   height_location ~ normal(183, 120);
-  height_stdev ~ normal(0, 20);
+  height_scale ~ normal(0, 20);
 }
