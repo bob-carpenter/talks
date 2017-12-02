@@ -48,7 +48,7 @@
 
 
 
-\mypart{}{Predator-Prey Dyanmics}
+\mypart{}{Predator-Prey Dynamics}
 
 
 \sld{Lynxes and Hares}
@@ -641,7 +641,7 @@ generated quantities {
 \begin{subitemize}
 \item based on Isaac Asimov's short story ``Franchise'' in
   which a single average voter represented everyone
-\item the average member of a multiviate normal is the mean
+\item the average member of a multivariate normal is the mean
 \item thus no members of the typical set are average in this sense
 \item popular in physics
 \item \myemph{very poor} solution for most inferential purposes
@@ -669,7 +669,7 @@ generated quantities {
 %
 \vspace*{8pt}
 \item {\slshape Problem}:  Need gradients of log posterior for HMC
-\item {\slshape Solution}: Reverse-mode algorithmic differentation
+\item {\slshape Solution}: Reverse-mode algorithmic differentiation
 \end{itemize}
 
 
@@ -1194,7 +1194,7 @@ of Monte Carlo methods.
 \sld{Monte Carlo Calculation of $\pi$ {\normalsize (cont.)}}
 %
 \begin{subitemize}
-\item R code to calcuate $\pi$ with Monte Carlo simulation:
+\item R code to calculate $\pi$ with Monte Carlo simulation:
 \\[-8pt]
 {\small
 \begin{Verbatim}
@@ -1250,7 +1250,7 @@ generated quantities {
 \item \myemph{Simulates} $X$ and $Y$
 \item \myemph{Codes indicator function} implicitly with comparison
 \begin{subitemize}
-\item uses Stan's built-in hypoteneuse function
+\item uses Stan's built-in hypotenuse function
 \item \Verb|hypot(a, b) = sqrt(a^2 + b^2)|
 \end{subitemize}
 \end{itemize}
@@ -1626,7 +1626,7 @@ where $J$ is the (potentially asymmetric) proposal density
 \item i.e.,
 {\small
 \[
-\frac{\mbox{probabilty of being at } \theta^*
+\frac{\mbox{probability of being at } \theta^*
       \mbox{ and jumping to } \theta^{(m-1)}}
      {\mbox{probability of being at } \theta^{(m-1)}
       \mbox{ and jumping to } \theta^{*}}
@@ -1986,7 +1986,7 @@ complex posteriors (i.e., high curvature and correlation)
 \begin{itemize}
 \item Random variables are the currency of probability theory
 \item Random variables typically take numbers as values
-\item Imagine a bin filled with balls represneting the way the world might be
+\item Imagine a bin filled with balls representing the way the world might be
 \item A ball records the value of every random variable
 \item Examples
 \begin{subitemize}
@@ -2007,7 +2007,7 @@ complex posteriors (i.e., high curvature and correlation)
   for quantities we {observe} and about which we {wish to learn}.''
   %
 \item ``The essential characteristic of Bayesian methods is
-  their \myemph{explict use of probability for quantifying uncertainty}
+  their \myemph{explicit use of probability for quantifying uncertainty}
   in inferences based on statistical analysis.''
 \end{itemize}
 %
@@ -2028,7 +2028,7 @@ complex posteriors (i.e., high curvature and correlation)
 \item \myemph{Condition} on observed data (where Stan comes in!)
   \vspace*{-4pt}
   \begin{itemize}
-  \item to caclulate posterior probability of unobserved quantities
+  \item to calculate posterior probability of unobserved quantities
     (e.g., parameters, predictions, missing data)
   \end{itemize}
   %
@@ -2070,7 +2070,7 @@ complex posteriors (i.e., high curvature and correlation)
 \item Do the inferences make sense?
 \begin{subitemize}
 \item are parameter values consistent with model's prior?
-\item does simulating from parameter values produce reasoable fake
+\item does simulating from parameter values produce reasonable fake
   data?
 \item are marginal predictions consistent with the data?
 \end{subitemize}
@@ -2115,7 +2115,7 @@ complex posteriors (i.e., high curvature and correlation)
 \item parameter estimates minimizing expected error
 \item predictions for future outcomes with uncertainty
 \item event probability updates conditioned on data
-\item risk assesment / decision analysis conditioned on uncertainty
+\item risk assessment / decision analysis conditioned on uncertainty
 \end{subitemize}
 \end{itemize}
 
@@ -2385,7 +2385,7 @@ p(\theta|y,N,\alpha,\beta)
 \vspace*{-4pt}
 \begin{itemize}
 \item Start with prior $\distro{Beta}(\theta|\alpha,\beta)$
-\item Receive binomial data in $K$ statges $(y_1, N_1), \ldots, (y_K, N_K)$
+\item Receive binomial data in $K$ stages $(y_1, N_1), \ldots, (y_K, N_K)$
 \item After $(y_1,N_1)$, posterior is
   $\distro{Beta}(\theta|\alpha + y_1, \ \beta + N_1 - y_1)$
 \item Use as prior for $(y_2,N_2)$, with posterior \\[3pt]
@@ -2885,7 +2885,7 @@ p(\theta|y,N)
 \end{eqnarray*}
 \item  Laplace solved Bayes's integral by
 \begin{subitemize}
-\item determing the posterior was a beta distribution (conjugacy!)
+\item determining that the posterior was a beta distribution (conjugacy!)
 \item and solving the normalization (gamma functions)
 \end{subitemize}
 \end{itemize}
@@ -4198,7 +4198,7 @@ for every $N$-permutation $\pi$ (i.e, a one-to-one mapping of $\setcomp{1,\ldots
 \item Typically when other knowledge is not available
 \begin{subitemize}
 \item e.g., treat voters as conditionally i.i.d. given their age,
-sex, income, education level, religous affiliation,
+sex, income, education level, religious affiliation,
 and state of residence
 \item But voters have many more properties (hair color, height, profession, employment status, marital status, car ownership, gun ownership, etc.)
 \item Missing predictors introduce additional error (on top of measurement error)
@@ -4315,7 +4315,7 @@ and state of residence
 \end{subitemize}
 \item From others
 \begin{subitemize}
-\item \myemph{Prohet} (Facebook): time-series analysis (R and Python)
+\item \myemph{Prophet} (Facebook): time-series analysis (R and Python)
 \item \myemph{brms} (B\"urkner): regression modeling with R expressions
 \item \myemph{rethinking} (McElreath): simplified Stan embedded in R
 \end{subitemize}
@@ -4448,7 +4448,7 @@ and \myemph{most easily extensible} (simple OO)
 %
 \begin{itemize}
 \item \myemph{Not} a graphical specification language like BUGS or JAGS
-\item Stan is a Turing-complete imperative programming langauge for specifying differentiable log densities
+\item Stan is a Turing-complete imperative programming language for specifying differentiable log densities
 \begin{subitemize}
 \item reassignable local variables and scoping
 \item full conditionals and loops
@@ -4479,7 +4479,7 @@ and \myemph{most easily extensible} (simple OO)
 \item \myemph{\tt\bfseries model} \ (every log prob eval)
   \vspace*{-4pt}
   \begin{itemize}\small
-  \item {\slshape content}: statements definining posterior density
+  \item {\slshape content}: statements defining posterior density
   \item {\slshape execute}: execute statements
   \end{itemize}
 \end{itemize}
@@ -4568,7 +4568,7 @@ and \myemph{most easily extensible} (simple OO)
 \item work backwards from final log density to parameters
 \item dynamic programming for shared subexpressions
 \end{subitemize}
-\item Linear multiple of time to evalue log density
+\item Linear multiple of time to evaluate log density
 \end{itemize}
 
 
@@ -4751,9 +4751,9 @@ and \myemph{most easily extensible} (simple OO)
     \code{=} & assignment \\
     \code{+=} & compound add and assign \\
     \code{-=} & compound subtract and assign \\
-    \code{*=} & compound mulitply and assign \\
+    \code{*=} & compound multiply and assign \\
     \code{/=} & compound divide and assign \\
-    \code{.*=} & compound elementwise mulitply and assign \\
+    \code{.*=} & compound elementwise multiply and assign \\
     \code{./=} & compound elementwise divide and assign \\
 
   \end{tabular}
@@ -4842,7 +4842,7 @@ and \myemph{most easily extensible} (simple OO)
 \item The following define the same$^*$ posterior
 \begin{itemize}
 \item \Verb|y ~ poisson(lambda);|
-\item \Verb|increment_log_prob(poisson_log(y, lamda));|
+\item \Verb|increment_log_prob(poisson_log(y, lambda));|
 \end{itemize}
 \item ${}^{*}$ up to a constant
 \item Sampling statement drops constant terms
@@ -5045,7 +5045,7 @@ y ~ normal(mu_y, sigma);
 \item Stan's probability functions are vectorized for speed
 \begin{subitemize}
 \item removes repeated computations (e.g., $-\log \sigma$ in normal)
-\item reduces size of expression graph for differentation
+\item reduces size of expression graph for differentiation
 \end{subitemize}
 \item Consider: \ \Verb|y ~ normal(mu, sigma);|
 \item Each of \code{y}, \code{mu}, and \code{sigma} may be any of
@@ -5158,7 +5158,7 @@ y ~ normal(mu_y, sigma);
 \end{subitemize}
 \item Stochastic \myemph{gradient-descent} optimization
 \begin{subitemize}
-\item ELBO gradient estimated via Monte Carlo + autdiff
+\item ELBO gradient estimated via Monte Carlo + autodiff
 \end{subitemize}
 \item Returns \myemph{approximate posterior} mean / covariance
 \item Returns \myemph{sample} transformed to constrained space
@@ -5455,7 +5455,7 @@ H_{i,j} = \frac{\partial^2}{\partial x_i \partial x_j} f(x)
 %
 \begin{itemize}
 \item Required for Riemannian HMC
-\item Graadients of Hessians (tensor of third-order partials)
+\item Gradients of Hessians (tensor of third-order partials)
 \[
 \frac{\partial^3}{\partial x_i \partial x_j \partial x_k} f(x)
 \]
@@ -6085,7 +6085,7 @@ H_{i,j}
 %
 \item Stochastic \myemph{gradient-descent} optimization
 \begin{subitemize}
-\item ELBO gradient estimated via Monte Carlo + autdiff
+\item ELBO gradient estimated via Monte Carlo + autodiff
 \end{subitemize}
 %
 \item Returns \myemph{approximate posterior} mean / covariance
@@ -6161,7 +6161,7 @@ minimizing KL-divergence
 \item[(a)] VB-like: $\mbox{KL}[g \, || \, p]$
 \item[(b)] EP-like: $\mbox{KL}[p \, || \, g]$
 \end{subitemize}
-\item VB systematically \myemph{understimates posterior variance}
+\item VB systematically \myemph{underestimates posterior variance}
 \end{subitemize}
 \vfill \hfill
 {\footnotesize  --- Bishop (2006) {\slshape Pattern Recognition and Machine Learning}, fig.~10.2}
@@ -6240,7 +6240,7 @@ for the \myemph{unconstrained posterior}
 \item subsample data (e.g., stream in minibatches)
 \item upweight each minibatch to full data set size
 \item use to make unbiased estimate of true gradient
-\item take gradient step to minimimize KL-divergence
+\item take gradient step to minimize KL-divergence
 \end{subitemize}
 \vfill
 \item Prototype code complete
@@ -6262,7 +6262,7 @@ for the \myemph{unconstrained posterior}
 %
 \vfill
 %
-\item Prototypte stage
+\item Prototype stage
 \item {\small collaborating with Seth Flaxman, Aki Vehtari, Pasi
     Jyl\"anki, John Cunningham, Nicholas Chopin, Christian Robert}
 \end{itemize}
@@ -6333,7 +6333,7 @@ for the \myemph{unconstrained posterior}
 \end{subsubitemize}
 \item Example: hierarchical models
 \begin{subsubitemize}
-\item hierarhcical variance controls lower-level parameters
+\item hierarchical variance controls lower-level parameters
 \end{subsubitemize}
 \end{subitemize}
 \item Mitigate by reducing stepsize
