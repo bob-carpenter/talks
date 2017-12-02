@@ -1,0 +1,89 @@
+---
+title: "Exercise 1.1"
+output: ioslides_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, comment="")
+height_data = read.csv("heights.csv")
+height_data = height_data[height_data$age >= 18, ]
+hdata = height_data
+library(rstan)
+library(shinystan)
+```
+
+## Modeling heights in a population
+
+The !Kung San are the most famous foraging population of the 20th century, mostly because they have the most detailed quantitative studies conducted by anthropologists like Nancy Howell in the late 1960s.
+
+I've excluded the children from the data for now, so we're only modeling adult heights.
+
+```{r, echo=T}
+str(height_data)
+```
+
+## Resources
+
+- http://mc-stan.org > Users > Documentation > Stan Manual (pdf)
+
+```{r}
+writeLines(readLines("heights1.stan")[1:4])
+```
+```
+parameters { ??? }
+model { ??? }
+```
+## A full model
+
+```{r}
+writeLines(readLines("heights1.stan"))
+```
+```{r results='hide', cache=T}
+model1 = stan_model("heights1.stan")
+```
+- Priors
+
+## The fit
+```{r, results='hide', cache=T}
+fit1 = sampling(model1, list(num_people=nrow(hdata),
+                             heights=hdata$height))
+```
+```{r}
+fit1
+```
+
+## Let's see if we can get a better fit
+We'll look at better ways of evaluating this later, but for now we'll try to reduce the standard deviation for height by introducing weight as a predictive feature and adding a regression coefficient for it.
+
+```{r}
+writeLines(readLines("heights2.stan")[1:5])
+```
+
+## Weight regression model
+```{r}
+writeLines(readLines("heights2.stan")[-(1:5)])
+```
+
+## Weight regression fit
+```{r, results='hide', cache=T}
+model2 = stan_model("heights2.stan")
+fit2 = sampling(model2, list(num_people = nrow(hdata), heights = hdata$height,
+                             weights = hdata$weight))
+```
+```{r}
+fit2
+```
+
+## Interpretation
+
+- height_mean_avg_weight
+- weight_coeff
+```{r, echo=T}
+sd(height_data$weight) #kg
+```
+
+## Unidentified models have correlations
+```{r, echo=T}
+pairs(fit2, pars = c("height_mean_avg_weight", "weight_coeff"))
+```
+
