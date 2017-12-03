@@ -12,8 +12,8 @@ parameters {
 model {
   y ~ normal(X * beta + alpha, sigma);
   sigma ~ normal(0, 2);
-  alpha ~ normal(0, 10);
-  beta ~ normal(0, 10);
+  alpha ~ normal(0, 5);
+  beta ~ normal(0, 5);
 }
 generated quantities {
   vector[N] y_ppc;
