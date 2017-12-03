@@ -48,7 +48,68 @@
 
 
 
+\sld{\Large What does Stan Compute?}
+%
+\begin{subitemize}
+%
+\item \myemph{MCMC draws} from posterior $p(\theta | y)$
+\[
+\theta^{(1)}, \ldots, \theta^{(M)}
+\]
+\item Posterior \myemph{parameter estimates} as means
+\[
+\hat{\theta}
+\ = \
+\mathbb{E}[\theta \mid y]
+\ = \
+\int \theta \, p(\theta | y) \, \mathrm{d}\theta
+\ \approx \
+\frac{1}{M} \sum_{m=1}^M \theta^{(m)}
+\]
+%
+\item Posterior \myemph{parameter variance estimates} as variances
+\[
+\mathrm{var}[\theta \mid y]
+\ = \
+\int (\theta - \hat{\theta})^2 \, p(\theta | y) \, \mathrm{d}\theta
+\ \approx \
+\frac{1}{M} \sum_{m=1}^M (\theta^{(m)} - \hat{\theta})^2
+\]
+\end{subitemize}
 
+
+\sld{\Large What does Stan Compute? (cont.)}
+%
+\begin{subitemize}
+\item Posterior \myemph{event probabilities} as expectations of indicators
+\[
+\mbox{Pr}[\mbox{cond}(\theta) \mid y]
+\ = \
+\int \mathrm{I}[\mbox{cond}(\theta) \mid y] \, \mathrm{d}\theta
+\ \approx \
+\frac{1}{M} \sum_{m=1}^M \mathrm{I}[\mbox{cond}(\theta^{(m)})]
+\]
+%
+\item Posterior \myemph{predictions} by marginalizing parameters
+\[
+p(\tilde{y} | y)
+ =
+\mathbb{E}[p(\tilde{y}) | y]
+\ = \
+\int p(\tilde{y} | \theta) \, p(\theta | y) \, \mathrm{d}\theta
+\ \approx \
+\frac{1}{M} \sum_{m=1}^M p\left( \tilde{y} | \theta^{(m)} \right)
+\]
+%
+\item Posterior \myemph{quantiles} by sample quantiles (e.g.,
+posterior \myemph{intervals} and posterior \myemph{median} estimates)
+\[
+\mathrm{quantile}(\theta, \alpha)
+\ = \
+\mathrm{sort\_ascending}(\theta^{(1)}, \ldots, \theta^{(M)})
+\left[ \, \lceil \alpha \times M \rceil \, \right]
+\]
+\end{subitemize}
 
 
 
@@ -145,87 +206,6 @@
 \end{itemize}
 
 
-\mypart{}{Predator-Prey Dynamics}
-
-
-\sld{Lynxes and Hares}
-%
-\begin{center}
-\includegraphics[height=1in]{img/lynx.jpg}
-\hspace*{0.25in}
-\includegraphics[height=1in]{img/hare.jpg}
-\end{center}
-\begin{itemize}
-\item \myemph{Snowshoe hare} (prey): herbivorous cousin of rabbits
-\item \myemph{Canadian lynx} (predator): feline eating primarily hares
-\end{itemize}
-\vfill
-{\tiny
-\mbox{ } \hfill
-Lynx image copyright 2009, Keith Williams, CC-BY 2.0.
-\\[-2pt]
-\mbox{ } \hfill
-Hare image copyright 2013 D. Gordon E. Robonson, CC-BY SA 2.0}
-
-
-\sld{Hudson Bay Co. Pelts, 1900--20}
-%
-\\[-4pt] \spc
-\includegraphics[width=0.85\textwidth]{img/hare-lynx-pelts-1.png}
-
-
-\sld{Pelts, Phase Space}
-%
-\\[-4pt] \spc
-\includegraphics[width=0.85\textwidth]{img/hare-lynx-pelts-2.png}
-
-
-\sld{Volterra's (1927) Model}
-%
-
-\begin{minipage}[t]{0.65\textwidth}
-\vspace*{-1in}
-\begin{subitemize}
-\item population: $u(t)$ \myemph{prey}, \ $v(t)$ \myemph{predator}
-%
-\begin{eqnarray*}
-\frac{\mathrm{d}}{\mathrm{d}t} u
-& = &  (\alpha - \beta v) u
-\\[6pt]
-\frac{\mathrm{d}}{\mathrm{d}t} v
-& = &  (-\gamma + \delta \, u) \, v
-\end{eqnarray*}
-%
-\begin{subsubitemize}
-\item $\alpha$: prey growth, intrinsic
-\item $\beta$: prey shrinkage due to predation
-\item $\gamma$: predator shrinkage, intrinsic
-\item $\delta$: predator growth from predation
-\end{subsubitemize}
-\vspace*{-8pt}
-\item \footnotesize dynamics lead to \myemph{oscillation} as observed
-\end{subitemize}
-\end{minipage}
-%
-\hfill
-%
-\begin{minipage}[t]{0.3\textwidth}
-\mbox{ }
-\vspace*{0.5in}
-\mbox{ } \hfill
-\includegraphics[width=0.8\textwidth]{img/volterra-orbit.jpg}
-\\[-8pt]
-\mbox{ }
-\hfill
-\includegraphics[width=0.8\textwidth]{img/hare-lynx-pelts-2.png}
-\end{minipage}
-\vfill
-\hfill
-{\tiny
-Volterra, V., 1927. {\slshape Variazioni
-e fluttuazioni del numero d'individui in specie animali
-conviventi}. C.~Ferrari.
-}
 
 \mypart{}{The Curse of\\[8pt]{\spc}Dimensionality}
 
@@ -615,9 +595,6 @@ generated quantities {
 
 
 
-\end{document}
-
-
 \sld{Why Stan?}
 %
 \begin{itemize}
@@ -794,6 +771,51 @@ several potential outcomes
 \end{itemize}
 
 
+\sld{Pop Quiz! Cancer Clusters}
+%
+\begin{itemize}
+\item Why do lowest and highest cancer clusters look so similar?
+\end{itemize}
+\vspace*{1pt}
+\begin{center}
+\hfill
+\includegraphics[width=0.45\textwidth]{img/low-cancer.jpg}
+\hfill
+\includegraphics[width=0.45\textwidth]{img/high-cancer.jpg}
+\hfill
+\end{center}
+\vfill
+\hfill {\tiny Image from Gelman et al., {\slshape Bayesian Data Analysis, 3rd Edition} (2013)}
+
+
+\sld{Pop Quiz Answer}
+%
+\begin{itemize}
+\item Hint: mix earlier simulations of repeated i.i.d. trials with 20\% success and sort:
+{\footnotesize
+\begin{center}
+\begin{tabular}{ccccc}
+1/10 &  1/10 &  1/10 &  15/100 &  16/100
+\\
+17/100 &  175/1000 &  179/1000 &  18/100 &  181/1000
+\\
+188/1000 &  194/1000 &  198/1000 & 2/10 &  2/10
+\\
+2/10 &  2/10 & 21/100 &  21/100 &  21/100
+\\
+212/1000 &  213/1000 &   216/1000 &   223/1000 &  23/100
+\\
+26/100 &  26/100 &  3/10 &  4/10 &  5/10
+\end{tabular}
+\end{center}
+}
+\item More variation in observed rates with smaller sample sizes
+\vfill
+\item \emph{Answer}: High cancer and low cancer counties are small populations
+\end{itemize}
+
+
+
 \sld{Simple Point Estimation}
 %
 \begin{itemize}
@@ -867,64 +889,61 @@ expected to fall.
 \end{itemize}
 
 
-\sld{Simple Point Estimation (cont.)}
+\sld{Central Limit Theorem (picture)}
+%
+\vspace*{-3pt}
+\begin{center}
+\vspace*{-3pt}
+\includegraphics[width=0.8\textwidth]{img/coin-flip-clt.png}
+\end{center}
+\vspace*{-8pt}
+\begin{subitemize}
+\item proportion heads for 100 sequences of 100,000 flips
+\vspace*{-2pt}
+\item converges gradually to expected value of 0.5
+\end{subitemize}
+
+\sld{Central Limit Theorem (words)}
 %
 \begin{itemize}
-\item {\bfseries Central Limit Theorem:}  \emph{expected} error in $\theta^*$ goes down as
-{\Large
+\item \myemph{The} theorem of statistics
+\vspace*{-4pt}
+\begin{subsubitemize}
+\item Cardano (1501--1576) conjectured convergence; (Jacob) Bernoulli
+  (1713) proved convergence for binomials (law of large numbers); de Moivre
+  (1733) conjectured the CLT; Laplace (1812) proved i.i.d.\ version;
+  Lyapunov (1901) removed i.i.d.\ constraint
+\end{subsubitemize}
+\item Sample \myemph{mean} of $N$ i.i.d. variables with finite expectation
+\begin{subitemize}
+\item  \myemph{converges} to their expectation as $N \rightarrow \infty$
+\vspace*{2pt}
+\item \myemph{rate} of convergence is {\large ${\mathcal{O}}\!\left( \frac{1}{\sqrt{N}} \right)$}
+\vspace*{2pt}
+\item constant factor determined by standard deviation
+\end{subitemize}
+\vfill
+\item Each decimal place of accuracy requires $100 \times$ more draws
+\end{itemize}
+
+\sld{Central Limit Theorem (math)}
+%
+\begin{itemize}
+\item Given $N$ i.i.d.\ variables $\theta_1, \ldots, \theta_N$ with
+\begin{subitemize}
+\item $\mathbb{E}[\theta_n] = \mu$
+\item $\mathrm{sd}[\theta_n] = \sigma$
+\end{subitemize}
+the \myemph{central limit theorem} states
+%
 \[
-\frac{1}{\sqrt{N}}
+\lim_{N \rightarrow \infty} \
+\frac{\theta_1 + \cdots + \theta_N}{N}
+\sim
+\mathsf{Normal}\left( \mu, \frac{\sigma}{\sqrt{N}} \right)
 \]
-}
-\item Each decimal place of accuracy requires $100 \times$ more samples.
-\item Width of confidence intervals shrinks at the same rate.
-\vfill
-\item Can also use theory to show this estimator is unbiased.
 \end{itemize}
 
-
-\sld{Pop Quiz! Cancer Clusters}
-%
-\begin{itemize}
-\item Why do lowest and highest cancer clusters look so similar?
-\end{itemize}
-\vspace*{1pt}
-\begin{center}
-\hfill
-\includegraphics[width=0.45\textwidth]{img/low-cancer.jpg}
-\hfill
-\includegraphics[width=0.45\textwidth]{img/high-cancer.jpg}
-\hfill
-\end{center}
-\vfill
-\hfill {\tiny Image from Gelman et al., {\slshape Bayesian Data Analysis, 3rd Edition} (2013)}
-
-
-\sld{Pop Quiz Answer}
-%
-\begin{itemize}
-\item Hint: mix earlier simulations of repeated i.i.d. trials with 20\% success and sort:
-{\footnotesize
-\begin{center}
-\begin{tabular}{ccccc}
-1/10 &  1/10 &  1/10 &  15/100 &  16/100
-\\
-17/100 &  175/1000 &  179/1000 &  18/100 &  181/1000
-\\
-188/1000 &  194/1000 &  198/1000 & 2/10 &  2/10
-\\
-2/10 &  2/10 & 21/100 &  21/100 &  21/100
-\\
-212/1000 &  213/1000 &   216/1000 &   223/1000 &  23/100
-\\
-26/100 &  26/100 &  3/10 &  4/10 &  5/10
-\end{tabular}
-\end{center}
-}
-\item More variation in observed rates with smaller sample sizes
-\vfill
-\item \emph{Answer}: High cancer and low cancer counties are small populations
-\end{itemize}
 
 
 \mypart{}{Numerical Analysis}
@@ -6307,6 +6326,89 @@ for the \myemph{unconstrained posterior}
 \item initial (\code{stepsize}) and target acceptance (\code{adapt\_delta})
 \end{subsubitemize}
 \end{itemize}
+
+
+\mypart{}{Predator-Prey Dynamics}
+
+
+\sld{Lynxes and Hares}
+%
+\begin{center}
+\includegraphics[height=1in]{img/lynx.jpg}
+\hspace*{0.25in}
+\includegraphics[height=1in]{img/hare.jpg}
+\end{center}
+\begin{itemize}
+\item \myemph{Snowshoe hare} (prey): herbivorous cousin of rabbits
+\item \myemph{Canadian lynx} (predator): feline eating primarily hares
+\end{itemize}
+\vfill
+{\tiny
+\mbox{ } \hfill
+Lynx image copyright 2009, Keith Williams, CC-BY 2.0.
+\\[-2pt]
+\mbox{ } \hfill
+Hare image copyright 2013 D. Gordon E. Robonson, CC-BY SA 2.0}
+
+
+\sld{Hudson Bay Co. Pelts, 1900--20}
+%
+\\[-4pt] \spc
+\includegraphics[width=0.85\textwidth]{img/hare-lynx-pelts-1.png}
+
+
+\sld{Pelts, Phase Space}
+%
+\\[-4pt] \spc
+\includegraphics[width=0.85\textwidth]{img/hare-lynx-pelts-2.png}
+
+
+\sld{Volterra's (1927) Model}
+%
+
+\begin{minipage}[t]{0.65\textwidth}
+\vspace*{-1in}
+\begin{subitemize}
+\item population: $u(t)$ \myemph{prey}, \ $v(t)$ \myemph{predator}
+%
+\begin{eqnarray*}
+\frac{\mathrm{d}}{\mathrm{d}t} u
+& = &  (\alpha - \beta v) u
+\\[6pt]
+\frac{\mathrm{d}}{\mathrm{d}t} v
+& = &  (-\gamma + \delta \, u) \, v
+\end{eqnarray*}
+%
+\begin{subsubitemize}
+\item $\alpha$: prey growth, intrinsic
+\item $\beta$: prey shrinkage due to predation
+\item $\gamma$: predator shrinkage, intrinsic
+\item $\delta$: predator growth from predation
+\end{subsubitemize}
+\vspace*{-8pt}
+\item \footnotesize dynamics lead to \myemph{oscillation} as observed
+\end{subitemize}
+\end{minipage}
+%
+\hfill
+%
+\begin{minipage}[t]{0.3\textwidth}
+\mbox{ }
+\vspace*{0.5in}
+\mbox{ } \hfill
+\includegraphics[width=0.8\textwidth]{img/volterra-orbit.jpg}
+\\[-8pt]
+\mbox{ }
+\hfill
+\includegraphics[width=0.8\textwidth]{img/hare-lynx-pelts-2.png}
+\end{minipage}
+\vfill
+\hfill
+{\tiny
+Volterra, V., 1927. {\slshape Variazioni
+e fluttuazioni del numero d'individui in specie animali
+conviventi}. C.~Ferrari.
+}
 
 
 
