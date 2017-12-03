@@ -12,7 +12,7 @@ genData = function(N_groups, N_obs) {
   return(list(mu=mu,sigma=sigma,theta=theta,N_groups=N_groups,N_obs=N_obs,y=y));
 }
 
-N_groups = 12;
+N_groups = 10;
 d_0 = genData(N_groups, 0);
 d_4 = genData(N_groups, 4);
 d_16 = genData(N_groups, 16);

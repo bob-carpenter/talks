@@ -63,8 +63,8 @@ p4 = ggplot(fitted_models2, aes(x=fitted_models2$theta_par, y=fitted_models2$log
 p4 = p4 + geom_point(colour="black", size=0.85, alpha=0.1);
 p4 = p4 + geom_point(data=divs2, aes(x=divs2$theta, y=divs2$log_sigma), colour="darkred");
 p4 = p4 + facet_wrap(par ~ size, nrow=2, ncol=4, scales="free", labeller = labeller(par = label_value, size = label_both));
-p4 = p4 + labs(title="centered vs. non-centered parameterization", x = "", y = "log sigma");
-p4 = p4 + theme(plot.title = element_text(size = 32));
+p4 = p4 + labs(title="centered vs. non-centered parameterization", subtitle="10 groups, 20000 draws", x = "", y = "log sigma");
+p4 = p4 + theme(plot.title = element_text(size = 24));
 
-ggsave("theta_cp_vs_theta_std_nc_c12_b4.png", plot=p4, width=10, height=8);
+ggsave("theta_cp_vs_theta_std_nc_c12_b4.png", plot=p4, width=8, height=6);
 
