@@ -1,0 +1,146 @@
+---
+title: "Exercise 2.2"
+output: 
+  ioslides_presentation:
+    widescreen: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, comment="", autodep = T)
+
+library(shinystan)
+library(rstan)
+rstan_options(auto_write = TRUE)
+options(mc.cores = parallel::detectCores())
+
+N = 5
+K = 3
+X = matrix(rnorm(N*K, 0, 10), ncol=K)
+write.csv(X, file = "dist/X.csv", row.names = F)
+alpha = rnorm(1, 0, 1)
+beta = rnorm(K, 0, 1)
+sigma = 4
+y = rnorm(N, beta * X + alpha, sigma)
+write(y, file="dist/y.txt")
+```
+
+## A fun, fairly simple linear regression model
+```{r}
+writeLines(readLines("model.stan"))
+model = stan_model("model.stan")
+```
+
+## Problem fit
+
+```{r, cache=T, message=F}
+fit = sampling(model, list(y=y, N=N, X=X))
+```
+
+## Warnings
+- "X divergent transitions; increase adapt_delta"
+- "Y transitions exceeded maximum treedepth"
+- "Examine the pairs() plot"
+
+## The fit itself
+```{r}
+fit
+```
+
+## pairs() plot
+```{r warning=F, error=F}
+pairs(fit, pars = c('alpha', 'beta[1]', 'sigma'))
+```
+
+## Woops, let's add priors
+```{r}
+writeLines(readLines("model2.stan"))
+model2 = stan_model("model2.stan")
+```
+
+
+## Now with 100% more priors!
+
+```{r, cache=T, message=F}
+fit2 = sampling(model2, list(y=y, N=N, X=X))
+```
+```{r}
+fit2
+```
+
+## Pairs() plot, plus priors
+```{r echo=T}
+pairs(fit2, pars = c('alpha', 'beta[1]', 'sigma'))
+```
+
+## Raising adapt_delta
+
+```{r, cache=T, message=F, echo=T}
+fit2.1 = sampling(model2, list(y=y, N=N, X=X),
+               control=list(adapt_delta=0.99))
+```
+
+## The more careful fit
+- No more divergences!
+```{r} 
+fit2.1
+```
+
+## Punctilious pairs() plot
+```{r echo=T}
+pairs(fit2.1, pars = c('alpha', 'beta[1]', 'sigma'))
+```
+
+## More informative priors
+```{r}
+writeLines(readLines("model3.stan"))
+model3 = stan_model("model3.stan")
+```
+
+## Fit
+```{r, cache=T, message=F, echo=T}
+fit3 = sampling(model3, list(y=y, N=N, X=X))
+```
+
+## More informative prior fit
+```{r}
+fit3
+```
+
+## Pairs plot
+```{r echo=T}
+pairs(fit3, pars = c('alpha', 'beta[1]', 'sigma'))
+```
+
+## Home safe?
+- No more diagnostic warnings!
+- PPCs
+
+## PPC model
+```{r}
+writeLines(readLines("model3ppc.stan")[-(1:11)])
+model3ppc = stan_model("model3ppc.stan")
+```
+
+```{r, include=F}
+fit3ppc = sampling(model3ppc, list(y=y, N=N, X=X))
+```
+
+## Shinystan
+```{r, echo=T, eval=F}
+library(shinystan)
+launch_shinystan(fit3ppc)
+```
+
+## So what was that data, anyway?
+```{r echo=T}
+alpha
+beta
+sigma
+```
+
+## The fit
+```{r}
+fit3
+```
+
+## Non-identified!
