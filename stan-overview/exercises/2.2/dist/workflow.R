@@ -1,4 +1,5 @@
 library(rstan)
+library(shinystan)
 rstan_options(auto_write = TRUE)
 options(mc.cores = parallel::detectCores())
 
@@ -10,5 +11,4 @@ print(fit)
 
 pairs(fit, pars = c('alpha', 'beta[1]', 'sigma'))
 
-library(shinystan)
 launch_shinystan(fit)

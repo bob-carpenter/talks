@@ -1,0 +1,129 @@
+---
+title: "Exercise 1.1"
+output: 
+  ioslides_presentation:
+    widescreen: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, comment="")
+library(rstan)
+library(shinystan)
+library("ggplot2")
+
+set.seed(1234)
+```
+
+```{r setup2, include=F, cache=T}
+srrs2 = read.csv("srrs2.dat", strip.white=TRUE)
+srrs.mn = srrs2[srrs2$state == "MN",]
+srrs.mn$fips = srrs.mn$stfips * 1000 + srrs.mn$cntyfips
+cty = read.csv("cty.dat", strip.white=TRUE)
+cty.mn = cty[cty$st=="MN",]
+cty.mn$fips = 1000 * cty.mn$stfips + cty.mn$ctfips
+srrs.mn = merge(srrs.mn, cty.mn[c("fips", "Uppm")], by = 'fips')
+srrs.mn = srrs.mn[!duplicated(srrs.mn[,'idnum']),]
+u = log(srrs.mn$Uppm)
+n = nrow(srrs.mn)
+head(srrs.mn)
+srrs.mn$county = as.character(srrs.mn$county)
+mn.counties = unique(srrs.mn$county)
+county.lookup = as.vector(1:length(mn.counties), mode='list')
+names(county.lookup) = mn.counties
+county = srrs.mn$county.code = unlist(county.lookup[srrs.mn$county], use.names=F)
+radon = srrs.mn$activity
+srrs.mn$log.radon = log.radon = log(radon + 0.1)
+floor.measure = srrs.mn$floor
+df = data.frame(log.radon, floor.measure, county)
+write.csv(df, file="dist/data.csv", row.names = F)
+```
+
+## Radon contamination
+- radioactive gas that enters homes through the ground
+- carcinogenic
+- vary greatly household to household
+
+## EPA Study
+- 80,000 houses
+- Two predictors:
+    - measument on lowest floor?
+    - county uranium level (positive corr with radon levels)
+- We'll focus on Minnesota, which has 919 households in 85 counties
+
+## Distribution of radon levels in MN (log scale)
+```{r}
+ggplot(df, aes(log.radon)) + geom_histogram(bins = 25)
+```
+
+## Conventional approaches
+* Complete pooling
+    - Treat all counties the same and estimate a single radon level,
+    $y_i = \mathcal{N}(\alpha + \beta x_i, \sigma)$
+* No pooling
+    - Model radon in each county independently,
+    $y_i = \mathcal{N}(\alpha_{j[i]} + \beta x_i, \sigma)$, where $j = 1, ..., 85$ 
+    
+As usual, we can think of $\sigma$ as capturing all of the variance we aren't modeling.
+
+## Pooled model
+```{r}
+writeLines(readLines("pooled.stan"))
+```
+
+## Pooled fit
+```{r, cache=T, include=F}
+pooled.model = stan_model("pooled.stan")
+pooled.fit = sampling(pooled.model, list(y=df$log.radon,
+                           x = df$floor.measure,
+                           N=nrow(df)))
+```
+```{r}
+print(pooled.fit, probs = c(0.025, 0.5, 0.975))
+```
+## Pooled fit
+```{r}
+pooled.sample = extract(pooled.fit)
+b = mean(pooled.sample$beta[,1])
+m = mean(pooled.sample$beta[,2])
+
+ggplot(df, aes(floor.measure, log.radon)) + geom_count() +
+  geom_abline(intercept = b, slope = m, linetype=2)
+```
+
+## Unpooled model
+```{r}
+writeLines(readLines("unpooled.stan"))
+```
+
+## Unpooled fit
+```{r, cache=T, include=F}
+unpooled.model = stan_model("unpooled.stan")
+unpooled.fit = sampling(unpooled.model, list(y=df$log.radon,
+                           x = df$floor.measure,
+                           county = df$county,
+                           N=nrow(df)))
+```
+```{r}
+print(unpooled.fit, probs = c(0.025, 0.5, 0.975))
+```
+
+## Unpooled fit
+```{r}
+unpooled.samples = extract(unpooled.fit)
+unpooled.estimates = apply(unpooled.samples$a, 2, mean)
+unpooled.se = apply(unpooled.samples$a, 2, sd)
+unpooled.df = data.frame(unpooled.estimates, 1:85, 
+                         unpooled.estimates + unpooled.se,
+                         unpooled.estimates - unpooled.se)
+names(unpooled.df) = c("a", "county", "upper", "lower")
+unpooled.df = unpooled.df[order(unpooled.df$a),]
+
+ggplot(unpooled.df, aes(x=1:85, y=a)) + geom_pointrange(aes(ymin = lower, ymax = upper))
+```
+<!--
+## Visual comparisons between pooled and unpooled
+- TODO
+-->
+
+## Meh
+

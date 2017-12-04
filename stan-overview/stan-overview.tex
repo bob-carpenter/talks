@@ -2071,7 +2071,7 @@ complex posteriors (i.e., high curvature and correlation)
 
 
 
-\mypart{}{Bayesian Inference}
+\mypart{}{Bayesian Methodology}
 
 
 \sld{Probability is Epistemic}
@@ -2101,8 +2101,6 @@ complex posteriors (i.e., high curvature and correlation)
 \item prevalence of a disease in a population
 \end{subitemize}
 \end{itemize}
-
-
 
 
 \sld{Bayesian Data Analysis}
@@ -2224,6 +2222,127 @@ complex posteriors (i.e., high curvature and correlation)
 \item risk assessment / decision analysis conditioned on uncertainty
 \end{subitemize}
 \end{itemize}
+
+
+\sld{``All Models are Wrong,\\[8pt]\spc but some are useful''}
+%
+\begin{quote}
+  \hspace*{-5pt}{\Large``}Now it would be very remarkable if any system existing in the real
+  world could be exactly represented by any simple model. However,
+  cunningly chosen parsimonious models often do provide remarkably
+  useful approximations.{\Large''}
+\\
+\mbox{ } \hfill {\small --- George Box (1979)}
+
+\end{quote}
+\begin{itemize}
+\item Slide title was section title in Box's paper
+\end{itemize}
+\vfill
+\hfill {\tiny Box, G. E. P. 1979. Robustness in the strategy of
+  scientific model building.  In
+  {\slshape Robustness in Statistics}, Academic Press.}
+
+
+\sld{Model (Mis)Specification}
+%
+\begin{itemize}
+\item A model is \myemph{well specified} if it matches the data-generating
+  process of the data.
+\item All of our models will be \myemph{misspecified} to some extent
+\begin{subitemize}
+\item mildly misspecified: Newtonian physics (most speeds)
+\item wildly misspecified: social science regression
+\item wildly mispsecified: Newtonian physics (near speed of light)
+\end{subitemize}
+\item Models assumptions and predictions must be \myemph{tested}
+\begin{subitemize}
+\item ideally with \myemph{cross-validation} on quantities of interest
+\end{subitemize}
+\end{itemize}
+
+
+\sld{The Folk Theorem}
+%
+\begin{quote}
+\hspace*{-5pt}{\Large``}When you have computational problems, often there's a
+problem with your model.{\Large''}
+\\[4pt]
+\mbox{ } \hfill {\small --- Andrew Gelman, blog}
+\end{quote}
+\begin{itemize}
+\item The usual culprits are
+\begin{subitemize}
+\item bugs in: samplers, data munging, model coding, etc.
+\item model misspecification
+\end{subitemize}
+\end{itemize}
+\vfill
+\hfill
+{\footnotesize \url{http://andrewgelman.com/2008/05/13/the_folk_theore/}}
+
+
+\sld{Model Calibration}
+%
+\begin{itemize}
+\item Consider 100 days for which a meteorologist predicted a 70\%
+  chance of rain
+\begin{subitemize}
+\item about 70 of them should have had rain
+\item not fewer, not more!
+\item technically, expect $\mathsf{Binomial}(100, 0.7)$ rainy day from
+  a calibrated model
+\end{subitemize}
+\item Use posterior predictive checks to test calibration on
+\begin{subitemize}
+\item training data---can it fit?
+\item held out data---can it predict?
+\item cross-validation---approximates held out with trainin data
+\end{subitemize}
+\item Also applies to interval coverage of parameter values
+\end{itemize}
+
+\sld{Model Sharpness}
+%
+\begin{itemize}
+\item Ideal forecasts are deterministic
+\begin{subitemize}
+\item predict 100\% chance of rain or 0\% chance of rain
+\item always right
+\end{subitemize}
+%
+\item A forecast of 90\% chance of rain reduces uncertainty more than a 50\% prediction
+\item A model is \myemph{sharp} if it has narrow posterior intervals
+\begin{subitemize}
+\item Prediction $\mbox{Pr}[\alpha \in (1.2, 1.9)] = 0.9$
+\item is sharper than $\mbox{Pr}[\alpha \in (1, 2)] = 0.9$
+\end{subitemize}
+\item I.e., sharper models are more certain in its predictions
+\item Given calibration, we want our predictions to be \myemph{sharp}
+\end{itemize}
+
+
+\sld{Cross-Validation}
+%
+\begin{itemize}
+\item Uses single data set to model held-out performance
+\item Assumes stationarity (as most models do)
+\item Partition data evenly into disjoint subsets (called \myemph{folds})
+\begin{subitemize}
+\item 10 is a common choice
+\item \myemph{leave-one-out} (LOO) uses a the number of training
+  data points
+\end{subitemize}
+\item For each fold
+\begin{subitemize}
+\item estimate model on all data but that fold
+\item test on that fold
+\end{subitemize}
+\item Usual comparison statistic is held out log likelihood
+\end{itemize}
+
+
+\mypart{}{Bayesian Inference}
 
 
 \sld{Notation for Basic Quantities}
