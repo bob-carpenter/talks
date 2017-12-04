@@ -123,6 +123,12 @@ therefore, `stan` function must be invoked with `algorithm="Fixed_param"`:
 > fit_8ball = stan(file="gen_magic8.stan", algorithm="Fixed_param")
 ```
 
+### compile model, then fit: `stan_model` `sampling` 
+
+* function `stan_model` compiles a Stan program into a `stanmodel` object
+* function `sampling` plugs in the data and returns the sample as a `stanfit` object 
+
+
 *******************************
 ### `print(<stanfit>)`
 
@@ -146,19 +152,15 @@ The convenience functions `extract`, `as.array`, `as.matrix`, `as.data.frame` re
 the individual parameters and quantities of interest defined in the model as R objects.
 To access the generated quantity `ans` as a single vector of 4000 outcomes, use the `as.array` accessor.
 ```
-> a_rolls = as.vector(as.array(fit_8ball, pars=c("ans")))
-
-# check vector length (sample size)
-> length(a_rolls)
-[1] 4000
+> d20_outcomes = as.vector(as.array(fit_8ball, pars=c("ans")))
 
 # bin the outcomes
-> cts = as.vector(table(a_rolls))
+> cts = as.vector(table(d20_outcomes))
 > cts
  [1] 198 195 192 169 216 222 198 213 185 198 226 222 185 212 196 200 185 206 181 201
 
 # divide counts by total to retrieve p(theta)
-> thetas = cts/length(a_rolls)
+> thetas = cts/length(d20_outcomes)
 > thetas
  [1] 0.04950 0.04875 0.04800 0.04225 0.05400 0.05550 0.04950 0.05325 0.04625 0.04950 0.05650 0.05550
 [13] 0.04625 0.05300 0.04900 0.05000 0.04625 0.05150 0.04525 0.05025
@@ -173,8 +175,8 @@ which creates a names column for each parameter or generated quantity variable.
 We then pass this object into the ggplot function which creates a histogram plot:
 ```
 library(ggplot2);
-rolls = as.data.frame(fit_8ball, pars=c("ans"))
-p2 = ggplot(data=rolls, aes(rolls$ans)) +
+d20_outcomes = as.data.frame(fit_8ball, pars=c("ans"))
+p2 = ggplot(data=d20_outcomes, aes(d20_outcomes$ans)) +
      geom_histogram(bins=20, colour = "black", fill = "darkgrey")
 p2;
 ```
@@ -184,6 +186,7 @@ library(knitr)
 include_graphics("ex1_p1.png")
 ```
 
+*******************************
 ## Exercise 1:  Roll a single fair dice.
 
 * Write a program `gen_d6.stan` to simulate one roll of a fair 6-sided die.

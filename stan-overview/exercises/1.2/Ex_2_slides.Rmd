@@ -51,6 +51,35 @@ for (i in 1:N) rv[i] = normal(0, 1);
 
 * What is the Expectation of a random vector generated from a standard multinormal distribution?
 
+## Visualization: plotting the expectation of a normal random variate
+
+Program `gen_norm.stan`: generate a sample for a random variate, location = 1, scale = 3:
+```
+generated quantities {
+  real rv = normal_rng(1,3);
+}
+```
+
+Generate a sample consisting of 4000 draws, extract generated quantity `rv`:
+```
+f1 = stan("gen_norm.stan", algorithm = "Fixed_param");
+xs = as.data.frame(f1, pars=("rv"))
+```
+
+Create a histogram, overlay with density curve:
+```
+pp = ggplot(data=xs, aes(xs$rv));
+pp = pp + geom_histogram(aes(y = ..density..), bins=50, fill = "darkgrey");
+pp = pp + stat_function(fun = dnorm,
+          args = list(mean = mean(xs$rv), sd = sd(xs$rv)), lwd=2, col="red");
+```
+************************************
+
+```{r, echo=FALSE, out.width = "55%"}
+library(knitr)
+include_graphics("ex2_p1.png")
+```
+
 ## Exercise 1:  Choice of location and scale parameters for the Normal distribution
 
 * Write a program `gen_norm_variate.stan` which generates a random variate `x`
@@ -73,6 +102,9 @@ of `mu` and `sigma`.
 * Using the same values of `mu` and `sigma`, generate a sample using program `gen_norm_variate.stan`
 
 * Create histogram plots for both, compare and contrast.
+
+* Use the ggplot magic to overlay the normal density curve, discuss.
+
 
 ## Exercise 3:  Expectations of the MultiNormal distribution and the curse of dimensionality
 
