@@ -212,6 +212,93 @@ $
 \end{itemize}
 
 
+\mypart{}{The Funnel}
+
+\sld{Funnel-Shaped Posteriors \hfill \large (1/2)}
+%
+\vspace*{-6pt}
+\begin{itemize}
+\item Arise in hierarchical model with no data (Neal 2003)
+\begin{subitemize}
+\item $\log \sigma \sim \mathsf{Normal}(0, 1.5)$
+  \hfill {\small [hierarchical scale]}
+\item $\beta_n \sim \mathsf{Normal}(0, \sigma)$ \mbox{ for } $n \in
+  1:9$
+ \hfill {\small [low-level coefficients]}
+\end{subitemize}
+\vspace*{-12pt}
+\begin{center}
+  \includegraphics[height=1.05in]{img/funnel.png}
+  \includegraphics[height = 1.05in]{img/funnel-fit.png}
+\end{center}
+\vspace*{-12pt}
+{\footnotesize  $\beta_1$ coefficient ($x$-axis) vs.\ $\log
+   \sigma$ ($y$-axis);  {\slshape left}) density plot (log scale);  {\slshape right})
+  4000 independent draws}
+\\
+{\tiny \mbox{ } \hfill Neal, R. M. 2003. Slice sampling. {\slshape Annals of
+    Statistics}, {\bfseries 31}(3):705--767}
+\end{itemize}
+
+\sld{Funnel-Shaped Posteriors \hfill \large (2/2)}
+%
+\begin{itemize}
+\item Very \myemph{challenging for sampling}
+\item Need large step size to explore mouth of funnel (high
+  hierarchical variance)
+\item Need small step size to explore neck of funnel
+  (low hierarchical variance)
+\item Even small step sizes lead to divergences
+\begin{subitemize}
+\item numerical failure of Hamiltonian dynamics simulation to conserve the Hamiltonian
+\end{subitemize}
+\end{itemize}
+
+\sld{Non-Centered Parameterization}
+%
+\begin{itemize}
+\item The non-centered parameterization of the funnel is
+\begin{eqnarray*}
+\log \sigma & \sim & \mathsf{Normal}(0, 1.5)
+\\[4pt]
+\beta^{\mathrm{std}}_n & \sim & \mathsf{Normal}(0, 1)
+\\[4pt]
+\beta_n & = & \sigma \times \beta^{\mathrm{std}}_n
+\end{eqnarray*}
+\item Removes dependency of $\beta$ and $\sigma$ in prior
+\item Posterior of $\beta$ and $\log \sigma$ independent normal
+\begin{subitemize}
+\item this is how plot of independent draws was generated
+\end{subitemize}
+\end{itemize}
+
+\sld{Adding Data}
+%
+\begin{itemize}
+\item Use the $\beta$ in an intercept-only binomial logistic
+  regression,
+\[
+y_j \sim \mathsf{Binomial}(N, \mathrm{logit}^{-1}(\beta_j))
+\]
+\vspace*{-24pt}
+\begin{subitemize}
+\item i.e., $y_j \in 0:N$ is number of successes in $K$ trials
+\item $\beta_n$ is log odds of success for group $j$
+\end{subitemize}
+\item More data lessens dependency between $\beta$ and $\sigma$
+\item With informative enough data, centered parameterization is
+  better
+\begin{subitemize}
+\item not size of data, but how much it constrains posterior
+\end{subitemize}
+\end{itemize}
+
+\sld{Funnel + Data in the Wild}
+%
+\\ \spc
+\includegraphics[width=0.8\textwidth]{img/funnel-fit-data.png}
+
+
 \mypart{}{Mixture Models}
 
 \sld{Simple Normal Mixture \hfill \large (1/3)}
@@ -346,6 +433,51 @@ model {
   }
 \end{stancode}
 \end{itemize}
+
+\sld{Zero-Inflated Poisson}
+%
+\begin{itemize}
+\item Poisson is count of phenomenon parameterized by a single
+  parameter $\lambda$
+\begin{subitemize}
+\item $y_n \sim \mathsf{Poisson}(\lambda)$
+\item $\lambda$ is mean
+\item $\lambda$ is also variance ($\sqrt{\lambda}$ is scale)
+\end{subitemize}
+\item Sometimes more zero values than you'd expect from Poisson itself
+\item Simple branching generative process
+\begin{subitemize}
+\item $z_n \sim \mathsf{Bernoulli}(\theta)$
+\item if $z_n == 1$, then $y_n = 0$
+\item else if $z_n == 0$, $y_n \sim \mathsf{Poisson}(\lambda)$
+\end{subitemize}
+\end{itemize}
+
+\sld{Zero-Inflated Poisson in Stan}
+%
+\begin{itemize}
+\item Marginalize out as usual---addition becomes log-sum-exp
+\[
+p(y_n \mid \lambda, \theta)
+= \lambda \times \mathrm{I}[y_n = 0]
++ (1 - \lambda) \times \mathsf{Poisson}(y_n \mid \lambda)
+\]
+\item Coding the likelihood in Stan {\small (branch to simplify non-zero)}
+{\small
+\begin{stancode}
+real z_zero_lp = log(theta);
+real z_any_lp = log1m(theta);
+for (n in 1:N) {
+  real poisson_lp = poisson_lpmf(y[n] | lambda);
+  if (y[n] == 0)
+    target += log_sum_exp(z_zero_lp, z_any_lp + poisson_lp);
+  else
+    target += z_any_lp + poisson_lp;
+}
+\end{stancode}
+}
+\end{itemize}
+
 
 
 \sld{StanCon 2018}
