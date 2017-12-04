@@ -1,0 +1,100 @@
+---
+title: "Stan Workflow: Model Building / Model Checking"
+output:
+  pdf_document:
+    pandoc_args: --latex-engine=xelatex
+    toc: no
+    toc_depth: 4
+  html_document:
+    toc: no
+    toc_depth: 4
+---
+
+### A Very Simple Model: Rolling a 6-sided Die
+
+* Data:
+    + $N$ - number of trials (observations)
+    + $y_n$ in $\{1 \ldots 6\}$:  trial $n$ outcome
+* Parameters:
+    + $\theta$ a _simplex_ of length 6: all elements positive, sums to 1
+* Prior:
+    + $p(\theta)$ -  defaults to uniform prior
+* Likelihood:
+    + $p(y \vert \theta)$ = Categorical$(y \vert \theta)$
+* Posterior:
+    + $p(\theta \vert y) \propto p(\theta) p(y \vert \theta)$
+
+
+### A Very Simple Stan Program: `d6.stan`
+
+```
+data {
+  int N;  // number of obs
+  int N_sides;  // number of faces
+  int<lower=1, upper=N_sides> obs[N];
+}
+parameters {
+  simplex[N_sides] theta;
+}
+model {
+  obs ~ categorical(theta);
+}
+```
+
+### Fitting the Model to Simulated Data
+
+* Run program `gen_d6.stan`, extract values for generated quantity `roll_d6` as vector `obs`.
+
+```
+> library(rstan)
+> gendata_d6 = stan(file="gen_d6.stan", algorithm="Fixed_param")
+```
+* Fit program `d6.stan` to simulated data.
+
+```
+> obs = as.vector(as.array(gendata_d6, pars=c("roll_d6")))
+> N = length(obs)
+> N_sides = 6
+> d6_fit = stan(file="d6.stan", data=list(N,N_sides,obs));
+```
+
+### Checking the fit:  ShinyStan
+
+
+### Predictive Posterior Checks
+
+Add `generated quantities` block to Stan program.
+Given current draw, use parameter values to generate new data.
+
+### Exercise 1: Model `multi_dice.stan`
+
+* Write model to fit outcomes for N rolls of a platonic solid and generate predictive posterior checks
+* Generate data:  N=2 rolls of a D20
+* Fit model
+* Check the fit in ShinyStan
+
+* Generate data:  N=4 rolls of a D6
+* Fit model
+* Check the fit in ShinyStan
+
+How to the shapes of the PPD compare?
+
+### Exercise 2: Failure to fit
+
+* Use the model `multi_dice` and simulated data for N=2 rolls of a D20, using only first 20 observations.
+* Fit the model, specify `iter=100, warmup=0`
+* Check the fit in ShinyStan.
+
+
+
+
+
+
+
+
+
+
+
+
+
+

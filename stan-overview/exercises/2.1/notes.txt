@@ -1,0 +1,33 @@
+Stan Workflow - tools ShinyStan and BayesPlot
+
+- class exercise part 1: program the model to fit data
+
+  A. model to fit outcomes from 1 roll of D6
+  B. model to fit outcomes from 3 rolls of a fair D6
+
+- class exercise part 2: predictive posterior
+
+  A. add post predictive to model, log_lik to model
+  B. run Bayesplot
+
+- class exercise part 3:  visualization
+
+http://mc-stan.org/bayesplot/articles/plotting-mcmc-draws.html
+R code: library("bayesplot")
+
+
+Stan programming language excercises
+
+* recursive functions
+
+* efficient coding
+    + data block: declarations only
+    + transformed data block:  1x
+    + parameter block: param declarations only - can you assign to params in local block?  are local blocks allowed?
+    + transformed parameters, model block:  difference between local / global variables
+    + generated quantities block:  restrictions on variables
+
+Exercises (drawn form Forums?)
+
+1. code that doesn't compile - fix
+2. code that runs slowly - fix

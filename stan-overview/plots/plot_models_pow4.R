@@ -61,10 +61,11 @@ divs2 = rbind(divs2, get_fit_divergs(fit_nc_4096, 4096, "theta_std (non-centered
 # theta centered vs. theta_std non-centered
 p4 = ggplot(fitted_models2, aes(x=fitted_models2$theta_par, y=fitted_models2$log_sigma));
 p4 = p4 + geom_point(colour="black", size=0.85, alpha=0.1);
-p4 = p4 + geom_point(data=divs2, aes(x=divs2$theta, y=divs2$log_sigma), colour="darkred");
+p4 = p4 + geom_point(data=divs2, aes(x=divs2$theta, y=divs2$log_sigma), colour="darkorange");
 p4 = p4 + facet_wrap(par ~ size, nrow=2, ncol=4, scales="free", labeller = labeller(par = label_value, size = label_both));
-p4 = p4 + labs(title="centered vs. non-centered parameterization", subtitle="10 groups, 20000 draws", x = "", y = "log sigma");
-p4 = p4 + theme(plot.title = element_text(size = 24));
+p4 = p4 + labs(title="centered vs. non-centered parameterization", subtitle="hierarchical logistic regression with 10 groups, intercept only, 20000 draws, divergences in orange", x = "", y = "log sigma");
+p4 = p4 + theme(plot.title = element_text(size = 24), axis.text.x = element_text(size=6), axis.text.y = element_text(size=6));
+
 
 ggsave("theta_cp_vs_theta_std_nc_c12_b4.png", plot=p4, width=8, height=6);
 
