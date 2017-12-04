@@ -10,10 +10,6 @@ output:
     toc_depth: 4
 ---
 
-<style type="text/css">
-.table { width: 40%; }
-</style>
-
 ### Nice Dice:  the Platonic Solids
 
 Definition of a Platonic solid from [the wikipedia](https://en.wikipedia.org/wiki/Platonic_solid):
@@ -110,7 +106,9 @@ generated quantities {
 ```
 \pagebreak
 
-### RStan workflow for this set of exercises
+### RStan Workflow for Exercises
+
+This exercise set will require use of the following RStan and R commands:
 
 #### `stan`
 
@@ -167,13 +165,41 @@ To access the generated quantity `ans` as a single vector of 4000 outcomes, use 
 
 \pagebreak
 
+### Visualization: histogram plots using R package `ggplot2`
+
+[`ggplot2`](http://ggplot2.org) is a plotting system for R, based on the grammar of graphics.
+To create the same histogram using `ggplot`, we used RStan's `as.data.frame` function
+which creates a names column for each parameter or generated quantity variable.
+We then pass this object into the ggplot function which creates a histogram plot:
+
+```
+library(ggplot2);
+rolls = as.data.frame(fit_8ball, pars=c("ans"))
+p2 = ggplot(data=rolls, aes(rolls$ans)) +
+     geom_histogram(bins=20, colour = "black", fill = "darkgrey")
+p2;
+```
+
+```{r, echo=FALSE, out.width = "55%"}
+library(knitr)
+include_graphics("ex1_p1.png")
+```
+
+Compare this to visualizations produced using R's base graphics package:
+```
+# visualize in R
+> hist(a_rolls, xlab="outcome", ylab="frequency")
+> plot(table(a_rolls), xlab="outcome", ylab="frequency")
+```
+
+\pagebreak
+
 ### Exercise 1:  Roll a single fair dice.
 
 * Write a program `gen_d6.stan` to simulate one roll of a fair 6-sided die.
     + Use RStan function `stan` to generate a sample consisting of 4000 draws
     + Get the vector of all 4000 outcomes
     + Bin the outcomes, retrieve observed values for parameter `theta`
-
 
 ### Exercise 2: Load the die.
 
@@ -187,18 +213,17 @@ To access the generated quantity `ans` as a single vector of 4000 outcomes, use 
 The Stan language provides array operations which take arrays as input and produce single output values,
 among these are `min`, `max`, `sum`, and many more (see the Stan Reference Manual, section "Array Operations").
 
-* Generalize program `gen_d6.stan` to `gen_sum_N_rolls_dK.stan` so that it outputs the sum of N rolls of any platonic solid with number of faces K.
+* Generalize program `gen_d6.stan` to `gen_rollsN_facesK.stan` so that it outputs the sum of N rolls of any platonic solid with number of faces K.
     + calculate the expectation of the sum of 4 rolls of a D6
     + calculate the expectation of the sum of 2 rolls of a D12
-    + use R function `hist` to visualize the resulting distribution of sums - compare and constrast
+    + use histograms to visualize the distribution of the sums - compare and constrast
 
 ### Exercise 4: More games
 
-* Write a Stan program `gen_sum_best_3_of_4_d6.stan` which generates the sum of the best 3 out of 4 rolls of a fair, 6-sided die.
+* Write a Stan program `gen_best_3_of_4_d6.stan` which generates the sum of the best 3 out of 4 rolls of a fair, 6-sided die.
 
-* Compare `gen_sum_best_3_of_4_d6.stan` to the result of running `gen_sum_N_rolls_dK.stan` for 3 rolls of a 6-sided die.
+* Compare `gen_best_3_of_4_d6.stan` to the result of running `gen_rollsN_facesK.stan` for 3 rolls of a 6-sided die.
     + Use RStan function `stan` to generate a sample consisting of 4000 draws for each model
     + Get the vector of all 4000 outcomes
-    + use R function `hist` to visualize the resulting distribution of sums - compare and constrast
-    + use R function `hist` to visualize the resulting distribution of sums.
+    + use histograms to visualize the distribution of the sums - compare and constrast
 

@@ -5,9 +5,12 @@ transformed data {
 }
 generated quantities {
   int best3;
-  int rolls[N];
-  for (i in 1:N) {
-    rolls[i] = categorical_rng(theta);
+  // use local scope to do the work
+  {
+    int rolls[N];
+    for (i in 1:N) {
+      rolls[i] = categorical_rng(theta);
+    }
+    best3 = sum(rolls) - min(rolls);
   }
-  best3 = sum(rolls) - min(rolls);
 }
