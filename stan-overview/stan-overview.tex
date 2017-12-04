@@ -48,11 +48,6 @@
 
 
 
-
-
-
-
-
 \sld{StanCon 2018}
 %
 \begin{itemize}
@@ -89,7 +84,7 @@
 \begin{itemize}
 \item Stan is an \myemph{imperative probabilistic programming language}
   \begin{subitemize}
-  \item  cf., BUGS: declarative; \ Church: functional; \ PyMC3: ?
+  \item  cf., BUGS: declarative; \ Church: functional; \ Figaro: OO
   \end{subitemize}
 \item Stan \myemph{program}: defines a probability model
   \begin{subitemize}
@@ -122,8 +117,8 @@
 \item effective sample size / time (i.e., information)
 \item multi-core and GPU code complete on branches
 \end{subitemize}
-\item \myemph{Ongoing open source development}
-\item \myemph{Community support!}
+\item Ongoing \myemph{open source} development
+\item \myemph{Community} support!
 \end{itemize}
 
 
@@ -145,89 +140,682 @@
 \end{itemize}
 
 
-\mypart{}{Predator-Prey Dynamics}
+\mypart{}{Simulation}
 
 
-\sld{Lynxes and Hares}
+\sld{Repeated i.i.d. Trials}
 %
-\begin{center}
-\includegraphics[height=1in]{img/lynx.jpg}
-\hspace*{0.25in}
-\includegraphics[height=1in]{img/hare.jpg}
-\end{center}
-\begin{itemize}
-\item \myemph{Snowshoe hare} (prey): herbivorous cousin of rabbits
-\item \myemph{Canadian lynx} (predator): feline eating primarily hares
-\end{itemize}
-\vfill
-{\tiny
-\mbox{ } \hfill
-Lynx image copyright 2009, Keith Williams, CC-BY 2.0.
-\\[-2pt]
-\mbox{ } \hfill
-Hare image copyright 2013 D. Gordon E. Robonson, CC-BY SA 2.0}
+% need space to allow noindent to function
 
-
-\sld{Hudson Bay Co. Pelts, 1900--20}
-%
-\\[-4pt] \spc
-\includegraphics[width=0.85\textwidth]{img/hare-lynx-pelts-1.png}
-
-
-\sld{Pelts, Phase Space}
-%
-\\[-4pt] \spc
-\includegraphics[width=0.85\textwidth]{img/hare-lynx-pelts-2.png}
-
-
-\sld{Volterra's (1927) Model}
-%
-
-\begin{minipage}[t]{0.65\textwidth}
-\vspace*{-1in}
+\noindent
+\begin{minipage}[t]{0.69\textwidth}
+\vspace*{-1.9in}
 \begin{subitemize}
-\item population: $u(t)$ \myemph{prey}, \ $v(t)$ \myemph{predator}
-%
-\begin{eqnarray*}
-\frac{\mathrm{d}}{\mathrm{d}t} u
-& = &  (\alpha - \beta v) u
-\\[6pt]
-\frac{\mathrm{d}}{\mathrm{d}t} v
-& = &  (-\gamma + \delta \, u) \, v
-\end{eqnarray*}
-%
+\item Suppose we repeatedly generate a random outcome from among
+several potential outcomes
+\item Suppose the outcome chances are the same each time
 \begin{subsubitemize}
-\item $\alpha$: prey growth, intrinsic
-\item $\beta$: prey shrinkage due to predation
-\item $\gamma$: predator shrinkage, intrinsic
-\item $\delta$: predator growth from predation
+\item i.e., outcomes are independent and identically distributed (i.i.d.)
 \end{subsubitemize}
-\vspace*{-8pt}
-\item \footnotesize dynamics lead to \myemph{oscillation} as observed
+\item For example, spin a fair spinner (without cheating), such as one from \emph{Family Cricket}.
 \end{subitemize}
 \end{minipage}
 %
-\hfill
+\begin{minipage}[t]{0.29\textwidth}
+\hfill \includegraphics[height=2in]{img/family-cricket-spinner.jpg}
+\end{minipage}
+\vfill
+\hfill {\tiny Image source: \url{http://replaycricket.com/2010/10/29/family-cricket/}}
+
+
+\sld{Repeated i.i.d. Binary Trials}
 %
-\begin{minipage}[t]{0.3\textwidth}
-\mbox{ }
-\vspace*{0.5in}
-\mbox{ } \hfill
-\includegraphics[width=0.8\textwidth]{img/volterra-orbit.jpg}
-\\[-8pt]
-\mbox{ }
+\begin{itemize}
+\item Suppose the outcome is binary and assigned to 0 or 1; e.g.,
+\begin{subitemize}
+\item 20\% chance of outcome 1: \emph{ball in play}
+\item 80\% chance of outcome 0: \emph{ball \emph{not} in play}
+\end{subitemize}
+\item Consider different numbers of bowls delivered.
+\item How will proportion of successes in sample differ?
+\end{itemize}
+
+
+\sld{Simulating i.i.d. Binary Trials}
+%
+\begin{itemize}
+\item R Code: {\small \code{rbinom(10, N, 0.2) / N}}
+\begin{subitemize}
+\item {\bfseries 10 bowls} \hfill (10\% to 50\% success rate)
+\\[4pt] 2 3 5 2 4 1 2 2 1 1
+\vspace*{3pt}
+%
+\item {\bfseries 100 bowls} \hfill (16\% to 26\% success rate)
+\\[4pt] 26 18 23 17 21 16 21 15 21 26
+\vspace*{3pt}
+%
+\item {\bfseries 1000 bowls} \hfill (18\% to 22\% success rate)
+\\[4pt] 181 212 175 213 216 179 223 198 188 194
+\vspace*{3pt}
+%
+\item {\bfseries 10,000 bowls} \hfill (19.3\% to 20.3\% success rate)
+\\[4pt] 2029 1955 1981 1980 2001 2014 1931 1982 1989 2020
+\end{subitemize}
+\end{itemize}
+
+
+\sld{Pop Quiz! Cancer Clusters}
+%
+\begin{itemize}
+\item Why do lowest and highest cancer clusters look so similar?
+\end{itemize}
+\vspace*{1pt}
+\begin{center}
 \hfill
-\includegraphics[width=0.8\textwidth]{img/hare-lynx-pelts-2.png}
+\includegraphics[width=0.45\textwidth]{img/low-cancer.jpg}
+\hfill
+\includegraphics[width=0.45\textwidth]{img/high-cancer.jpg}
+\hfill
+\end{center}
+\vfill
+\hfill {\tiny Image from Gelman et al., {\slshape Bayesian Data Analysis, 3rd Edition} (2013)}
+
+
+\sld{Pop Quiz Answer}
+%
+\begin{itemize}
+\item Hint: mix earlier simulations of repeated i.i.d. trials with 20\% success and sort:
+{\footnotesize
+\begin{center}
+\begin{tabular}{ccccc}
+1/10 &  1/10 &  1/10 &  15/100 &  16/100
+\\
+17/100 &  175/1000 &  179/1000 &  18/100 &  181/1000
+\\
+188/1000 &  194/1000 &  198/1000 & 2/10 &  2/10
+\\
+2/10 &  2/10 & 21/100 &  21/100 &  21/100
+\\
+212/1000 &  213/1000 &   216/1000 &   223/1000 &  23/100
+\\
+26/100 &  26/100 &  3/10 &  4/10 &  5/10
+\end{tabular}
+\end{center}
+}
+\item More variation in observed rates with smaller sample sizes
+\vfill
+\item \emph{Answer}: High cancer and low cancer counties are small populations
+\end{itemize}
+
+
+
+\sld{Simple Point Estimation}
+%
+\begin{itemize}
+\item Estimate chance of success $\theta$ by proportion of successes:
+\[
+\theta^{*} = \frac{\text{successes}}{\text{attempts}}
+\]
+\item Simulation shows accuracy depends on the amount of data.
+\item Statistics is about quantifying uncertainty.
+\item Bayesian statistics is about using uncertainty in inference.
+\end{itemize}
+
+{\footnotesize Notation: $\theta^{*}$ denotes the
+{\it maximum likelihood estimate} of $\theta$.}
+
+
+\sld{Confidence via Simulation}
+%
+\begin{itemize}
+\item Estimator uncertainty (\emph{not} Bayesian posterior)
+{\small
+\begin{Verbatim}
+num_sims <- 10000
+N <- 100;
+theta <- 0.2;
+hist(rbinom(num_sims, N, theta) / N,
+     main=sprintf("%d simulations",N), xlab="theta*");
+\end{Verbatim}
+}
+\vspace*{-12pt}
+\begin{center}
+\includegraphics[width=0.8\textwidth]{img/hist-10-100-1000.pdf}
+\end{center}
+\end{itemize}
+
+
+\sld{Example Interval Calculation}
+%
+\begin{itemize}
+\item \emph{$P\%$ confidence interval:}  interval in which $P\%$ of the estimates are
+expected to fall.
+\item Simulation computes intervals to any accuracy.
+\item Simulate, sort, and inspect the central empirical interval.
+{\small
+\begin{Verbatim}
+> sims <- rbinom(10000, 1000, 0.2) / 1000
+> sorted_sims <- sort(sims)
+> sorted_sims[c(250, 9750)]
+[1] 0.176 0.225
+\end{Verbatim}
+}
+\item The 95\% confidence interval is thus $(0.176,0.225)$
+\item i.e., if true $\theta = 0.2$, then 95\% of the samples of
+  size 1000 used will produce estimates in $(0.176,0.225)$
+\end{itemize}
+
+
+\sld{Estimator Bias}
+%
+\begin{itemize}
+\item {\bfseries Bias:} expected difference of estimate from true value
+\item Continuing previous example
+{\small
+\begin{Verbatim}
+> sims <- rbinom(10000, 1000, 0.2) / 1000
+> mean(sims)
+[1] 0.2002536
+\end{Verbatim}
+}
+\item Value of 0.2 is estimate of expectation
+\item Shows this estimator is \emph{unbiased}
+\end{itemize}
+
+
+\sld{Central Limit Theorem (picture)}
+%
+\vspace*{-3pt}
+\begin{center}
+\vspace*{-3pt}
+\includegraphics[width=0.8\textwidth]{img/coin-flip-clt.png}
+\end{center}
+\vspace*{-8pt}
+\begin{subitemize}
+\item proportion heads for 100 sequences of 100,000 flips
+\vspace*{-2pt}
+\item converges gradually to expected value of 0.5
+\end{subitemize}
+
+
+\sld{Central Limit Theorem (words)}
+%
+\begin{itemize}
+\item \myemph{The} theorem of statistics
+\vspace*{-4pt}
+\begin{subsubitemize}
+\item Cardano (1501--1576) conjectured convergence; (Jacob) Bernoulli
+  (1713) proved convergence for binomials (law of large numbers); de Moivre
+  (1733) conjectured the CLT; Laplace (1812) proved i.i.d.\ version;
+  Lyapunov (1901) removed i.i.d.\ constraint
+\end{subsubitemize}
+\item Sample \myemph{mean} of $N$ i.i.d. variables with finite expectation
+\begin{subitemize}
+\item  \myemph{converges} to their expectation as $N \rightarrow \infty$
+\vspace*{2pt}
+\item \myemph{rate} of convergence is {\large ${\mathcal{O}}\!\left( \frac{1}{\sqrt{N}} \right)$}
+\vspace*{2pt}
+\item constant factor determined by standard deviation
+\end{subitemize}
+\vfill
+\item Each decimal place of accuracy requires $100 \times$ more draws
+\end{itemize}
+
+
+\sld{Central Limit Theorem (math)}
+%
+\begin{itemize}
+\item Given $N$ i.i.d.\ variables $\theta_1, \ldots, \theta_N$ with
+\begin{subitemize}
+\item $\mathbb{E}[\theta_n] = \mu$
+\item $\mathrm{sd}[\theta_n] = \sigma$
+\end{subitemize}
+the \myemph{central limit theorem} states
+%
+\[
+\lim_{N \rightarrow \infty} \
+\frac{\theta_1 + \cdots + \theta_N}{N}
+\sim
+\mathsf{Normal}\left( \mu, \frac{\sigma}{\sqrt{N}} \right)
+\]
+\end{itemize}
+
+
+
+\mypart{}{Numerical Analysis}
+
+\sld{Floating-Point Standard: IEEE 754}
+%
+\begin{itemize}
+\item \myemph{Finite numbers} ($s$: sign; $c$: mantissa; $q$: exponent)
+{\large
+\[
+x = (-1)^s \times c \times 2^q
+\]
+}
+\begin{center}
+\begin{tabular}{r|c|c|cc}
+{\slshape size} & $s, c$ {\slshape bits} & $q$ {\slshape bits}
+& {\slshape range} & {\slshape precision}
+\\ \hline
+{\slshape 32-bit} & 24 & 8
+& $\pm 3.4 \times 10^{38}$ & 7.2 digits
+\\[4pt]
+{\slshape 64-bit} & 53 & 11
+& $\pm 1.8 \times 10^{308}$ & 16 digits
+\end{tabular}
+\end{center}
+\item Quiet and signaling \myemph{not-a-number} (NaN)
+\item Positive and negative \myemph{infinity} ($+\infty, -\infty$)
+\item \myemph{Stan} uses 64-bit floating point
+\end{itemize}
+
+
+\sld{Catastrophic Cancellation}
+%
+\begin{itemize}
+\item Subtraction risks \myemph{catastrophic cancellation}
+\item Consider $0.99802 - 0.99801 = 0.00001$
+\begin{subitemize}
+\item input has five digits of precision
+\item output has single digit of precision
+\end{subitemize}
+\item E.g., problem for sample variance of sequence $x$
+\[
+\mbox{var}(x) = \frac{1}{N - 1} \, \sum_{n = 1}^N (x_n - \overline{x})^2
+\]
+if elements $x_n$ close to sample mean
+\[
+\overline{x} = \frac{1}{N} \, \sum_{n=1}^N x_n
+\]
+\end{itemize}
+
+\sld{Welford's Algorithm}
+\begin{itemize}
+\item \myemph{Streaming computation} uses fixed memory
+\begin{stancode}
+N = 0;    mean = 0;    sum_sq_err = 0
+
+handle(y):
+    N += 1
+    diff = y - mean
+    mean = mean + diff / N
+    diff2 = y - mean
+    sum_sq_err += diff * diff2
+
+mean():  return mean
+
+var():  return sum_sq_err / (N - 1)
+\end{stancode}
+\item Two stage difference is \myemph{less prone to cancellation}
+\end{itemize}
+
+
+\sld{Gaps Between Numbers}
+%
+\begin{itemize}
+\item Smallest number greater than zero
+\begin{subitemize}
+\item single precision:  $1.4 \times 10^{-45}$
+\item double precision: $4.9 \times 10^{-324}$
+\end{subitemize}
+\item Largest number less than one
+\begin{subitemize}
+\item single precision: $1 - 10^{-7.2}$
+\item double precision: $1 - 10^{-16}$
+\end{subitemize}
+\item Gap size \myemph{depends on scale}
+\end{itemize}
+
+
+\sld{Lack of Transitivity}
+%
+\begin{itemize}
+\item For real numbers $x, y, z \in \mathbb{R}$,
+\[
+x + (y + z) \ = \ (x + y) + z
+\]
+\item This can fail for floating point due to rounding
+\begin{subitemize}
+\item \code{(1 + 6e-17) + 6e-17 == 1}
+\item \code{1 + (6e-17 + 6e-17) != 1}
+\end{subitemize}
+\item For square matrices $L \, L^{\top}$ is symmetric
+\item This won't hold for efficient matrix multiplications
+\begin{subitemize}
+\item \code{(L * L')[1, 2] != (L * L')[2, 1]}
+\end{subitemize}
+\end{itemize}
+
+
+\sld{Rounding and Equality}
+%
+\begin{itemize}
+\item Dangerous to compare floating point numbers
+\begin{subitemize}
+\item they may have lost precision during calculation
+\end{subitemize}
+\item Rounding
+\begin{subitemize}
+\item default: round toward nearest
+\item round toward zero, round to plus or minus infinity
+\end{subitemize}
+\end{itemize}
+
+
+\sld{Overflow and Rounding}
+%
+\begin{itemize}
+\item Because there is a max size, operations can overflow
+\begin{subitemize}
+\item e.g., \code{exp(1000)}, \code{1e200 * 1e200}, ...
+\end{subitemize}
+\item Because there are gaps, operations can round to zero
+\begin{subitemize}
+\item e.g., \code{exp(-1000)}, \code{1e-200 * 1e-200}, ...
+\item e.g., evaluating $\prod_{n=1}^N p(y_n | \theta)$ underflows
+for $N = 2000$ if $p(y_n | \theta) < 0.1$.
+\end{subitemize}
+\end{itemize}
+
+
+\sld{Example: \code{log1p} and CCDFs}
+%
+\begin{itemize}
+\item \code{log1p(x)} is for evaluating $\log$ near one
+\begin{subitemize}
+\item when \code{x} is near zero, \code{1 + x} catastrophically rounds
+  to 1
+\item this forces \code{log(1 + x)} to round to 0
+\item \code{log1p(x)} avoids \code{1 + x} operation
+\item \code{log1p(x)} uses Taylor series expansion of $\log(1 + x)$
+\end{subitemize}
+\item Complementary CDFs evaluate CDFs with values near one
+\begin{subitemize}
+\item $X$ is some random variable, e.g., $X \sim \mathsf{Normal}(0, 1)$
+\item CDF: $F_X(x) = \mbox{Pr}[X \leq x]$
+\item CCDF: $F^{\complement}_X(x) = 1 - \mbox{Pr}[X \leq x]$
+\item converts range around one to range around zero
+\end{subitemize}
+\end{itemize}
+
+
+\sld{Example: \code{log} and \code{log\_sum\_exp}}
+%
+\begin{itemize}
+\item \myemph{Multiplication on the log scale}: \code{log}
+\begin{subitemize}
+\item $\log (a \times b) = \log a + \log b$
+\item log converts multiplication to addition
+\item $\log \prod_n x_n = \sum_n \log x_n$
+\item avoids underflow and overflow even if $x_n \ll 1$ or $x_n \gg 1$
+\item useful absolutely everywhere (e.g., log likelihoods)
+\end{subitemize}
+\item \myemph{Addition on the log scale}: \code{log\_sum\_exp}
+\begin{subitemize}
+\item $\log (a + b) = \log(\exp(\log a) + \exp(\log b))$
+\item log converts addition to log sum of exponentials
+\item avoids underflow and overflow, preserves precision
+\item useful for mixtures (e.g., HMMs, zero-inflated Poisson)
+\end{subitemize}
+\end{itemize}
+
+
+\sld{Example: \code{log\_sum\_exp}}
+%
+\begin{itemize}
+\item Without loss of generality, assume $a > b$ (otherwise swap)
+\vspace*{-8pt}
+\begin{eqnarray*}
+\mathrm{log\_sum\_exp}(a, b) & = & \log(\exp(a) + \exp(b))
+\\[2pt]
+& = & a + \log(\exp(a - a) + \exp(b - a))
+\\[2pt]
+& = & a + \log(1 + \exp(b - a))
+\\[2pt]
+& = & a + \mathrm{log1p(\exp(b - a))}
+\end{eqnarray*}
+\vspace*{-8pt}
+\begin{subitemize}
+\item \myemph{increase precision}: \ pull $a$ out of $\log()$ and
+  $\exp()$
+\item \myemph{increase precision}: \ use \code{log1p}
+\item \myemph{prevents overflow}: \ can't overflow because $b - a \leq 0$
+\end{subitemize}
+\item Generalize to more than two inputs: subtract max
+\end{itemize}
+
+
+
+
+
+
+
+\mypart{}{Monte Carlo \\[8pt]\spc Integration}
+
+\sld{Monte Carlo Calculation of $\pi$}
+
+\noindent
+\begin{minipage}[t]{0.65\textwidth}
+\begin{itemize}
+\item Computing $\pi = 3.14\ldots$ via simulation is \emph{the} textbook application
+of Monte Carlo methods.
+\vfill
+\item Generate points uniformly at random within the square
+\item Calculate proportion within circle ($x^2 + y^2 \leq 1$) and multiply by square's area (4) to produce the area of the circle.
+\item This area is $\pi$ (radius is 1, so area is $\pi r^2 = \pi$)
+\end{itemize}
+\end{minipage}
+%
+\hfill
+\begin{minipage}[t]{0.2\textwidth}
+\vspace*{12pt}
+\hfill \includegraphics[height=\textwidth]{img/mc-integration-wikipedia.png}
+\\[4pt]
+{\tiny plot by Mysid Yoderj,\\ courtesy of Wikipedia.}
+\end{minipage}
+\vfill
+
+
+\sld{Monte Carlo Calculation of $\pi$ {\normalsize (cont.)}}
+%
+\begin{subitemize}
+\item R code to calculate $\pi$ with Monte Carlo simulation:
+\\[-8pt]
+{\small
+\begin{Verbatim}
+> x <- runif(1e6,-1,1)
+> y <- runif(1e6,-1,1)
+
+> prop_in_circle <- sum(x^2 + y^2 <= 1) / 1e6
+
+> 4 * prop_in_circle
+[1] 3.144032
+\end{Verbatim}
+}
+\end{subitemize}
+
+
+\sld{$\pi$ as an Expectation}
+%
+\begin{itemize}
+\item If probability is uniform over the sample space,
+\\[2pt] \ \ then an event's
+  probability is its area (volume in general)
+\item Suppose $X, Y \sim \mathsf{Uniform}(-1, 1)$
+\item Then $\mathrm{Pr}[X^2 + Y^2 \leq 1] \ = \ \pi / 4$.
+\item To calculate using Monte Carlo draws $(x^{(m)}, y^{(m)})$,
+{\small
+\begin{eqnarray*}
+\mathrm{Pr}[X^2 + Y^2 \leq 1]
+& = & \mathbb{\normalsize E}\!\left[ \, \mathrm{\normalsize I}\!\left[ X^2 + Y^2 < 1 \right]
+      \, \right]
+\\[8pt]
+& = & \int_{-1}^1 \int_{-1}^1 \
+       \mathrm{\normalsize I}\!\left[ x^2 + y^2 < 1 \right] \ p_X(x) \ p_Y(y) \ \mathrm{d}x \, \mathrm{d}y
+\\[8pt]
+& \approx
+& \frac{1}{M}
+\ \mathrm{\Large I}\!\left[ \left( x^{(m)} \right)^2 + \left( y^{(m)} \right)^2
+                   < 1 \right]
+\end{eqnarray*}
+}
+\end{itemize}
+
+\sld{Calculating $\pi$ with Stan}
+%
+\begin{itemize}
+\item Complete Stan program to compute $\mathrm{Pr}[X^2 + Y^2 \leq 1]$:
+\begin{stancode}
+generated quantities {
+  real x = uniform_rng(-1, 1);
+  real y = uniform_rng(-1, 1);
+  real pi_div_4 = hypot(x, y) <= 1;
+}
+\end{stancode}
+\item \myemph{Simulates} $X$ and $Y$
+\item \myemph{Codes indicator function} implicitly with comparison
+\begin{subitemize}
+\item uses Stan's built-in hypotenuse function
+\item \Verb|hypot(a, b) = sqrt(a^2 + b^2)|
+\end{subitemize}
+\end{itemize}
+
+\sld{Fitting Stan model for $\pi$ in R}
+\begin{itemize}
+\item \code{Fixed\_param} algorithm for no parameters
+\begin{stancode}
+> fit <- stan("pi.stan", algorithm="Fixed_param",
+              iter=100000)
+\end{stancode}
+\item Print only what's needed (print output elided manually)
+\begin{stancode}
+> print(fit, digits=3, probs=c(), pars=c("pi_div_4"))
+
+          mean se_mean
+pi_div_4 0.786   0.001
+\end{stancode}
+\item Estimate accurate to \myemph{within estimated tolerances}
+\begin{subitemize}
+\item $4 \times 0.786 = 3.144$
+\item predicted accuracy is 0.004 (four times standard error)
+\end{subitemize}
+\end{itemize}
+
+
+\sld{Accuracy of Monte Carlo}
+%
+\begin{itemize}
+\item Monte Carlo Integration computes the exact posterior to within any $\epsilon$
+(\emph{not} like variational Bayes which yields an approximation of the posterior)
+\item Monte Carlo draws are i.i.d. by definition
+\item Central limit theorem: expected error decreases at rate of
+{\Large
+\[
+\frac{1}{\sqrt{N}}
+\]
+}
+\item 3 decimal places of accuracy with
+sample size 1e6
+\item Need $100 \times$ larger sample for each digit of accuracy
+\end{itemize}
+
+
+\sld{General Monte Carlo Integration}
+%
+\begin{minipage}[t]{0.69\textwidth}
+\vspace*{-0.1in}
+\small
+\begin{itemize}
+\item MC can calculate arbitrary definite integrals,
+\[
+\int_a^b f(x) \, dx
+\]
+\item Let $d$ upper bound $f(x)$ in $(a,b)$;  tightness determines
+computational efficiency
+\item Then generate random points uniformly in the rectangle bounded by $(a,b)$ and $(0,d)$
+\item Multiply proportion of draws $(x,y)$ where $y < f(x)$ by area of rectangle, $d \times (b-a)$.
+\item Can be generalized to multiple dimensions in obvious way
+\end{itemize}
+\end{minipage}
+\begin{minipage}[t]{0.29\textwidth}
+\mbox{ } \\
+\mbox{ } \ \ \ \
+\includegraphics[height=0.9in]{img/monte-carlo-integration.png}
 \end{minipage}
 \vfill
 \hfill
-{\tiny
-Volterra, V., 1927. {\slshape Variazioni
-e fluttuazioni del numero d'individui in specie animali
-conviventi}. C.~Ferrari.
-}
+{\tiny Image courtesy of Jeff Cruzan, \url{http://www.drcruzan.com/NumericalIntegration.html}}
+
+
+\sld{Expectations of Function of R.V.}
+%
+\begin{itemize}
+\item Suppose $f(\theta)$ is a function of random variable vector
+  $\theta$
+\item Suppose the density of $\theta$ is $p(\theta)$
+\begin{subitemize}
+\item {\slshape Warning}: $\theta$ overloaded as random and bound variable
+\end{subitemize}
+\item Then $f(\theta)$ is also random variable, with expectation
+  \[
+  \mathbb{E}[f(\theta)] = \int_{\Theta} f(\theta) \ p(\theta) \ d\theta.
+  \]
+\begin{subitemize}
+\item
+where $\Theta$ is support of $p(\theta)$ (i.e., $\Theta =
+\setcomp{\theta \, | \, p(\theta) > 0}$
+\end{subitemize}
+\end{itemize}
+
+
+\sld{QoI as Expectations}
+%
+\begin{itemize}
+\item Most Bayesian quantities of interest (QoI) are expectations
+  over the posterior $p(\theta \, | \, y)$ of functions $f(\theta)$
+\item \myemph{Bayesian parameter estimation}: $\hat{\theta}$
+\begin{subitemize}
+\item $f(\theta) = \theta$
+\item $\hat{\theta} = \mathbb{E}[\theta | y]$ minimizes expected
+  square error
+\end{subitemize}
+\item \myemph{Bayesian parameter (co)variance estimation}:
+  $\mathrm{var}[\theta \, | \, y]$
+\begin{subitemize}
+\item $f(\theta) = (\theta - \hat{\theta})^2$
+\end{subitemize}
+\item \myemph{Bayesian event probability}:  $\mbox{Pr}[A \, | \, y]$
+\begin{subitemize}
+  \item $f(\theta) = \mathrm{I}(\theta \in A)$
+\end{subitemize}
+\end{itemize}
+
+
+\sld{Expectations via Monte Carlo}
+%
+\begin{itemize}
+\item Generate draws $\theta^{(1)}, \theta^{(2)}, \ldots,
+  \theta^{(M)}$ drawn from $p(\theta)$
+\item Monte Carlo Estimator \myemph{plugs in average} for expectation:
+  \[
+  \mathbb{E}[f(\theta)|y] \approx \frac{1}{M} \sum_{m=1}^M f(\theta^{(m)})
+  \]
+\item Can be made \myemph{as accurate as desired}, because
+\[
+\mathbb{E}[f(\theta)]
+=
+\lim_{M \rightarrow \infty} \
+\frac{1}{M} \sum_{m=1}^M f(\theta^{(m)})
+\]
+\vfill
+\item {\slshape Reminder}:  By CLT, error goes down as
+$1 \, / \, \sqrt{M}$
+\end{itemize}
+
 
 \mypart{}{The Curse of\\[8pt]{\spc}Dimensionality}
+
 
 \sld{The Curse}
 %
@@ -565,23 +1153,38 @@ generated quantities {
 \item Events with non-zero probability have probability mass, e.g.,
   $\mbox{Pr}[\theta_0 > \theta_1 \mid y]$
 \item Mass arises from integrating over density
+\item As data size increases, posterior concentrates around true value
+\item Also see this in non-centered reparameterization plot
 \end{itemize}
 
-\sld{Binomial Concentration, $n = 25$}
+\sld{E.g., Binomial Concentration}
+%
+\begin{itemize}
+\item $y \sim \mathsf{Binomial}(N, \theta)$
+\[
+\mathsf{Binomial}(y \mid N, \theta)
+= \binom{N}{y} \, \theta^y \, (1 - \theta)^{N - y}
+\]
+\item As $N \rightarrow \infty$, posterior average $y / N$
+  concentrates around $\theta$
+\item Concentration governed by central limit theorem
+\end{itemize}
+
+\sld{Binomial Concentration, $N = 25$}
 %
 \\[-12pt]
 \begin{center}
 \includegraphics[width=0.8\textwidth]{img/binomial-concentration-25.png}
 \end{center}
 
-\sld{Binomial Concentration, $n = 100$}
+\sld{Binomial Concentration, $N = 100$}
 %
 \\[-12pt]
 \begin{center}
 \includegraphics[width=0.8\textwidth]{img/binomial-concentration-100.png}
 \end{center}
 
-\sld{Binomial Concentration, $n = 400$}
+\sld{Binomial Concentration, $N = 400$}
 %
 \\[-12pt]
 \begin{center}
@@ -611,777 +1214,6 @@ generated quantities {
 \item ball has volume ${} \propto r^3$
 \item 4-dimensional hyperball has volume ${} \propto r^4$
 \end{subitemize}
-\end{itemize}
-
-
-
-\end{document}
-
-
-\sld{Why Stan?}
-%
-\begin{itemize}
-\item {\slshape\bfseries Goal}: Robust, fully Bayesian inference.
-\end{itemize}
-%
-\vspace*{2pt}
-\begin{itemize}
-\item {\slshape Problem}: Gibbs and Metropolis too slow (diffusive)
-\item {\slshape Solution}: Hamiltonian Monte Carlo (flow)
-%
-\vspace*{8pt}
-\item {\slshape Problem}:  Interpreters slow and unscalable
-\item {\slshape Solution}: Compiled to C++
-%
-\vspace*{8pt}
-\item {\slshape Problem}:  Need gradients of log posterior for HMC
-\item {\slshape Solution}: Reverse-mode algorithmic differentiation
-\end{itemize}
-
-
-\sld{Why Stan? (cont.)}
-%
-\begin{itemize}
-\item {\slshape Problem}:  Existing algo-diff slow, limited, unextensible
-\item {\slshape Solution}: Our own algo-diff
-%
-\vspace*{8pt}
-\item {\slshape Problem}:  Algo-diff requires functions templated on
-  all args
-\item {\slshape Solution}: Our own density library, Eigen linear
- algebra
-%
-\vspace*{8pt}
-\item {\slshape Problem}:  Need unconstrained parameters for HMC
-\item {\slshape Solution}: Variable transforms w. Jacobian determinants
-%
-\end{itemize}
-
-
-\sld{Why Stan? (cont.)}
-%
-\begin{itemize}
-\item {\slshape Problem}:  Need ease of use of BUGS
-\item {\slshape Solution}: Compile a domain-specific language
-%
-\vspace*{8pt}
-\item {\slshape Problem}:  Pure directed graphical language inflexible
-\item {\slshape Solution}: Imperative probabilistic programming
-  language
-\vspace*{8pt}
-\item {\slshape Problem}:  Need to tune parameters for HMC
-\item {\slshape Solution}: Tune step size and estimate mass matrix
-  during warmup;  on-the-fly number of steps (NUTS)
-%
-\end{itemize}
-
-
-\sld{Why Stan? (cont.)}
-%
-\begin{itemize}
-%
-\vspace*{4pt}
-\item {\slshape Problem}:  Efficient up-to-proportion density calcs
-\item {\slshape Solution}: Density template metaprogramming
-%
-\vspace*{4pt}
-\item {\slshape Problem}:  Limited error checking, recovery
-\item {\slshape Solution}: Static model typing, informative exceptions
-%
-\vspace*{4pt}
-\item {\slshape Problem}:  Poor numerical stability
-\item {\slshape Solutions}:
-{
-Taylor expansions, e.g., {\small \code{log1p()}}
-\\[2pt]
-compound functions, e.g., {\small \code{log\_sum\_exp()}, \
-\code{BernoulliLogit()}}
-\\[2pt]
-limits at boundaries, e.g., {\small \code{multiply\_log()}}
-}
-%
-\end{itemize}
-
-\sld{Why Stan? (cont.)}
-%
-\begin{itemize}
-\item {\slshape Problem}:  Nobody knows everything
-\item {\slshape Solution}: Expand project team with specialists
-\vspace*{8pt}
-\item {\slshape Problem}:  Expanding code and project team
-\item {\slshape Solution}: GitHub: branch, pull
-  request, code review
-\item {\slshape Solution}: Jenkins: continuous integration
-\item {\slshape Solution}: ongoing refactoring and code simplification
-%
-\end{itemize}
-
-\sld{Why Stan? (cont.)}
-%
-\begin{itemize}
-\item {\slshape Problem}:  Heterogeneous user base
-\item {\slshape Solution}: More interfaces (R, Python, MATLAB, Julia)
-\item {\slshape Solution}:  domain-specific examples, tutorials
-\vspace*{8pt}
-\item {\slshape Problem}:  Restrictive licensing limits use
-\item {\slshape Solution}: Code and doc open source
-(BSD, CC-BY)
-\end{itemize}
-
-
-
-\mypart{}{MCMC}
-
-
-\sld{Repeated i.i.d. Trials}
-%
-% need space to allow noindent to function
-
-\noindent
-\begin{minipage}[t]{0.69\textwidth}
-\vspace*{-1.9in}
-\begin{subitemize}
-\item Suppose we repeatedly generate a random outcome from among
-several potential outcomes
-\item Suppose the outcome chances are the same each time
-\begin{subsubitemize}
-\item i.e., outcomes are independent and identically distributed (i.i.d.)
-\end{subsubitemize}
-\item For example, spin a fair spinner (without cheating), such as one from \emph{Family Cricket}.
-\end{subitemize}
-\end{minipage}
-%
-\begin{minipage}[t]{0.29\textwidth}
-\hfill \includegraphics[height=2in]{img/family-cricket-spinner.jpg}
-\end{minipage}
-\vfill
-\hfill {\tiny Image source: \url{http://replaycricket.com/2010/10/29/family-cricket/}}
-
-
-\sld{Repeated i.i.d. Binary Trials}
-%
-\begin{itemize}
-\item Suppose the outcome is binary and assigned to 0 or 1; e.g.,
-\begin{subitemize}
-\item 20\% chance of outcome 1: \emph{ball in play}
-\item 80\% chance of outcome 0: \emph{ball \emph{not} in play}
-\end{subitemize}
-\item Consider different numbers of bowls delivered.
-\item How will proportion of successes in sample differ?
-\end{itemize}
-
-
-\sld{Simulating i.i.d. Binary Trials}
-%
-\begin{itemize}
-\item R Code: {\small \code{rbinom(10, N, 0.2) / N}}
-\begin{subitemize}
-\item {\bfseries 10 bowls} \hfill (10\% to 50\% success rate)
-\\[4pt] 2 3 5 2 4 1 2 2 1 1
-\vspace*{3pt}
-%
-\item {\bfseries 100 bowls} \hfill (16\% to 26\% success rate)
-\\[4pt] 26 18 23 17 21 16 21 15 21 26
-\vspace*{3pt}
-%
-\item {\bfseries 1000 bowls} \hfill (18\% to 22\% success rate)
-\\[4pt] 181 212 175 213 216 179 223 198 188 194
-\vspace*{3pt}
-%
-\item {\bfseries 10,000 bowls} \hfill (19.3\% to 20.3\% success rate)
-\\[4pt] 2029 1955 1981 1980 2001 2014 1931 1982 1989 2020
-\end{subitemize}
-\end{itemize}
-
-
-\sld{Simple Point Estimation}
-%
-\begin{itemize}
-\item Estimate chance of success $\theta$ by proportion of successes:
-\[
-\theta^{*} = \frac{\text{successes}}{\text{attempts}}
-\]
-\item Simulation shows accuracy depends on the amount of data.
-\item Statistics is about quantifying uncertainty.
-\item Bayesian statistics is about using uncertainty in inference.
-\end{itemize}
-
-{\footnotesize Notation: $\theta^{*}$ denotes the
-{\it maximum likelihood estimate} of $\theta$.}
-
-\sld{Confidence via Simulation}
-%
-\begin{itemize}
-\item Estimator uncertainty (\emph{not} Bayesian posterior)
-{\small
-\begin{Verbatim}
-num_sims <- 10000
-N <- 100;
-theta <- 0.2;
-hist(rbinom(num_sims, N, theta) / N,
-     main=sprintf("%d simulations",N), xlab="theta*");
-\end{Verbatim}
-}
-\vspace*{-12pt}
-\begin{center}
-\includegraphics[width=0.8\textwidth]{img/hist-10-100-1000.pdf}
-\end{center}
-\end{itemize}
-
-
-\sld{Example Interval Calculation}
-%
-\begin{itemize}
-\item \emph{$P\%$ confidence interval:}  interval in which $P\%$ of the estimates are
-expected to fall.
-\item Simulation computes intervals to any accuracy.
-\item Simulate, sort, and inspect the central empirical interval.
-{\small
-\begin{Verbatim}
-> sims <- rbinom(10000, 1000, 0.2) / 1000
-> sorted_sims <- sort(sims)
-> sorted_sims[c(250, 9750)]
-[1] 0.176 0.225
-\end{Verbatim}
-}
-\item The 95\% confidence interval is thus $(0.176,0.225)$
-\item i.e., if true $\theta = 0.2$, then 95\% of the samples of
-  size 1000 used will produce estimates in $(0.176,0.225)$
-\end{itemize}
-
-
-\sld{Estimator Bias}
-%
-\begin{itemize}
-\item {\bfseries Bias:} expected difference of estimate from true value
-\item Continuing previous example
-{\small
-\begin{Verbatim}
-> sims <- rbinom(10000, 1000, 0.2) / 1000
-> mean(sims)
-[1] 0.2002536
-\end{Verbatim}
-}
-\item Value of 0.2 is estimate of expectation
-\item Shows this estimator is \emph{unbiased}
-\end{itemize}
-
-
-\sld{Simple Point Estimation (cont.)}
-%
-\begin{itemize}
-\item {\bfseries Central Limit Theorem:}  \emph{expected} error in $\theta^*$ goes down as
-{\Large
-\[
-\frac{1}{\sqrt{N}}
-\]
-}
-\item Each decimal place of accuracy requires $100 \times$ more samples.
-\item Width of confidence intervals shrinks at the same rate.
-\vfill
-\item Can also use theory to show this estimator is unbiased.
-\end{itemize}
-
-
-\sld{Pop Quiz! Cancer Clusters}
-%
-\begin{itemize}
-\item Why do lowest and highest cancer clusters look so similar?
-\end{itemize}
-\vspace*{1pt}
-\begin{center}
-\hfill
-\includegraphics[width=0.45\textwidth]{img/low-cancer.jpg}
-\hfill
-\includegraphics[width=0.45\textwidth]{img/high-cancer.jpg}
-\hfill
-\end{center}
-\vfill
-\hfill {\tiny Image from Gelman et al., {\slshape Bayesian Data Analysis, 3rd Edition} (2013)}
-
-
-\sld{Pop Quiz Answer}
-%
-\begin{itemize}
-\item Hint: mix earlier simulations of repeated i.i.d. trials with 20\% success and sort:
-{\footnotesize
-\begin{center}
-\begin{tabular}{ccccc}
-1/10 &  1/10 &  1/10 &  15/100 &  16/100
-\\
-17/100 &  175/1000 &  179/1000 &  18/100 &  181/1000
-\\
-188/1000 &  194/1000 &  198/1000 & 2/10 &  2/10
-\\
-2/10 &  2/10 & 21/100 &  21/100 &  21/100
-\\
-212/1000 &  213/1000 &   216/1000 &   223/1000 &  23/100
-\\
-26/100 &  26/100 &  3/10 &  4/10 &  5/10
-\end{tabular}
-\end{center}
-}
-\item More variation in observed rates with smaller sample sizes
-\vfill
-\item \emph{Answer}: High cancer and low cancer counties are small populations
-\end{itemize}
-
-
-\mypart{}{Numerical Analysis}
-
-\sld{Floating-Point Standard: IEEE 754}
-%
-\begin{itemize}
-\item \myemph{Finite numbers} ($s$: sign; $c$: mantissa; $q$: exponent)
-{\large
-\[
-x = (-1)^s \times c \times 2^q
-\]
-}
-\begin{center}
-\begin{tabular}{r|c|c|cc}
-{\slshape size} & $s, c$ {\slshape bits} & $q$ {\slshape bits}
-& {\slshape range} & {\slshape precision}
-\\ \hline
-{\slshape 32-bit} & 24 & 8
-& $\pm 3.4 \times 10^{38}$ & 7.2 digits
-\\[4pt]
-{\slshape 64-bit} & 53 & 11
-& $\pm 1.8 \times 10^{308}$ & 16 digits
-\end{tabular}
-\end{center}
-\item Quiet and signaling \myemph{not-a-number} (NaN)
-\item Positive and negative \myemph{infinity} ($+\infty, -\infty$)
-\item \myemph{Stan} uses 64-bit floating point
-\end{itemize}
-
-
-\sld{Catastrophic Cancellation}
-%
-\begin{itemize}
-\item Subtraction risks \myemph{catastrophic cancellation}
-\item Consider $0.99802 - 0.99801 = 0.00001$
-\begin{subitemize}
-\item input has five digits of precision
-\item output has single digit of precision
-\end{subitemize}
-\item E.g., problem for sample variance of sequence $x$
-\[
-\mbox{var}(x) = \frac{1}{N - 1} \, \sum_{n = 1}^N (x_n - \overline{x})^2
-\]
-if elements $x_n$ close to sample mean
-\[
-\overline{x} = \frac{1}{N} \, \sum_{n=1}^N x_n
-\]
-\end{itemize}
-
-\sld{Welford's Algorithm}
-\begin{itemize}
-\item \myemph{Streaming computation} uses fixed memory
-\begin{stancode}
-N = 0;    mean = 0;    sum_sq_err = 0
-
-handle(y):
-    N += 1
-    diff = y - mean
-    mean = mean + diff / N
-    diff2 = y - mean
-    sum_sq_err += diff * diff2
-
-mean():  return mean
-
-var():  return sum_sq_err / (N - 1)
-\end{stancode}
-\item Two stage difference is \myemph{less prone to cancellation}
-\end{itemize}
-
-
-\sld{Gaps Between Numbers}
-%
-\begin{itemize}
-\item Smallest number greater than zero
-\begin{subitemize}
-\item single precision:  $1.4 \times 10^{-45}$
-\item double precision: $4.9 \times 10^{-324}$
-\end{subitemize}
-\item Largest number less than one
-\begin{subitemize}
-\item single precision: $1 - 10^{-7.2}$
-\item double precision: $1 - 10^{-16}$
-\end{subitemize}
-\item Gap size \myemph{depends on scale}
-\end{itemize}
-
-
-\sld{Lack of Transitivity}
-%
-\begin{itemize}
-\item For real numbers $x, y, z \in \mathbb{R}$,
-\[
-x + (y + z) \ = \ (x + y) + z
-\]
-\item This can fail for floating point due to rounding
-\begin{subitemize}
-\item \code{(1 + 6e-17) + 6e-17 == 1}
-\item \code{1 + (6e-17 + 6e-17) != 1}
-\end{subitemize}
-\item For square matrices $L \, L^{\top}$ is symmetric
-\item This won't hold for efficient matrix multiplications
-\begin{subitemize}
-\item \code{(L * L')[1, 2] != (L * L')[2, 1]}
-\end{subitemize}
-\end{itemize}
-
-
-\sld{Rounding and Equality}
-%
-\begin{itemize}
-\item Dangerous to compare floating point numbers
-\begin{subitemize}
-\item they may have lost precision during calculation
-\end{subitemize}
-\item Rounding
-\begin{subitemize}
-\item default: round toward nearest
-\item round toward zero, round to plus or minus infinity
-\end{subitemize}
-\end{itemize}
-
-
-\sld{Overflow and Rounding}
-%
-\begin{itemize}
-\item Because there is a max size, operations can overflow
-\begin{subitemize}
-\item e.g., \code{exp(1000)}, \code{1e200 * 1e200}, ...
-\end{subitemize}
-\item Because there are gaps, operations can round to zero
-\begin{subitemize}
-\item e.g., \code{exp(-1000)}, \code{1e-200 * 1e-200}, ...
-\item e.g., evaluating $\prod_{n=1}^N p(y_n | \theta)$ underflows
-for $N = 2000$ if $p(y_n | \theta) < 0.1$.
-\end{subitemize}
-\end{itemize}
-
-
-\sld{Example: \code{log1p} and CCDFs}
-%
-\begin{itemize}
-\item \code{log1p(x)} is for evaluating $\log$ near one
-\begin{subitemize}
-\item when \code{x} is near zero, \code{1 + x} catastrophically rounds
-  to 1
-\item this forces \code{log(1 + x)} to round to 0
-\item \code{log1p(x)} avoids \code{1 + x} operation
-\item \code{log1p(x)} uses Taylor series expansion of $\log(1 + x)$
-\end{subitemize}
-\item Complementary CDFs evaluate CDFs with values near one
-\begin{subitemize}
-\item $X$ is some random variable, e.g., $X \sim \mathsf{Normal}(0, 1)$
-\item CDF: $F_X(x) = \mbox{Pr}[X \leq x]$
-\item CCDF: $F^{\complement}_X(x) = 1 - \mbox{Pr}[X \leq x]$
-\item converts range around one to range around zero
-\end{subitemize}
-\end{itemize}
-
-
-\sld{Example: \code{log} and \code{log\_sum\_exp}}
-%
-\begin{itemize}
-\item \myemph{Multiplication on the log scale}: \code{log}
-\begin{subitemize}
-\item $\log (a \times b) = \log a + \log b$
-\item log converts multiplication to addition
-\item $\log \prod_n x_n = \sum_n \log x_n$
-\item avoids underflow and overflow even if $x_n \ll 1$ or $x_n \gg 1$
-\item useful absolutely everywhere (e.g., log likelihoods)
-\end{subitemize}
-\item \myemph{Addition on the log scale}: \code{log\_sum\_exp}
-\begin{subitemize}
-\item $\log (a + b) = \log(\exp(\log a) + \exp(\log b))$
-\item log converts addition to log sum of exponentials
-\item avoids underflow and overflow, preserves precision
-\item useful for mixtures (e.g., HMMs, zero-inflated Poisson)
-\end{subitemize}
-\end{itemize}
-
-
-\sld{Example: \code{log\_sum\_exp}}
-%
-\begin{itemize}
-\item Without loss of generality, assume $a > b$ (otherwise swap)
-\vspace*{-8pt}
-\begin{eqnarray*}
-\mathrm{log\_sum\_exp}(a, b) & = & \log(\exp(a) + \exp(b))
-\\[2pt]
-& = & a + \log(\exp(a - a) + \exp(b - a))
-\\[2pt]
-& = & a + \log(1 + \exp(b - a))
-\\[2pt]
-& = & a + \mathrm{log1p(\exp(b - a))}
-\end{eqnarray*}
-\vspace*{-8pt}
-\begin{subitemize}
-\item \myemph{increase precision}: \ pull $a$ out of $\log()$ and
-  $\exp()$
-\item \myemph{increase precision}: \ use \code{log1p}
-\item \myemph{prevents overflow}: \ can't overflow because $b - a \leq 0$
-\end{subitemize}
-\item Generalize to more than two inputs: subtract max
-\end{itemize}
-
-
-\mypart{}{Monte Carlo \\[8pt]\spc Integration}
-
-\sld{Monte Carlo Calculation of $\pi$}
-
-\noindent
-\begin{minipage}[t]{0.65\textwidth}
-\begin{itemize}
-\item Computing $\pi = 3.14\ldots$ via simulation is \emph{the} textbook application
-of Monte Carlo methods.
-\vfill
-\item Generate points uniformly at random within the square
-\item Calculate proportion within circle ($x^2 + y^2 \leq 1$) and multiply by square's area (4) to produce the area of the circle.
-\item This area is $\pi$ (radius is 1, so area is $\pi r^2 = \pi$)
-\end{itemize}
-\end{minipage}
-%
-\hfill
-\begin{minipage}[t]{0.2\textwidth}
-\vspace*{12pt}
-\hfill \includegraphics[height=\textwidth]{img/mc-integration-wikipedia.png}
-\\[4pt]
-{\tiny plot by Mysid Yoderj,\\ courtesy of Wikipedia.}
-\end{minipage}
-\vfill
-
-
-\sld{Monte Carlo Calculation of $\pi$ {\normalsize (cont.)}}
-%
-\begin{subitemize}
-\item R code to calculate $\pi$ with Monte Carlo simulation:
-\\[-8pt]
-{\small
-\begin{Verbatim}
-> x <- runif(1e6,-1,1)
-> y <- runif(1e6,-1,1)
-
-> prop_in_circle <- sum(x^2 + y^2 <= 1) / 1e6
-
-> 4 * prop_in_circle
-[1] 3.144032
-\end{Verbatim}
-}
-\end{subitemize}
-
-
-\sld{$\pi$ as an Expectation}
-%
-\begin{itemize}
-\item If probability is uniform over the sample space,
-\\[2pt] \ \ then an event's
-  probability is its area (volume in general)
-\item Suppose $X, Y \sim \mathsf{Uniform}(-1, 1)$
-\item Then $\mathrm{Pr}[X^2 + Y^2 \leq 1] \ = \ \pi / 4$.
-\item To calculate using Monte Carlo draws $(x^{(m)}, y^{(m)})$,
-{\small
-\begin{eqnarray*}
-\mathrm{Pr}[X^2 + Y^2 \leq 1]
-& = & \mathbb{\normalsize E}\!\left[ \, \mathrm{\normalsize I}\!\left[ X^2 + Y^2 < 1 \right]
-      \, \right]
-\\[8pt]
-& = & \int_{-1}^1 \int_{-1}^1 \
-       \mathrm{\normalsize I}\!\left[ x^2 + y^2 < 1 \right] \ p_X(x) \ p_Y(y) \ \mathrm{d}x \, \mathrm{d}y
-\\[8pt]
-& \approx
-& \frac{1}{M}
-\ \mathrm{\Large I}\!\left[ \left( x^{(m)} \right)^2 + \left( y^{(m)} \right)^2
-                   < 1 \right]
-\end{eqnarray*}
-}
-\end{itemize}
-
-\sld{Calculating $\pi$ with Stan}
-%
-\begin{itemize}
-\item Complete Stan program to compute $\mathrm{Pr}[X^2 + Y^2 \leq 1]$:
-\begin{stancode}
-generated quantities {
-  real x = uniform_rng(-1, 1);
-  real y = uniform_rng(-1, 1);
-  real pi_div_4 = hypot(x, y) <= 1;
-}
-\end{stancode}
-\item \myemph{Simulates} $X$ and $Y$
-\item \myemph{Codes indicator function} implicitly with comparison
-\begin{subitemize}
-\item uses Stan's built-in hypotenuse function
-\item \Verb|hypot(a, b) = sqrt(a^2 + b^2)|
-\end{subitemize}
-\end{itemize}
-
-\sld{Fitting Stan model for $\pi$ in R}
-\begin{itemize}
-\item \code{Fixed\_param} algorithm for no parameters
-\begin{stancode}
-> fit <- stan("pi.stan", algorithm="Fixed_param",
-              iter=100000)
-\end{stancode}
-\item Print only what's needed (print output elided manually)
-\begin{stancode}
-> print(fit, digits=3, probs=c(), pars=c("pi_div_4"))
-
-          mean se_mean
-pi_div_4 0.786   0.001
-\end{stancode}
-\item Estimate accurate to \myemph{within estimated tolerances}
-\begin{subitemize}
-\item $4 \times 0.786 = 3.144$
-\item predicted accuracy is 0.004 (four times standard error)
-\end{subitemize}
-\end{itemize}
-
-
-
-
-
-
-
-\sld{Accuracy of Monte Carlo}
-%
-\begin{itemize}
-\item Monte Carlo Integration computes the exact posterior to within any $\epsilon$
-(\emph{not} like variational Bayes which yields an approximation of the posterior)
-\item Monte Carlo draws are i.i.d. by definition
-\item Central limit theorem: expected error decreases at rate of
-{\Large
-\[
-\frac{1}{\sqrt{N}}
-\]
-}
-\item 3 decimal places of accuracy with
-sample size 1e6
-\item Need $100 \times$ larger sample for each digit of accuracy
-\end{itemize}
-
-
-\sld{General Monte Carlo Integration}
-%
-\begin{minipage}[t]{0.69\textwidth}
-\vspace*{-0.1in}
-\small
-\begin{itemize}
-\item MC can calculate arbitrary definite integrals,
-\[
-\int_a^b f(x) \, dx
-\]
-\item Let $d$ upper bound $f(x)$ in $(a,b)$;  tightness determines
-computational efficiency
-\item Then generate random points uniformly in the rectangle bounded by $(a,b)$ and $(0,d)$
-\item Multiply proportion of draws $(x,y)$ where $y < f(x)$ by area of rectangle, $d \times (b-a)$.
-\item Can be generalized to multiple dimensions in obvious way
-\end{itemize}
-\end{minipage}
-\begin{minipage}[t]{0.29\textwidth}
-\mbox{ } \\
-\mbox{ } \ \ \ \
-\includegraphics[height=0.9in]{img/monte-carlo-integration.png}
-\end{minipage}
-\vfill
-\hfill
-{\tiny Image courtesy of Jeff Cruzan, \url{http://www.drcruzan.com/NumericalIntegration.html}}
-
-
-\sld{Expectations of Function of R.V.}
-%
-\begin{itemize}
-\item Suppose $f(\theta)$ is a function of random variable vector
-  $\theta$
-\item Suppose the density of $\theta$ is $p(\theta)$
-\begin{subitemize}
-\item {\slshape Warning}: $\theta$ overloaded as random and bound variable
-\end{subitemize}
-\item Then $f(\theta)$ is also random variable, with expectation
-  \[
-  \mathbb{E}[f(\theta)] = \int_{\Theta} f(\theta) \ p(\theta) \ d\theta.
-  \]
-\begin{subitemize}
-\item
-where $\Theta$ is support of $p(\theta)$ (i.e., $\Theta =
-\setcomp{\theta \, | \, p(\theta) > 0}$
-\end{subitemize}
-\end{itemize}
-
-
-\sld{QoI as Expectations}
-%
-\begin{itemize}
-\item Most Bayesian quantities of interest (QoI) are expectations
-  over the posterior $p(\theta \, | \, y)$ of functions $f(\theta)$
-\item \myemph{Bayesian parameter estimation}: $\hat{\theta}$
-\begin{subitemize}
-\item $f(\theta) = \theta$
-\item $\hat{\theta} = \mathbb{E}[\theta | y]$ minimizes expected
-  square error
-\end{subitemize}
-\item \myemph{Bayesian parameter (co)variance estimation}:
-  $\mathrm{var}[\theta \, | \, y]$
-\begin{subitemize}
-\item $f(\theta) = (\theta - \hat{\theta})^2$
-\end{subitemize}
-\item \myemph{Bayesian event probability}:  $\mbox{Pr}[A \, | \, y]$
-\begin{subitemize}
-  \item $f(\theta) = \mathrm{I}(\theta \in A)$
-\end{subitemize}
-\end{itemize}
-
-
-\sld{Expectations via Monte Carlo}
-%
-\begin{itemize}
-\item Generate draws $\theta^{(1)}, \theta^{(2)}, \ldots,
-  \theta^{(M)}$ drawn from $p(\theta)$
-\item Monte Carlo Estimator \myemph{plugs in average} for expectation:
-  \[
-  \mathbb{E}[f(\theta)|y] \approx \frac{1}{M} \sum_{m=1}^M f(\theta^{(m)})
-  \]
-\item Can be made \myemph{as accurate as desired}, because
-\[
-\mathbb{E}[f(\theta)]
-=
-\lim_{M \rightarrow \infty} \
-\frac{1}{M} \sum_{m=1}^M f(\theta^{(m)})
-\]
-\vfill
-\item {\slshape Reminder}:  By CLT, error goes down as
-$1 \, / \, \sqrt{M}$
-\end{itemize}
-
-
-\sld{Monte Carlo for Expectations}
-%
-\begin{itemize}
-\item Most quantities of interest are expectations
-\item Suppose $f(\theta)$ is a function of random variable vector $\theta$
-  \[
-  \mathbb{E}[f(\theta)] = \int_{\Theta} f(\theta) \ p(\theta) \ d\theta.
-  \]
-where $\Theta$ is support of $p(\theta)$ (i.e., $\Theta =
-\setcomp{\theta \, | \, p(\theta) > 0}$)
-\item Generate samples $\theta^{(1)}, \theta^{(2)}, \ldots,
-  \theta^{(M)}$ drawn from $p(\theta)$
-\item Monte Carlo Estimator plugs in average for expectation:
-  \[
-  \mathbb{E}[f(\theta)|y] \approx \frac{1}{M} \sum_{m=1}^M f(\theta^{(m)})
-  \]
-\item This technique can be made as accurate as desired, because
-\[
-\mathbb{E}[f(\theta)]
-=
-\lim_{M \rightarrow \infty}
-\frac{1}{M} \sum_{m=1}^M f(\theta^{(m)})
-\]
 \end{itemize}
 
 
@@ -1418,19 +1250,23 @@ p(\theta^{(m)} | y, \theta^{(1)}, \ldots, \theta^{(m-1)})
 \ = \
 p(\theta^{(m)} | y, \theta^{(m-1)})
 \]
-\item Drawing $\theta^{(1)}, \ldots, \theta^{(M)}$ from a Markov chain
-  according to \\ $p(\theta^{(m)} \, | \, \theta^{(m-1)}, y)$ is more tractable
-\item Require marginal of each draw, $p(\theta^{(m)}|y)$,
-  to be equal to true posterior
-\item Otherwise, apply just like ordinary (non-Markov chain) Monte Carlo methods
 \end{itemize}
 
-
-\sld{Applying MCMC}
+\sld{Markov Chain Monte Carlo}
 %
 \begin{itemize}
+\item Simulating independent draws from the posterior $p(\theta | y)$ usually intractable
+\item Simulating a Markov chain $\theta^{(1)}, \ldots, \theta^{(M)}$
+  with marginals equal to posterior, i.e.,
+\[
+p(\theta^{(m)} | y) = p(\theta | y)
+\]
+often is tractable
+\item Replace indepedent draws with Markov chain of draws
+\begin{subitemize}
 \item Plug in just like ordinary (non-Markov chain) Monte Carlo
-\item Adjust standard errors for dependence in Markov chain
+\item Adjust standard errors for correlation in Markov chain
+\end{subitemize}
 \end{itemize}
 
 
@@ -1561,21 +1397,24 @@ Draw $u^{(m)} \sim \distro{Uniform}(0,1)$ and set
 \sld{Metropolis and Normalization}
 %
 \begin{itemize}
-\item Metropolis only uses posterior in a ratio:
-\[
+\item Metropolis only uses posterior in a ratio
+\begin{eqnarray*}
 \frac{p(\theta^{*} \, | \, y)}
      {p(\theta^{(m)} \, | \, y)}
-\]
-\item This allows the use of unnormalized densities
-\item Recall Bayes's rule:
-\[
-p(\theta | y) \propto p(y|\theta) \, p(\theta)
-\]
-\item Thus we only need to evaluate sampling (likelihood) and prior
-\item It also sidesteps computing the normalizing term
-\[
-\int_{\Theta} p(y|\theta) \, p(\theta) d\theta
-\]
+& = &
+\frac{p(y, \theta^*) \ / \ p(y)}
+     {p(y, \theta^{(m)}) \ / \ p(y)}
+\\[8pt]
+& = &
+\frac{p(y, \theta^*)}
+     {p(y, \theta^{(m)})}
+\\[8pt]
+& = &
+\frac{p(y \mid \theta^*) \, p(\theta^*)}
+     {p(y \mid \theta^{(m)}) \, p(\theta^{(m)})}
+\end{eqnarray*}
+\item Drops $p(y)$ term with nasty integral
+\item Baye's rule reduces to likelihood and prior
 \end{itemize}
 
 
@@ -1592,45 +1431,47 @@ where $J$ is the (potentially asymmetric) proposal density
 \item i.e.,
 {\small
 \[
-\frac{\mbox{probability of being at } \theta^*
-      \mbox{ and jumping to } \theta^{(m-1)}}
-     {\mbox{probability of being at } \theta^{(m-1)}
-      \mbox{ and jumping to } \theta^{*}}
+\frac{\mbox{density at } \theta^*
+      \mbox{ and jump to } \theta^{(m-1)}}
+     {\mbox{density at } \theta^{(m-1)}
+      \mbox{ and jump to } \theta^{*}}
 \]
 }
 \vspace*{3pt}
-\item General form ensures equilibrium
-  by maintaining \emph{detailed balance}
 \item Like Metropolis, only requires ratios
-\item Many algorithms involve a Metropolis-Hastings ``correction''
+%\item General form ensures equilibrium
+%  by maintaining \emph{detailed balance}
+%\item Can use volumes and measure rather than points and density
+%\item Many algorithms involve a Metropolis-Hastings ``correction''
 \end{itemize}
 
 
 \sld{Detailed Balance \& Reversibility}
 %
 \begin{itemize}
-\item Definition is measure theoretic, but applies to densities
-\begin{subitemize}
-\item just like Bayes's rule
-\end{subitemize}
-\item Assume Markov chain has stationary density $p(a)$
-\item Suppose $\pi(a | b)$ is density of
-  transitioning from $b$ to $a$
-\begin{subitemize}
-\item use of $\pi$ to indicates different measure on $\Theta$ than $p$
-\end{subitemize}
-\item Detailed balance is a reversibility equilibrium condition
+\item Sufficient for a \emph{stationary distribution} on Markov chain
 \[
-p(a) \,\pi(b | a)
-\ = \
-p(b) \, \pi(a | b)
+p(\theta^{(m)}) = p(\theta) \ \mbox{ for all } m \gg 1
 \]
+\item Suppose $\pi(\theta^{(m+1)} | \theta^{(m)})$ is Markov transition density
+\item Detailed balance is a reversibility equilibrium condition of
+\begin{subitemize}
+\item density at $\theta^{(m)}$ and jump density to $\theta^{(m+1)}$
+\item density at $\theta^{(m+1)}$ and jump density back to
+  $\theta^{(m)}$
+\end{subitemize}
+\[
+p(\theta^{(m)}) \times \pi(\theta^{(m+1)} | \theta^{(m)})
+\ = \
+p(\theta^{(m+1)}) \times \pi(\theta^{(m)} | \theta^{(m+1)})
+\]
+
 \end{itemize}
 
 
 \sld{Optimal Proposal Scale?}
 %
-\begin{itemize}
+\begin{subitemize}
 \item Proposal scale $\sigma$ is a free; too low or high is inefficient
 \begin{center}
 \includegraphics[width=0.9\textwidth]{img/roberts-rosenthal-traceplots.jpg}
@@ -1638,7 +1479,7 @@ p(b) \, \pi(a | b)
 \item \emph{Traceplots} show parameter value on $y$ axis, iterations on $x$
 \item Empirical tuning problem; theoretical optima exist for some
   cases
-\end{itemize}
+\end{subitemize}
 \vfill\hfill
 {\tiny Roberts and Rosenthal (2001) Optimal Scaling for Various
   Metropolis-Hastings Algorithms. {\slshape Statistical Science}.}
@@ -1647,36 +1488,36 @@ p(b) \, \pi(a | b)
 \sld{Convergence and Stationarity}
 %
 \begin{itemize}
-\item Imagine releasing a hive of bees in a sealed house
-\begin{subitemize}
-\item they disperse, but eventually reach equilibrium where the same
-  number of bees leave a room as enter it (on average)
-\end{subitemize}
-\item May take many iterations for Markov chain to reach equilibrium
+%\item Imagine releasing a hive of bees in a sealed house
+%\begin{subitemize}
+%\item they disperse, but eventually reach equilibrium where the same
+%  number of bees leave a room as enter it (on average)
+%\end{subitemize}
+\item May take many iterations for chain to reach equilibrium
+\item Different initializations should converge in distribution
 \vspace*{3pt}
 \begin{center}
 \includegraphics[width=0.8\textwidth]{img/bda-diffuse-converge.png}
 \end{center}
-\item Four chains with different starting points
-\item \emph{Left}) 50 iterations;  \emph{Center}) 1000 iterations;  \emph{Right}) Draws from second half of each chain
+\item Four chains with different starting points.  \emph{Left}) 50 iterations;  \emph{Center}) 1000 iterations;  \emph{Right}) Draws from second half of each chain
 \end{itemize}
 
 
 \sld{Potential Scale Reduction ($\hat{R}$)}
 %
-\begin{itemize}
+\begin{subitemize}
 \item Gelman \& Rubin recommend $M$ chains of $N$ draws with
   \myemph{diffuse initializations}
 \item Measure that each chain has same posterior mean and variance
 \item If not, may be stuck in multiple modes or just not converged yet
 \item Define statistic $\hat{R}$ of chains such that \myemph{at convergence},
 $\hat{R} \rightarrow 1$
-\begin{subitemize}
+\begin{subsubitemize}
 \item $\hat{R} >\!> 1$ implies non-convergence
 \item $\hat{R} \approx 1$ \myemph{does not guarantee convergence}
 \item Only measures marginals
+\end{subsubitemize}
 \end{subitemize}
-\end{itemize}
 
 
 \sld{Split $\hat{R}$}
@@ -1697,7 +1538,7 @@ $\hat{R} \rightarrow 1$
 
 \sld{Calculating $\hat{R}$ Statistic}
 %
-\begin{itemize}
+\begin{subitemize}
 \item \myemph{Between-sample variance} estimate
 \[\textstyle
 B
@@ -1725,7 +1566,7 @@ where
 \[\textstyle
 s_m^2 = \frac{1}{N-1} \, \sum_{n=1}^N (\theta^{(n)}_m - \bar{\theta}^{(\bullet)}_m)^2.
 \]
-\end{itemize}
+\end{subitemize}
 
 
 \sld{Calculating $\hat{R}$ Statistic (cont.)}
@@ -1749,26 +1590,26 @@ s_m^2 = \frac{1}{N-1} \, \sum_{n=1}^N (\theta^{(n)}_m - \bar{\theta}^{(\bullet)}
 
 \sld{Correlations in Posterior Draws}
 %
-\begin{itemize}
+\begin{subitemize}
 \item Markov chains typically display autocorrelation in the series of
   draws $\theta^{(1)}, \ldots, \theta^{(m)}$
 \item Without i.i.d. draws, central limit theorem \emph{does not apply}
 \item Effective sample size $N_{\mbox{\footnotesize eff}}$ divides out
   autocorrelation
 \item $N_{\mbox{\footnotesize eff}}$ must be estimated from sample
-\begin{subitemize}
-\item Fast Fourier transform to efficiently computes correlations at all lags
-\end{subitemize}
+\begin{subsubitemize}
+\item Fast Fourier transform efficiently computes correlations at all lags
+\end{subsubitemize}
 \vspace*{-6pt}
 \item Estimation accuracy proportional to
-{\Large
+{\large
 \[
 \frac{1}{\sqrt{N_{\mbox{\normalsize eff}}}}
 \]
 }
 \item Compare previous plots; good choice of $\sigma$ leads to high
 $N_{\mbox{\footnotesize eff}}$
-\end{itemize}
+\end{subitemize}
 
 
 \sld{Effective Sample Size (ESS)}
@@ -1796,7 +1637,7 @@ $N_{\mbox{\footnotesize eff}}$
 
 \sld{Estimating Autocorrelations}
 %
-\begin{itemize}
+\begin{subitemize}
 \item Effective sample size is defined by
 \[\textstyle
 N_{\mbox{\scriptsize eff}}
@@ -1829,7 +1670,7 @@ V_t =
 \]
 \item If not converged, $\widehat{\mbox{var}}^{+}$ overestimates variance
 \item Efficiently calculate using fast Fourier transform (w.\ padding)
-\end{itemize}
+\end{subitemize}
 
 
 \sld{Estimating $N_{\normalsize eff}$}
@@ -1846,7 +1687,7 @@ V_t =
 \item NUTS avoids negative autocorrelations, so first negative
   autocorrelation estimate is reasonable
 \vfill
-\item See {\footnotesize Charles Geyer (2013) Introduction to MCMC. In
+\item {\footnotesize See: Charles Geyer (2013) Introduction to MCMC. In
     {\slshape Handbook of MCMC}.
  (free online at \url{http://www.mcmchandbook.net/index.html})}
 \end{itemize}
@@ -2294,6 +2135,68 @@ generated quantities {
 \item Not frequentist, because involves parameter probabilities
 \end{itemize}
 
+\sld{\Large What Stan Computes \hfill \large (1/2)}
+%
+\begin{subitemize}
+%
+\item \myemph{MCMC draws} from posterior $p(\theta | y)$
+\[
+\theta^{(1)}, \ldots, \theta^{(M)}
+\]
+\item Posterior \myemph{parameter estimates}
+\[
+\hat{\theta}
+\ = \
+\mathbb{E}[\theta \mid y]
+\ = \
+\int \theta \, p(\theta | y) \, \mathrm{d}\theta
+\ \approx \
+\frac{1}{M} \sum_{m=1}^M \theta^{(m)}
+\]
+%
+\item Posterior \myemph{parameter variance estimates}
+\[
+\mathrm{var}[\theta \mid y]
+\ = \
+\int (\theta - \hat{\theta})^2 \, p(\theta | y) \, \mathrm{d}\theta
+\ \approx \
+\frac{1}{M - 1} \sum_{m=1}^M (\theta^{(m)} - \hat{\theta})^2
+\]
+\end{subitemize}
+
+
+\sld{\Large What Stan Computes \hfill \large (2/2)}
+%
+\begin{subitemize}
+\item Posterior \myemph{event probabilities}
+\[
+\mbox{Pr}[\mbox{cond}(\theta) \mid y]
+\ = \
+\int \mathrm{I}[\mbox{cond}(\theta) \mid y] \, \mathrm{d}\theta
+\ \approx \
+\frac{1}{M} \sum_{m=1}^M \mathrm{I}[\mbox{cond}(\theta^{(m)})]
+\]
+%
+\item Posterior \myemph{predictions}
+\[
+p(\tilde{y} | y)
+ =
+\mathbb{E}[p(\tilde{y}) | y]
+\ = \
+\int p(\tilde{y} | \theta) \, p(\theta | y) \, \mathrm{d}\theta
+\ \approx \
+\frac{1}{M} \sum_{m=1}^M p\left( \tilde{y} | \theta^{(m)} \right)
+\]
+%
+\item Posterior \myemph{quantiles} (e.g., \myemph{intervals} and \myemph{median})
+\[
+\mathrm{quantile}(\theta, \alpha)
+\ = \
+\mathrm{sort\_ascending}(\theta^{(1)}, \ldots, \theta^{(M)})
+\left[ \, \lceil \alpha \times M \rceil \, \right]
+\]
+\end{subitemize}
+
 
 \mypart{}{Conjugate Priors}
 
@@ -2500,6 +2403,9 @@ theta   0.41    0.00 0.10   0.28   0.55  1580    1
 
 
 \sld{RStan:  Full Bayes}
+%
+\\[-2pt]
+\spc
 \begin{minipage}[t]{\textwidth}
 \footnotesize
 \begin{Verbatim}
@@ -2592,12 +2498,11 @@ Displays the full posterior {\slshape marginal} distribution $p(\theta \,
 $par              $value  (log density)
 theta             [1] -3.4
   0.4
-\ened{stancode}
+\end{stancode}
 % \begin{subitemize}
 % \item Posterior: $\distro{Beta}(1+2, 1+3)$;  mode $0.40$; mean $0.43$
 % \item Density: MLE w/o Jacobian;  MCMC with Jacobian
 % \end{subitemize}
-\end{center}
 
 
 \sld{Plug in Posterior Draws}
@@ -3134,9 +3039,9 @@ generated quantities {
 \end{stancode}
 
 
-\sld{Transforms: Non-Centered Parameterization}
-{\small
-\begin{Verbatim}
+\sld{Transform: Non-Centered Params}
+%
+\begin{stancode}
 parameters {
   vector[K] beta_std;  // non-centered
 }
@@ -3147,8 +3052,7 @@ model {
   // implies:  beta ~ normal(mu, sigma)
   beta_std ~ normal(0, 1);
 }
-\end{Verbatim}
-}
+\end{stancode}
 
 
 \sld{Logistic Regression}
@@ -3274,24 +3178,6 @@ model {
 \end{subitemize}
 
 
-\sld{Multivariate Random-Effects Priors}
-%
-\begin{stancode}
-parameters {
-  vector[2] beta[G];
-  cholesky_factor_corr[2] L_Omega;
-  vector<lower=0>[2] sigma;
-  ...
-model {
-  sigma ~ cauchy(0, 2.5);
-  L_Omega ~ lkj_cholesky(4);
-  beta ~ multi_normal_cholesky(rep_vector(0, 2),
-                         diag_pre_multiply(sigma, L_Omega));
-  for (n in 1:N)
-    y[n] ~ bernoulli_logit(... + x[n] * beta[gg[n]]);
-\end{stancode}
-
-
 \sld{\large Example: Gaussian Process Estimation}
 %
 \vspace*{-5pt}
@@ -3330,25 +3216,6 @@ data {
 \end{Verbatim}
 }
 \end{itemize}
-
-
-\sld{Non-Centered Parameterization}
-%
-\begin{stancode}
-parameters {
-  vector[K] beta_std;  // non-centered
-  real mu;
-  real<lower=0> sigma;
-}
-transformed parameters {
-  vector[K] beta = mu + sigma * beta_raw;
-}
-model {
-  mu ~ cauchy(0, 2.5);
-  sigma ~ cauchy(0, 2.5);
-  beta_std ~ normal(0, 1);
-}
-\end{stancode}
 
 
 \sld{Mixture of Two Normals}
@@ -4141,7 +4008,7 @@ in the long run using full Bayes (de Finetti)
 \end{itemize}
 
 
-\mypart{}{Philosophy of Probability}
+\mypart{}{Philosophy\\[12pt]\spc of Probability}
 
 
 \sld{Exchangeability}
@@ -4267,31 +4134,30 @@ and state of residence
 
 \sld{Higher-Level Interfaces}
 %
-\begin{itemize}
-\item \myemph{R Interfaces}
 \begin{subitemize}
+\item \myemph{R Interfaces}
+\begin{subsubitemize}
  \item \myemph{RStanArm}: regression modeling with R expressions
  \item \myemph{ShinyStan}: web-based posterior visualization, exploration
  \item \myemph{Loo}:  approximate leave-one-out cross-validation
-\end{subitemize}
+\end{subsubitemize}
 \item \myemph{Jupyter Containers}
-\begin{subitemize}
+\begin{subsubitemize}
 \item \myemph{Docker} versions for R, Python, Julia
 \item \myemph{SageMath}: free online server (R)
-\end{subitemize}
+\end{subsubitemize}
 \item From others
-\begin{subitemize}
+\begin{subsubitemize}
 \item \myemph{Prophet} (Facebook): time-series analysis (R and Python)
 \item \myemph{brms} (B\"urkner): regression modeling with R expressions
 \item \myemph{rethinking} (McElreath): simplified Stan embedded in R
+\end{subsubitemize}
 \end{subitemize}
-\end{itemize}
-\vfill
 
 
-\sld{Who's Using Stan?}
+\sld{\Large Who's Using Stan?}
 %
-\begin{itemize}
+\begin{subitemize}
 \item 2500+ \myemph{users group} registrations;  20,000+ \myemph{downloads}
   \small{(per version just in Rstudio)}; 1000+ Google scholar citations
 \item \myemph{Biological sciences}: {\footnotesize
@@ -4309,8 +4175,8 @@ astrophysics, particle physics, molecular biology, oceanography, climatology, bi
 }
 \item \myemph{Other}: {\footnotesize materials engineering, finance,
     actuarial science, sports, public health, recommender systems,
-    educational testing, fleet maintenance, sports}
-\end{itemize}
+    education, fleet maintenance, sports}
+\end{subitemize}
 
 
 \sld{Documentation}
@@ -4347,22 +4213,26 @@ astrophysics, particle physics, molecular biology, oceanography, climatology, bi
 \end{itemize}
 
 
-\sld{Books about Stan}
+\sld{Books about Stan \hfill \large (1/2)}
 %
-\begin{subitemize}
-\footnotesize
+\begin{itemize}
 \item Gelman and Hill (2018) {\slshape Regression and Other Stories}. Cambridge.
 \item Hilbe, de Souza, and Ishida (2017) {\slshape Bayesian Models for Astrophysical Data Using R, JAGS, Python, and Stan}. Cambridge.
 \item Matsuura (2016) {\slshape Bayesian Statistical Modeling Using Stan and R}. Kyoritsu. (Japanese)
-\item Faraway (2016) {\slshape Extending the Linear Model with R: Generalized Linear, Mixed Effects and Nonparametric Regression Models}, 2nd Edition. CRC.
 \item McElreath (2016) {\slshape Statistical Rethinking: A Bayesian course
     with R and Stan}. CRC.
+\end{itemize}
+
+\sld{Books about Stan \hfill \large (2/2)}
+%
+\begin{itemize}
+\item Faraway (2016) {\slshape Extending the Linear Model with R: Generalized Linear, Mixed Effects and Nonparametric Regression Models}, 2nd Edition. CRC.
 \item Korner-Nievergelt et al. (2015) {\slshape Bayesian Data Analysis in
     Ecology Using Linear Models with R, BUGS, and Stan}. Academic Press.
 \item Kruschke (2014) {\slshape Doing Bayesian Data Analysis, Second
     Edition: A Tutorial with R, JAGS, and Stan}. Academic Press.
 \item Gelman et al. (2013) {\slshape Bayesian Data Analysis}, 3rd Edition. CRC.
-\end{subitemize}
+\end{itemize}
 
 
 \sld{Scaling and Evaluation}
@@ -4631,7 +4501,7 @@ and \myemph{most easily extensible} (simple OO)
 \item Arrays allow most efficient access (no copying)
 \item Arrays stored first-index major (i.e., 2D are row major)
 \item Vectors and matrices required for matrix and linear algebra functions
-\item Matrices stored column-major
+\item Matrices stored column-major (memory locality matters)
 \item Are not assignable to each other, but there are conversion functions
 \end{itemize}
 
@@ -4770,29 +4640,42 @@ and \myemph{most easily extensible} (simple OO)
 \end{itemize}
 
 
-\sld{Statements}
+\sld{Atomic Statements}
 %
-\vspace*{-4pt}
 \begin{itemize}
 \item \myemph{Sampling}: \ {\footnotesize \Verb|y ~ normal(mu,sigma)|}
-  \ \ \ {\footnotesize (increments log probability)}
-  %
-\item \myemph{Log probability}: \ {\footnotesize increment\_log\_prob(lp);}
-\item \myemph{Assignment}: \  {\footnotesize \code{y\_hat <- x * beta};}
-  %
+  \ \ \ {\footnotesize (\myemph{increments log probability})}
+\item \myemph{Increment log density}: \ {\footnotesize target += lp;}
+\item \myemph{Assignment}: \  {\footnotesize \code{y\_hat = x * beta};}
+\end{itemize}
+
+
+\sld{Block of Statements}
+%
+\begin{itemize}
+\item \myemph{Block}: \ {\footnotesize \Verb|{ ...; ...; ...; }|}
+  \hfill {\footnotesize
+    (allows initial local variables)}
+\end{itemize}
+
+\sld{Control Statements}
+%
+\begin{itemize}
 \item \myemph{For loop}: \ {\footnotesize \code{for (n in 1:N) ...}}
-  %
 \item \myemph{While loop}: \ {\footnotesize \code{while (cond) ...}}
-  %
 \item \myemph{Conditional}: \ {\footnotesize
     \code{if (cond) ...; else if (cond) ...;  else ...;}}
-\item \myemph{Block}: \ {\footnotesize \Verb|{ ... }|}  \ \ \ {\footnotesize
-    (allows local variables)}
-\item \myemph{Print}: \ {\footnotesize \code{print("theta=",theta);}}
+\item \myemph{Break}: \ {\footnotesize \code{break}}
+\item \myemph{Continue}: \ {\footnotesize \code{continue}}
+\end{itemize}
+
+\sld{Side-Effect Statements}
+%
+\begin{itemize}
+\item \myemph{Print}: \ {\footnotesize \code{print("theta=", theta);}}
 \item \myemph{Reject}:
 \ {\footnotesize
     \code{reject("arg to foo must be positive, found y=", y);}}
-\item \myemph{Break, Continue}: \ {\footnotesize \code{break}, \code{continue}}
 \end{itemize}
 
 
@@ -4813,6 +4696,7 @@ and \myemph{most easily extensible} (simple OO)
 \item ${}^{*}$ up to a constant
 \item Sampling statement drops constant terms
 \end{itemize}
+
 
 
 \sld{Local Variable Scope Blocks}
@@ -5663,12 +5547,12 @@ J_{i,j} = \frac{\partial}{\partial x_i} f_j(x)
 
 
 \sld{Product \& Log-Sum-Exp}
-%
-\hfill \hfill
+
+\hfill
 \includegraphics[width=0.45\textwidth]{img/product_rel_eval.pdf}
 \hfill
 \includegraphics[width=0.45\textwidth]{img/log_sum_exp_2_rel_eval.pdf}
-\hfill \hfill
+\hfill
 
 
 \sld{Stan's Matrix Calculations}
@@ -6250,7 +6134,7 @@ for the \myemph{unconstrained posterior}
 \end{subitemize}
 
 
-\mypart{}{Modeling and Computing\\[8pt]Challenges}
+\mypart{}{Challenges}
 
 
 \sld{Discrete Parameters}
@@ -6307,6 +6191,89 @@ for the \myemph{unconstrained posterior}
 \item initial (\code{stepsize}) and target acceptance (\code{adapt\_delta})
 \end{subsubitemize}
 \end{itemize}
+
+
+\mypart{}{Predator-Prey Dynamics}
+
+
+\sld{Lynxes and Hares}
+%
+\begin{center}
+\includegraphics[height=1in]{img/lynx.jpg}
+\hspace*{0.25in}
+\includegraphics[height=1in]{img/hare.jpg}
+\end{center}
+\begin{itemize}
+\item \myemph{Snowshoe hare} (prey): herbivorous cousin of rabbits
+\item \myemph{Canadian lynx} (predator): feline eating primarily hares
+\end{itemize}
+\vfill
+{\tiny
+\mbox{ } \hfill
+Lynx image copyright 2009, Keith Williams, CC-BY 2.0.
+\\[-2pt]
+\mbox{ } \hfill
+Hare image copyright 2013 D. Gordon E. Robonson, CC-BY SA 2.0}
+
+
+\sld{Hudson Bay Co. Pelts, 1900--20}
+%
+\\[-4pt] \spc
+\includegraphics[width=0.85\textwidth]{img/hare-lynx-pelts-1.png}
+
+
+\sld{Pelts, Phase Space}
+%
+\\[-4pt] \spc
+\includegraphics[width=0.85\textwidth]{img/hare-lynx-pelts-2.png}
+
+
+\sld{Volterra's (1927) Model}
+%
+
+\begin{minipage}[t]{0.65\textwidth}
+\vspace*{-1in}
+\begin{subitemize}
+\item population: $u(t)$ \myemph{prey}, \ $v(t)$ \myemph{predator}
+%
+\begin{eqnarray*}
+\frac{\mathrm{d}}{\mathrm{d}t} u
+& = &  (\alpha - \beta v) u
+\\[6pt]
+\frac{\mathrm{d}}{\mathrm{d}t} v
+& = &  (-\gamma + \delta \, u) \, v
+\end{eqnarray*}
+%
+\begin{subsubitemize}
+\item $\alpha$: prey growth, intrinsic
+\item $\beta$: prey shrinkage due to predation
+\item $\gamma$: predator shrinkage, intrinsic
+\item $\delta$: predator growth from predation
+\end{subsubitemize}
+\vspace*{-8pt}
+\item \footnotesize dynamics lead to \myemph{oscillation} as observed
+\end{subitemize}
+\end{minipage}
+%
+\hfill
+%
+\begin{minipage}[t]{0.3\textwidth}
+\mbox{ }
+\vspace*{0.5in}
+\mbox{ } \hfill
+\includegraphics[width=0.8\textwidth]{img/volterra-orbit.jpg}
+\\[-8pt]
+\mbox{ }
+\hfill
+\includegraphics[width=0.8\textwidth]{img/hare-lynx-pelts-2.png}
+\end{minipage}
+\vfill
+\hfill
+{\tiny
+Volterra, V., 1927. {\slshape Variazioni
+e fluttuazioni del numero d'individui in specie animali
+conviventi}. C.~Ferrari.
+}
 
 
 
@@ -6480,6 +6447,119 @@ sigma[2] 0.29       0  0.06  0.23  0.29  0.37   2821    1
 \item training data (1900-1920); \ future predictions (1921+)
 \end{subsubitemize}
 
+
+
+\sld{Why Stan?  \hfill \large (1/6)}
+%
+\begin{itemize}
+\item {\slshape\bfseries Goal}: Robust, fully Bayesian inference.
+\end{itemize}
+%
+\vspace*{2pt}
+\begin{itemize}
+\item {\slshape Problem}: Gibbs and Metropolis too slow (diffusive)
+\item {\slshape Solution}: Hamiltonian Monte Carlo (flow)
+%
+\vspace*{8pt}
+\item {\slshape Problem}:  Interpreters slow and unscalable
+\item {\slshape Solution}: Compiled to C++
+%
+\vspace*{8pt}
+\item {\slshape Problem}:  Need gradients of log posterior for HMC
+\item {\slshape Solution}: Reverse-mode algorithmic differentiation
+\end{itemize}
+
+
+\sld{Why Stan? \hfill \large (2/6)}
+%
+\begin{itemize}
+\item {\slshape Problem}:  Existing algo-diff slow, limited, unextensible
+\item {\slshape Solution}: Our own algo-diff
+%
+\vspace*{8pt}
+\item {\slshape Problem}:  Algo-diff requires functions templated on
+  all args
+\item {\slshape Solution}: Our own density library, Eigen linear
+ algebra
+%
+\vspace*{8pt}
+\item {\slshape Problem}:  Need unconstrained parameters for HMC
+\item {\slshape Solution}: Variable transforms w. Jacobian determinants
+%
+\end{itemize}
+
+
+\sld{Why Stan? \hfill \large (3/6)}
+%
+\begin{itemize}
+\item {\slshape Problem}:  Need ease of use of BUGS
+\item {\slshape Solution}: Compile a domain-specific language
+%
+\vspace*{8pt}
+\item {\slshape Problem}:  Pure directed graphical language inflexible
+\item {\slshape Solution}: Imperative probabilistic programming
+  language
+\vspace*{8pt}
+\item {\slshape Problem}:  Need to tune parameters for HMC
+\item {\slshape Solution}: Tune step size and estimate mass matrix
+  during warmup;  on-the-fly number of steps (NUTS)
+%
+\end{itemize}
+
+
+\sld{Why Stan? \hfill \large (4/6)}
+%
+\begin{itemize}
+%
+\vspace*{4pt}
+\item {\slshape Problem}:  Efficient up-to-proportion density calcs
+\item {\slshape Solution}: Density template metaprogramming
+%
+\vspace*{4pt}
+\item {\slshape Problem}:  Limited error checking, recovery
+\item {\slshape Solution}: Static model typing, informative exceptions
+%
+\vspace*{4pt}
+\item {\slshape Problem}:  Poor numerical stability
+\item {\slshape Solutions}:
+{
+Taylor expansions, e.g., {\small \code{log1p()}}
+\\[2pt]
+compound functions, e.g., {\small \code{log\_sum\_exp()}, \
+\code{BernoulliLogit()}}
+\\[2pt]
+limits at boundaries, e.g., {\small \code{multiply\_log()}}
+}
+%
+\end{itemize}
+
+
+\sld{Why Stan? \hfill \large (5/6)}
+%
+\begin{itemize}
+\item {\slshape Problem}:  Nobody knows everything
+\item {\slshape Solution}: Expand project team with specialists
+\vspace*{8pt}
+\item {\slshape Problem}:  Expanding code and project team
+\item {\slshape Solution}: GitHub: branch, pull
+  request, code review
+\item {\slshape Solution}: Jenkins: continuous integration
+\item {\slshape Solution}: ongoing refactoring and code simplification
+%
+\end{itemize}
+
+
+\sld{Why Stan? \hfill \large (6/6)}
+%
+\begin{itemize}
+\item {\slshape Problem}:  Heterogeneous user base
+\item {\slshape Solution}: More interfaces (R, Python, MATLAB, Julia)
+\item {\slshape Solution}:  domain-specific examples, tutorials
+\vspace*{8pt}
+\item {\slshape Problem}:  Restrictive licensing limits use
+\item {\slshape Solution}: Code and doc open source
+(BSD, CC-BY)
+\end{itemize}
 
 
 

@@ -5,17 +5,20 @@ output:
     widescreen: true
 ---
 
-```{r setup, include=FALSE}
+```{r setup, include=FALSE, cache=T}
 knitr::opts_chunk$set(echo = FALSE, comment="")
 height_data = read.csv("heights.csv")
 height_data = height_data[height_data$age >= 18, ]
 hdata = height_data
 library(rstan)
 library(shinystan)
+
+library("rstanarm")
+library("ggplot2")
+posterior <- as.matrix(stan_glm(mpg ~ ., data = mtcars))
 ```
 
 ## Modeling heights in a population
-
 The !Kung San are the most famous foraging population of the 20th century, mostly because they have the most detailed quantitative studies conducted by anthropologists like Nancy Howell in the late 1960s.
 
 I've excluded the children from the data for now, so we're only modeling adult heights.
@@ -24,8 +27,35 @@ I've excluded the children from the data for now, so we're only modeling adult h
 str(height_data)
 ```
 
-## Resources
+## Simple modeling
+- How tall is the average !Kung San?
+```{r, echo=T}
+mean(height_data$height)
+```
+- How dispersed are the heights?
+```{r, echo=T}
+sd(height_data$height)
+```
+- What might we expect a new !Kung San height to look like?
+```{r, echo=T}
+rnorm(1, mean(height_data$height), sd(height_data$height))
+```
+## Draws all the way down
+- Primary output of a fit object is a set of draws of parameter values
+- Draws retain uncertainty, correlation, and other aspects of the posterior that point estimates lose
+- Standard toolbox for working with draws
+- Summarize only when required
 
+## Bayesian ways to summarize a distribution
+```{r, message=F, warning=F, error=F, cache=T}
+plot_title <- ggtitle("Posterior distributions",
+                      "with medians and 80% intervals")
+mcmc_areas(posterior,
+           pars = c("cyl", "drat", "am", "wt"),
+           prob = 0.8) + plot_title
+```
+
+## Resources
 - http://mc-stan.org > Users > Documentation > Stan Manual (pdf)
 
 ```{r}
@@ -35,8 +65,8 @@ writeLines(readLines("heights1.stan")[1:4])
 parameters { ??? }
 model { ??? }
 ```
-## A first draft
 
+## A first draft
 ```{r}
 writeLines(readLines("heights1.stan"))
 ```
@@ -77,7 +107,6 @@ print(fit2, probs = c(0.025, 0.975))
 ```
 
 ## Interpretation
-
 - height_location_avg_weight
 - weight_coeff
 ```{r, echo=T}
