@@ -1454,7 +1454,6 @@ generated quantities {
   $\mbox{Pr}[\theta_0 > \theta_1 \mid y]$
 \item Mass arises from integrating over density
 \item As data size increases, posterior concentrates around true value
-\item Also see this in non-centered reparameterization plot
 \end{itemize}
 
 \sld{E.g., Binomial Concentration}
@@ -3573,8 +3572,8 @@ data {
 \end{itemize}
 \begin{stancode}
 functions {
-  real[] sho(real t, real[] y, real[] theta,
-             real[] x_r, int[] x_i) {
+  real[] sho(data real t, real[] y, real[] theta,
+             data real[] x_r, data int[] x_i) {
     return { y[2],
              -y[1] - theta[1] * y[2] };
   }
@@ -5046,7 +5045,6 @@ is more efficient with sufficient statistics
   \end{minipage}
 \end{itemize}
 
-
 \sld{Special User-Defined Functions}
 %
 \begin{itemize}
@@ -5060,6 +5058,76 @@ is more efficient with sufficient statistics
 \end{itemize}
 
 
+\sld{User-Defined PDFs and CDFs}
+%
+\begin{itemize}
+\item May be used with sampling and PDF/PMF notation
+\begin{subitemize}
+\item \myemph{density}: suffix \code{\_lpdf} if variate (first arg) is real
+\item \myemph{mass}: Suffix \code{\_lpmf} if variate (first arg) is integer
+\end{subitemize}
+\end{itemize}
+%
+{\small
+\begin{stancode}
+functions {
+  real centered_normal_lpdf(real y, real sigma) {
+    return -0.5 * (y / sigma)^2;
+  }
+
+model {
+  y ~ centered_normal(2.5);                 // sampling
+
+  target += centered_normal_lpdf(y | 2.5);  // pdf notation
+\end{stancode}
+}
+
+
+\sld{Target Incrementing Functions}
+%
+\begin{itemize}
+\item May access target or use sampling statements
+\item Only usable in model block
+\begin{subitemize}
+\item must end in \code{\_lp}
+\end{subitemize}
+\end{itemize}
+%
+\begin{stancode}
+functions {
+  vector non_center_lp(vector beta_std, real mu, real sigma) {
+    beta_std ~ normal(0, 1);
+    return mu + sigma * beta_raw;
+  }
+parameters {
+  vector[K] beta_std;
+model {
+  vector[K] beta = non_center_lp(beta_std);
+  y ~ normal(x * beta, sigma);
+\end{stancode}
+
+
+\sld{RNG Functions}
+%
+\begin{itemize}
+\item Only usable in generated quantities block
+\begin{subitemize}
+\item must end in \code{\_rng}
+\end{subitemize}
+\end{itemize}
+%
+\begin{stancode}
+functions {
+  real centered_normal_rng(real sigma) {
+    return normal_rng(0, sigma);
+  }
+
+generated quantities {
+  real alpha = centered_normal_rng(2.7);
+\end{stancode}
+
+
+
 \sld{Differential Equation Solver}
 %
 \begin{itemize}
@@ -5070,15 +5138,14 @@ is more efficient with sufficient statistics
 \end{subitemize}
 \item Simple harmonic oscillator diff eq
 \begin{stancode}
-\begin{Verbatim}
-    real[] sho(real t,         // time
-               real[] y,       // system state
-               real[] theta,   // params
-               real[] x_r,     // real data
-               int[] x_i) {    // int data
-      return { y[2],
-               -y[1] - theta[1] * y[2] };
-   }
+  real[] sho(data real t,        // time
+             real[] y,           // system state
+             real[] theta,       // params
+             data real[] x_r,    // real data
+             data int[] x_i) {   // int data
+    return { y[2],
+             -y[1] - theta[1] * y[2] };
+ }
 \end{stancode}
 \end{itemize}
 
@@ -6572,12 +6639,12 @@ conviventi}. C.~Ferrari.
 \vspace*{-2pt}
 {\footnotesize
 \begin{stancode}
-  real[] dz_dt(real t,          // time (unused)
-               real[] z,        // system state
-               real[] theta,    // parameters
-               real[] x_r,      // real data (unused)
-               int[] x_i) {     // integer data (unused)
-    real u = z[1];              // extract state
+  real[] dz_dt(data real t,       // time (unused)
+               real[] z,          // system state
+               real[] theta,      // parameters
+               data real[] x_r,   // real data (unused)
+               data int[] x_i) {  // integer data (unused)
+    real u = z[1];                // extract state
     real v = z[2];
 
     real alpha = theta[1];
