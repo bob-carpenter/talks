@@ -10,10 +10,6 @@ output:
     toc_depth: 4
 ---
 
-<style type="text/css">
-.table { width: 40%; }
-</style>
-
 ## The Normal Distribution
 
 The Normal distribution is a continuous probability distribution with two parameters:
@@ -59,6 +55,8 @@ for (i in 1:N) rv[i] = normal(0, 1);
 
 * What is the Expectation of a random vector generated from a standard multinormal distribution?
 
+\pagebreak
+
 ## Exercise 1:  Choice of location and scale parameters for the Normal distribution
 
 * Write a program `gen_norm_variate.stan` which generates a random variate `x`
@@ -75,9 +73,12 @@ when `mu` is 0 and `sigma` is 1.
 
 * Write a program `gen_cauchy_variate.stan` which generates a random variate `x` for some choice
 of `mu` and `sigma`.
-    + Use this program to generate a sample
-    + Using the same values of `mu` and `sigma`, generate a sample using program `gen_norm_variate.stan`
-    + Create histogram plots for both, compare and contrast.
+
+* Use this program to generate a sample
+
+* Using the same values of `mu` and `sigma`, generate a sample using program `gen_norm_variate.stan`
+
+* Create histogram plots for both, compare and contrast.
 
 
 ## Exercise 3:  Expectations of the MultiNormal distribution and the curse of dimensionality

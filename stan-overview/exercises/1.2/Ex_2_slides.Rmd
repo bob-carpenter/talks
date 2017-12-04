@@ -67,10 +67,12 @@ when `mu` is 0 and `sigma` is 1.
 
 * Write a program `gen_cauchy_variate.stan` which generates a random variate `x` for some choice
 of `mu` and `sigma`.
-    + Use this program to generate a sample
-    + Using the same values of `mu` and `sigma`, generate a sample using program `gen_norm_variate.stan`
-    + Create histogram plots for both, compare and contrast.
 
+* Use this program to generate a sample
+
+* Using the same values of `mu` and `sigma`, generate a sample using program `gen_norm_variate.stan`
+
+* Create histogram plots for both, compare and contrast.
 
 ## Exercise 3:  Expectations of the MultiNormal distribution and the curse of dimensionality
 
