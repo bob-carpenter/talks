@@ -47,7 +47,309 @@
 \includegraphics[width=0.45in]{img/new-logo.png}
 
 
+\mypart{}{Reparameterizations}
 
+\sld{Why Reparameterize?}
+%
+\begin{itemize}
+\item Statistical reasons
+\begin{subitemize}
+\item more natural priors (e.g, Beta distribution)
+\item different scales (e.g., lognormal, inverse gamma)
+\item links for generalized linear models (e.g., inverse logit)
+\end{subitemize}
+\item Computational reasons
+\begin{subitemize}
+\item standardize scales
+\item reduce dependence among variables
+\item reduce curvature
+\begin{subsubitemize}
+\item often related to interaction of scale and dependence
+\end{subsubitemize}
+\end{subitemize}
+\end{itemize}
+
+\sld{Beta Reparameterization}
+%
+\begin{itemize}
+\item $\mathsf{Beta}(\alpha, \beta)$ for $\alpha, \beta > 1$ is
+  standard
+\begin{subitemize}
+\item $\alpha$ and $\beta$ are ``prior'' success and failure counts plus one
+\item difficult to specify mean and variance in prior
+\end{subitemize}
+\item Reparameterize with $\theta = \alpha / \beta$ and $\kappa =
+  \alpha + \beta$.
+\begin{subitemize}
+\item $\theta$ is mean and $\kappa$ is prior count plus two
+\item $\kappa$ is inversely related to variance
+\end{subitemize}
+\item example priors $\theta \sim \mathsf{Beta}(12, 4)$ and
+$\kappa \sim  \mathsf{Pareto}(2, 1.5)$
+\item no Jacobian needed
+\end{itemize}
+
+\sld{Log-Odds Reparameterization \hfill \large (1/3)}
+%
+\begin{itemize}
+\item Chance of success $\theta \in (0, 1)$ is constrained
+\item Odds of success
+\[
+\frac{\theta}{1 - \theta} \in (0, \infty)
+\]
+\item Log odds of success
+\[
+\mathrm{logit}(\theta) = \log \left( \frac{\theta}{1 - \theta} \right)
+\in (-\infty, \infty)
+\]
+\item Inverting log odds $(-\infty, \infty) \mapsto (0, 1)$ by
+\[
+\mbox{logit}^{-1}(\alpha) = \frac{1}{1 + \exp(-\alpha)}
+\]
+\end{itemize}
+
+\sld{Log-Odds Reparameterization \hfill \large (2/3)}
+%
+\begin{itemize}
+\item Log odds are unconstrained and symmetric around zero
+{\small
+\begin{center}
+\begin{tabular}{rcc}
+{\slshape log odds} & {\slshape odds} & {\slshape probability}
+ \\ \hline
+$\log 2$ & $2 : 1$ & $2 / 3$
+\\
+$ \log 1$ & $1 : 1$ & $1 /2$
+\\
+$-\log 2$ &  $1:2$ & $1 / 3$
+\end{tabular}
+\end{center}
+}
+\item Easy to formulate hierarchical priors for
+\[
+\alpha \sim \mathsf{Normal}(0, 2)
+\]
+\item Easy to use in generalized linear models
+\[
+\theta = \mathrm{logit}^{-1}(a + b \, x)
+\]
+\end{itemize}
+
+\sld{Log-Odds Reparameterization \hfill \large (3/3)}
+%
+
+\mbox{ }
+  \includegraphics[width=0.48\textwidth]{img/hist-unif01.png}
+  \includegraphics[width=0.48\textwidth]{img/hist-logit-unif01.png}
+\mbox{ }
+%
+\vspace*{-4pt}
+\begin{subitemize}
+\item \emph{Left}: \ histogram of $\theta$ where $\theta \sim \mathsf{Uniform}(0,1)$
+\item \emph{Right}: \ histogram of $\displaystyle \mathrm{logit}(\theta) = \log
+\frac{\theta}{1 - \theta}$
+\item Transformed variable no longer uniform---it's
+  $\mathsf{Logistic}(0, 1)$
+\end{subitemize}
+
+
+\sld{Jacobian Calculation, 1D \hfill \large (1/2)}
+%
+\begin{itemize}
+\item Let $\theta \sim \mathsf{Uniform}(0, 1)$ be uniformly distributed
+\item Let $\alpha = \mathsf{logit}(\theta)$ be its log odds
+\item What is the density $p(\alpha)$ of the transformed variable?
+\item In general, apply Jacobian formula when $Y = f(X)$
+\[
+p_Y(y) = p_X(f^{-1}(y))
+\,
+\left| \frac{\mathrm{d}}{\mathrm{d}y} \, f^{-1}(y) \right|
+\]
+\end{itemize}
+
+\sld{Jacobian Calculation, 1D \hfill \large (1/2)}
+%
+\begin{itemize}
+\item By Jacobian formula, if $\theta \sim \mathsf{Uniform}(0, 1)$
+and $\alpha = \mathrm{logit}(\theta)$,
+\end{itemize}
+\begin{eqnarray*}
+p(\alpha)
+& = &
+\mathsf{Uniform}(\mathrm{logit}^{-1}(\alpha) \mid 0, 1)
+\times
+\left| \frac{\mathrm{d}}{\mathrm{d}\alpha} \, \mathrm{logit}^{-1}(\alpha)
+\right|
+\\[6pt]
+& = & 1 \times \left| \mathrm{logit}^{-1}(\alpha) \times \left( 1 -
+      \mathrm{logit}^{-1}(\alpha)\right) \right|
+\\[6pt]
+& = & \mathsf{Logistic}(\alpha \mid 0, 1)
+\end{eqnarray*}
+
+
+\sld{Lognormal Variable}
+%
+\begin{itemize}
+\item Assume $\alpha \in (-\infty, \infty)$ is an unconstrained
+  parameter
+\item Want log of positive parameter to be standard normal, so try
+\begin{stancode}
+    parameters {
+      real<lower = 0> alpha;
+    model {
+      log(alpha) ~ lognormal(0, 1);  // WARNING!!!
+\end{stancode}
+\item Jacobian on the log scale:
+$
+\log \left| \frac{\mathrm{d}}{\mathrm{d}\alpha} \, log(\alpha) \right|
+= - \log | \alpha |
+$
+\item So Stan program needs Jacobian adjustment
+\begin{stancode}
+      target += -log(abs(alpha));
+\end{stancode}
+\end{itemize}
+
+
+\mypart{}{Mixture Models}
+
+\sld{Simple Normal Mixture \hfill \large (1/3)}
+%
+\begin{itemize}
+\item Assume a population is a mixture of two subpopulations
+\begin{subitemize}
+\item subpopulation one is distributed $\mathsf{Normal}(\mu_1,
+  \sigma_1)$
+\item subpopulation two is distributed $\mathsf{Normal}(\mu_2,
+  \sigma_2)$
+\item subpopulation one makes up $\lambda \in (0, 1)$ of the population
+\end{subitemize}
+\item Model a draw $y_n$ from the population as follows
+\begin{subitemize}
+\item draw subpopulation indicator $z_n \sim \mathsf{Bernoulli}(\lambda)$
+\item if $z_n = 1$ draw $y_n \sim \mathsf{Normal}(\mu_1, \sigma_1)$,
+  \\
+else draw $y_n \sim \mathsf{Normal}(\mu_2, \sigma_2)$
+\end{subitemize}
+\item The distribution of $y$ and $z$ given the parameters is
+{\small
+\[
+p(y_n, z_n \mid \lambda, \mu, \sigma)
+=
+\mathsf{Bernoulli}(z_n \mid \lambda)
+\times \mathsf{Normal}(\mu_{z_n \ ? \ 1 \ : \ 2}, \sigma_{z_n \ ? \ 1 \ : \ 2})
+\]
+}
+\end{itemize}
+
+
+\sld{Normal Mixture \hfill \large (2 / 3)}
+%
+\begin{itemize}
+\item To get likelihood $p(y_n \mid \lambda, \mu, \sigma)$, need to
+  marginalize out $z_n$
+\item Law of total probability: $p(a) = \sum_{b} p(a, b)$
+\item Marginalizing out $z_n$ yields
+{\small
+\[
+\begin{array}{l}
+p(y_n \mid \lambda, \mu, \sigma)
+\\[8pt]
+\ \ \ \ = \
+\sum_{k=0}^1 p(y_n, z_n = k \mid \lambda, \mu, \sigma)
+\\[8pt]
+\ \ \ \ = \
+\mathsf{Bernouli}(1 \mid \lambda)
+          \times \mathsf{Normal}(y_n \mid \mu_1, \sigma_1)
+\\[4pt]
+\ \ \ \ \ \ \ \      + \ \mathsf{Bernoulli}(0 \mid \lambda)
+            \times  \mathsf{Normal}(y_n \mid \mu_2, \sigma_2)
+\\[8pt]
+\ \ \ \ = \
+\lambda
+    \, \mathsf{Normal}(y_n \mid \mu_1, \sigma_1)
++ (1 - \lambda)
+      \, \mathsf{Normal}(y_n \mid  \mu_2, \sigma_2)
+\end{array}
+\]
+}
+\end{itemize}
+
+
+\sld{Normal Mixture \hfill \large (3/3)}
+%
+\begin{itemize}
+\item Log converts addition to log sum of exponents
+\[
+\begin{array}{l}
+\log \left( \lambda
+    \, \mathsf{Normal}(y_n \mid \mu_1, \sigma_1)
++ (1 - \lambda)
+      \, \mathsf{Normal}(y_n \mid  \mu_2, \sigma_2) \right)
+\\[8pt]
+\ \ = \log \left( \right.
+\begin{array}[t]{l}
+\exp \left( \log \lambda + \log \mathsf{Normal}(y_n \mid
+  \mu_1, \sigma_1) \right)
+\\[3pt]
+\left. + \exp \left( \log (1 - \lambda) + \log \mathsf{Normal}(y_n \mid
+  \mu_1, \sigma_1) \right) \ \right)
+\end{array}
+\end{array}
+\]
+\item In Stan code, use \code{log\_sum\_exp}
+\begin{stancode}
+for (n in 1:N) {
+  real lp1 = log(lambda)
+             + normal_lpdf(y[n] | mu[1], sigma[1]);
+  real lp2 = log1m(lambda)
+             + normal_lpdf(y[n] | mu[2], sigma[2]);
+  target += log_sum_exp(lp1, lp2);
+}
+\end{stancode}
+
+\end{itemize}
+
+\sld{Normal Mixture \hfill \large (bonus 1/2)}
+%
+\begin{itemize}
+\item The two-component mixture case is built-in, e.g.,
+\begin{stancode}
+for (n in 1:N)
+  target += log_mix(lambda,
+                    normal_lpdf(y[n] | mu[1], sigma[1]),
+                    normal_lpdf(y[n] | mu[2], sigma[2]));
+\end{stancode}
+\item \code{lambda} is a probability between zero and one
+\item second two arguments are log-scale densities or masses
+\end{itemize}
+
+\sld{Normal Mixture \hfill \large (bonus 2/2)}
+%
+\begin{itemize}
+\item Use simplex and loop for more than two components
+%
+\begin{stancode}
+parameters {
+  simplex[K] lambda;         // mixture ratios
+  vector[K] mu;              // component locations
+  vector<lower=0>[K] sigma;  // component scales
+
+model {
+  vector[K] log_lambda = log(lambda);  // cache & reuse
+  for (n in 1:N)
+    vector[K] lp = log_lambda;
+    for (k in 1:K)
+      lp[k] += normal_lpdf(y[n] | mu[k], sigma[k]);
+    target += log_sum_exp(lp);
+  }
+\end{stancode}
+\end{itemize}
+
+
+
+\end{document}
 \sld{StanCon 2018}
 %
 \begin{itemize}
