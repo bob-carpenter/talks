@@ -4008,7 +4008,7 @@ in the long run using full Bayes (de Finetti)
 \end{itemize}
 
 
-\mypart{}{Philosophy\\[12pt] of Probability}
+\mypart{}{Philosophy\\[12pt]\spc of Probability}
 
 
 \sld{Exchangeability}
@@ -4155,9 +4155,9 @@ and state of residence
 \end{subitemize}
 
 
-\sld{Who's Using Stan?}
+\sld{\Large Who's Using Stan?}
 %
-\begin{itemize}
+\begin{subitemize}
 \item 2500+ \myemph{users group} registrations;  20,000+ \myemph{downloads}
   \small{(per version just in Rstudio)}; 1000+ Google scholar citations
 \item \myemph{Biological sciences}: {\footnotesize
@@ -4175,8 +4175,8 @@ astrophysics, particle physics, molecular biology, oceanography, climatology, bi
 }
 \item \myemph{Other}: {\footnotesize materials engineering, finance,
     actuarial science, sports, public health, recommender systems,
-    educational testing, fleet maintenance, sports}
-\end{itemize}
+    education, fleet maintenance, sports}
+\end{subitemize}
 
 
 \sld{Documentation}
@@ -4213,22 +4213,26 @@ astrophysics, particle physics, molecular biology, oceanography, climatology, bi
 \end{itemize}
 
 
-\sld{Books about Stan}
+\sld{Books about Stan \hfill \large (1/2)}
 %
-\begin{subitemize}
-\footnotesize
+\begin{itemize}
 \item Gelman and Hill (2018) {\slshape Regression and Other Stories}. Cambridge.
 \item Hilbe, de Souza, and Ishida (2017) {\slshape Bayesian Models for Astrophysical Data Using R, JAGS, Python, and Stan}. Cambridge.
 \item Matsuura (2016) {\slshape Bayesian Statistical Modeling Using Stan and R}. Kyoritsu. (Japanese)
-\item Faraway (2016) {\slshape Extending the Linear Model with R: Generalized Linear, Mixed Effects and Nonparametric Regression Models}, 2nd Edition. CRC.
 \item McElreath (2016) {\slshape Statistical Rethinking: A Bayesian course
     with R and Stan}. CRC.
+\end{itemize}
+
+\sld{Books about Stan \hfill \large (2/2)}
+%
+\begin{itemize}
+\item Faraway (2016) {\slshape Extending the Linear Model with R: Generalized Linear, Mixed Effects and Nonparametric Regression Models}, 2nd Edition. CRC.
 \item Korner-Nievergelt et al. (2015) {\slshape Bayesian Data Analysis in
     Ecology Using Linear Models with R, BUGS, and Stan}. Academic Press.
 \item Kruschke (2014) {\slshape Doing Bayesian Data Analysis, Second
     Edition: A Tutorial with R, JAGS, and Stan}. Academic Press.
 \item Gelman et al. (2013) {\slshape Bayesian Data Analysis}, 3rd Edition. CRC.
-\end{subitemize}
+\end{itemize}
 
 
 \sld{Scaling and Evaluation}
@@ -4636,29 +4640,42 @@ and \myemph{most easily extensible} (simple OO)
 \end{itemize}
 
 
-\sld{Statements}
+\sld{Atomic Statements}
 %
-\vspace*{-4pt}
 \begin{itemize}
 \item \myemph{Sampling}: \ {\footnotesize \Verb|y ~ normal(mu,sigma)|}
-  \ \ \ {\footnotesize (increments log probability)}
-  %
-\item \myemph{Log probability}: \ {\footnotesize increment\_log\_prob(lp);}
-\item \myemph{Assignment}: \  {\footnotesize \code{y\_hat <- x * beta};}
-  %
+  \ \ \ {\footnotesize (\myemph{increments log probability})}
+\item \myemph{Increment log density}: \ {\footnotesize target += lp;}
+\item \myemph{Assignment}: \  {\footnotesize \code{y\_hat = x * beta};}
+\end{itemize}
+
+
+\sld{Block of Statements}
+%
+\begin{itemize}
+\item \myemph{Block}: \ {\footnotesize \Verb|{ ...; ...; ...; }|}
+  \hfill {\footnotesize
+    (allows initial local variables)}
+\end{itemize}
+
+\sld{Control Statements}
+%
+\begin{itemize}
 \item \myemph{For loop}: \ {\footnotesize \code{for (n in 1:N) ...}}
-  %
 \item \myemph{While loop}: \ {\footnotesize \code{while (cond) ...}}
-  %
 \item \myemph{Conditional}: \ {\footnotesize
     \code{if (cond) ...; else if (cond) ...;  else ...;}}
-\item \myemph{Block}: \ {\footnotesize \Verb|{ ... }|}  \ \ \ {\footnotesize
-    (allows local variables)}
-\item \myemph{Print}: \ {\footnotesize \code{print("theta=",theta);}}
+\item \myemph{Break}: \ {\footnotesize \code{break}}
+\item \myemph{Continue}: \ {\footnotesize \code{continue}}
+\end{itemize}
+
+\sld{Side-Effect Statements}
+%
+\begin{itemize}
+\item \myemph{Print}: \ {\footnotesize \code{print("theta=", theta);}}
 \item \myemph{Reject}:
 \ {\footnotesize
     \code{reject("arg to foo must be positive, found y=", y);}}
-\item \myemph{Break, Continue}: \ {\footnotesize \code{break}, \code{continue}}
 \end{itemize}
 
 
@@ -4679,6 +4696,7 @@ and \myemph{most easily extensible} (simple OO)
 \item ${}^{*}$ up to a constant
 \item Sampling statement drops constant terms
 \end{itemize}
+
 
 
 \sld{Local Variable Scope Blocks}
@@ -5529,12 +5547,12 @@ J_{i,j} = \frac{\partial}{\partial x_i} f_j(x)
 
 
 \sld{Product \& Log-Sum-Exp}
-%
-\hfill \hfill
+
+\hfill
 \includegraphics[width=0.45\textwidth]{img/product_rel_eval.pdf}
 \hfill
 \includegraphics[width=0.45\textwidth]{img/log_sum_exp_2_rel_eval.pdf}
-\hfill \hfill
+\hfill
 
 
 \sld{Stan's Matrix Calculations}
@@ -6116,7 +6134,7 @@ for the \myemph{unconstrained posterior}
 \end{subitemize}
 
 
-\mypart{}{Modeling and Computing\\[8pt]Challenges}
+\mypart{}{Challenges}
 
 
 \sld{Discrete Parameters}
