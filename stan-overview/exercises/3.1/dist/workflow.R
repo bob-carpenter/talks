@@ -20,6 +20,8 @@ m = mean(pooled.sample$beta[,2])
 ggplot(df, aes(floor.measure, log.radon)) + geom_count() +
   geom_abline(intercept = b, slope = m, linetype=2)
 
+
+
 ## Unpooled
 unpooled.model = stan_model("unpooled.stan")
 unpooled.fit = sampling(unpooled.model, list(y=df$log.radon,
