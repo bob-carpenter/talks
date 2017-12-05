@@ -186,13 +186,6 @@ library(knitr)
 include_graphics("ex1_p1.png")
 ```
 
-Compare this to visualizations produced using R's base graphics package:
-```
-# visualize in R
-> hist(d20_outcomes, xlab="outcome", ylab="frequency")
-> plot(table(d20_outcomes), xlab="outcome", ylab="frequency")
-```
-
 \pagebreak
 
 ### Exercise 1:  Roll a single fair dice.

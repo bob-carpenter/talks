@@ -198,7 +198,7 @@ generated quantities {
 
 <ul>
 <li>function <code>stan_model</code> compiles a Stan program into a <code>stanmodel</code> object</li>
-<li>function <code>sampling</code> plugs in the data and generates a sample</li>
+<li>function <code>sampling</code> plugs in the data and returns the sample as a <code>stanfit</code> object</li>
 </ul>
 
 </article></slide><slide class=''><hgroup><h2></h2></hgroup><article  class="smaller">
@@ -241,8 +241,8 @@ ans  10.49    0.09 5.7    1   6  11  15    20  3794    1</pre>
 <p><a href='http://ggplot2.org' title=''><code>ggplot2</code></a> is a plotting system for R, based on the grammar of graphics. To create the same histogram using <code>ggplot</code>, we used RStan&#39;s <code>as.data.frame</code> function which creates a names column for each parameter or generated quantity variable. We then pass this object into the ggplot function which creates a histogram plot:</p>
 
 <pre >library(ggplot2);
-rolls = as.data.frame(fit_8ball, pars=c(&quot;ans&quot;))
-p2 = ggplot(data=rolls, aes(rolls$ans)) +
+d20_outcomes = as.data.frame(fit_8ball, pars=c(&quot;ans&quot;))
+p2 = ggplot(data=d20_outcomes, aes(d20_outcomes$ans)) +
      geom_histogram(bins=20, colour = &quot;black&quot;, fill = &quot;darkgrey&quot;)
 p2;</pre>
 

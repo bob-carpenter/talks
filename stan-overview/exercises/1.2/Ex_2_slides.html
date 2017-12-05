@@ -99,13 +99,11 @@
 
 <p>The <em>standard normal distribution</em> is the normal distribution with a mean of zero and a variance of one.</p>
 
-<p>Normal distributions are often used to represent a real-valued random variable whose true distribution isn&#39;t known.</p>
-
 <p>Stan provides the function <code>normal_rng</code> which takes two real-values arguments <code>mu</code> and <code>sigma</code> which specify the location and scale, respectively. (Note: <code>sigma</code> must be positive). This function may only be used in generated quantities block.</p>
 
 </article></slide><slide class=''><hgroup><h2>Other &quot;Bell Curve&quot; Distributions: Cauchy, Logistic, Student&#39;s t</h2></hgroup><article  id="other-bell-curve-distributions-cauchy-logistic-students-t" class="smaller ">
 
-<p>The shape of the probability densities functions for these distributions are all bell-shaped, however they have more area under the tail of the curve than the Normal does, thus the extreme quantiles are farther from the mean. For the Cauchy distribution, the area under the tail is infinite! These distributions are useful when the amount of variance is unknown.</p>
+<p>The shape of the probability densities functions for these distributions are all bell-shaped, however they have more area under the tail of the curve than the Normal does, thus the extreme quantiles are farther from the mean. For the Cauchy distribution, the area under the tail is infinite! These distributions are useful for random variables whose variance is unknown.</p>
 
 <p>Stan provides functions <code>cauchy_rng</code>, <code>student_t_rng</code>, and <code>logistic_rng</code>, all of which take location and scale parameters <code>mu</code> and <code>sigma</code>.</p>
 
@@ -113,10 +111,10 @@
 
 <p>The multivariate normal distribution is the extension of the normal distribution of a single random variable to a vector of random variables (a &quot;random vector&quot;). Each element of a random vector is a variable which is normally distributed, i.e., each element is drawn from its own normal distribution with parameters <code>mu</code> and <code>sigma</code>.</p>
 
-<p>The following code snippet shows how to generate a standard random vector of length N in Stan:</p>
+<p>Generating a standard normal random vector in Stan is just like generating a standard normal variate, only using a <code>vector</code> and a <code>for</code> loop:</p>
 
 <pre >vector[N] rv;
-for (i in 1:N) rv[i] = normal(0, 1);</pre>
+for (i in 1:N) rv[i] = normal_rng(0, 1);</pre>
 
 <ul>
 <li><p>What is the Expectation of a random variable generated from a standard normal distribution?</p></li>
@@ -168,8 +166,8 @@ pp = pp + stat_function(fun = dnorm,
 </article></slide><slide class=''><hgroup><h2>Exercise 3: Expectations of the MultiNormal distribution and the curse of dimensionality</h2></hgroup><article  id="exercise-3-expectations-of-the-multinormal-distribution-and-the-curse-of-dimensionality" class="smaller ">
 
 <ul>
-<li><p>Write a program <code>gen_std_norm_vector.stan</code> which generates a standard random vector <code>X</code> of length N for some choice of N <em>and</em> which computes the distance between X and the origin as quantity of interest <code>dist_to_origin</code>.</p></li>
-<li><p>Generate an x,y plot for x in 1:256 where x is the length of the random vector X and y is the expectation of the distance to the origin when X is a standard MultiNormal random vector. (You should be able to write a Stan program which computes the distance to origin for vectors of length 1:256 all in one go.)</p></li>
+<li><p>Write a program <code>gen_std_norm_vector.stan</code> which generates a standard normal random vector <code>X</code> of length N for some choice of N and computes its distance to the origin vector as quantity of interest <code>dist_to_origin</code>. Generalize this program to compute distance to the origin for all standard normal random vectors of length 1 through N.</p></li>
+<li><p>Generate an x,y plot for x in 1:256 where x is the length of the random vector X and y is the expectation of the distance to the origin when X is a standard normal random vector.</p></li>
 </ul></article></slide>
 
 
