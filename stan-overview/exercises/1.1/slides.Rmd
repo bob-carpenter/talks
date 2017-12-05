@@ -56,7 +56,9 @@ mcmc_areas(height_data,
 ```
 
 ## Resources
-- http://mc-stan.org > Users > Documentation > Stan Manual (pdf)
+- Data: http://mc-stan.org/workshops/dec2017/1.1.zip
+- http://mc-stan.org > Users > Documentation > Stan Reference Manual (pdf)
+    - List of functions in the index
 - We think adult heights are normally distributed, 
 $y \sim \mathcal{N}(\mu, \sigma)$
 ```{r}
