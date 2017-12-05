@@ -695,7 +695,7 @@ several potential outcomes
 
 
 
-\sld{Simple Point Estimation}
+\sld{Maximum Likeilihood}
 %
 \begin{itemize}
 \item Estimate chance of success $\theta$ by proportion of successes:
@@ -811,6 +811,7 @@ expected to fall.
 \sld{Central Limit Theorem (math)}
 %
 \begin{itemize}
+\item Simple i.i.d.\ version---can be established more generally
 \item Given $N$ i.i.d.\ variables $\theta_1, \ldots, \theta_N$ with
 \begin{subitemize}
 \item $\mathbb{E}[\theta_n] = \mu$
@@ -2233,6 +2234,7 @@ complex posteriors (i.e., high curvature and correlation)
 \item Statistical reasoning is \myemph{counterfactual}
 \end{itemize}
 
+
 \sld{Random Variables}
 %
 \begin{itemize}
@@ -2247,6 +2249,7 @@ complex posteriors (i.e., high curvature and correlation)
 \item prevalence of a disease in a population
 \end{subitemize}
 \end{itemize}
+
 
 \sld{Events}
 %
@@ -2275,6 +2278,7 @@ complex posteriors (i.e., high curvature and correlation)
 \item What if I tell you his mother is taller than 6'?
 \end{subitemize}
 \end{itemize}
+
 
 \sld{Bayesian Data Analysis}
 %
@@ -2441,7 +2445,7 @@ complex posteriors (i.e., high curvature and correlation)
 \hspace*{-5pt}{\Large``}When you have computational problems, often there's a
 problem with your model.{\Large''}
 \\[4pt]
-\mbox{ } \hfill {\small --- Andrew Gelman, blog}
+\mbox{ } \hfill {\small --- Andrew Gelman (2008)}
 \end{quote}
 \begin{itemize}
 \item The usual culprits are
@@ -2993,7 +2997,7 @@ theta   0.41    0.00 0.10   0.28   0.55  1580    1
 \end{codeout}
 
 
-\sld{RStan:  Full Bayes}
+\sld{RStan: Full Bayes}
 %
 \\[-2pt]
 \spc
@@ -3027,7 +3031,7 @@ lp__  -5.33  0.02  0.80  -7.46  -5.04  -4.78   1201     1
 \end{minipage}
 
 
-\sld{RStan:  Posterior Sample}
+\sld{RStan: Posterior Sample}
 %
 \begin{codein}
 > theta_draws <- extract(fit)$theta;

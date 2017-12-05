@@ -10,22 +10,24 @@ output:
     toc_depth: 4
 ---
 
-### A Very Simple Model: Rolling a 6-sided Die
+Our goal is to come up with good and better models.
+Fitting the model with simulated data is one method of checking model correctness.
 
-* Data:
-    + $N$ - number of trials (observations)
-    + $y_n$ in $\{1 \ldots 6\}$:  trial $n$ outcome
-* Parameters:
-    + $\theta$ a _simplex_ of length 6: all elements positive, sums to 1
-* Prior:
-    + $p(\theta)$ -  defaults to uniform prior
-* Likelihood:
-    + $p(y \vert \theta)$ = Categorical$(y \vert \theta)$
-* Posterior:
-    + $p(\theta \vert y) \propto p(\theta) p(y \vert \theta)$
+### A Very Simple Stan Program: rolling the dice
 
+Program `gen_d6.stan` generates data.
 
-### A Very Simple Stan Program: `d6.stan`
+```
+// simulate one roll of a fair D6
+transformed data {
+  vector[6] theta = rep_vector(1.0 / 6.0, 6);
+}
+generated quantities {
+  int roll_d6 = categorical_rng(theta);
+}
+```
+
+Program `d6.stan` is the corresponding model of this data generating process:
 
 ```
 data {
@@ -43,14 +45,13 @@ model {
 
 ### Fitting the Model to Simulated Data
 
-* Run program `gen_d6.stan`, extract values for generated quantity `roll_d6` as vector `obs`.
-
+Run program `gen_d6.stan`, extract values for generated quantity `roll_d6` as vector `obs`:
 ```
 > library(rstan)
 > gendata_d6 = stan(file="gen_d6.stan", algorithm="Fixed_param")
 ```
-* Fit program `d6.stan` to simulated data.
 
+Fit program `d6.stan` to simulated data (`obs`):
 ```
 > obs = as.vector(as.array(gendata_d6, pars=c("roll_d6")))
 > N = length(obs)
@@ -58,7 +59,36 @@ model {
 > d6_fit = stan(file="d6.stan", data=list(N,N_sides,obs));
 ```
 
+### Common error #1: data supplied doesn't match data block specification
+
+The `data` list passed into the `stan` and `sampling` functions must contain
+entries corresponding to all of the variables declared in the `data` block of the Stan program.
+If some variables are missing, this will trigger a rather opaque error message.
+
+The data block of program `d6.stan` declares two scalar integer variables and one integer array.
+Passing in 3 scalar values results in the following:
+```
+> fit = stan("d6.stan", data=list(N=4000,N_sides=6,obs=3))
+
+Error in new_CppObject_xp(fields$.module, fields$.pointer, ...) : 
+  no valid constructor available for the argument list
+failed to create the sampler; sampling not done
+```
+
 ### Checking the fit:  ShinyStan
+
+[ShinyStan](http://mc-stan.org/users/interfaces/shinystan)
+provides visual and numerical summaries of model parameters and convergence diagnostics for MCMC simulations.
+
+ShinyStan is coded in R using the Shiny web application framework (RStudio).
+
+The ShinyStan app takes a `stanfit` object as input.
+Launching the app opens the RShiny viewer and returns a `shinystan` object.
+
+```
+library(shinystan);
+d6_shiny = launch_shinystan(d6_fit);
+```
 
 
 ### Predictive Posterior Checks
@@ -84,6 +114,7 @@ How to the shapes of the PPD compare?
 * Use the model `multi_dice` and simulated data for N=2 rolls of a D20, using only first 20 observations.
 * Fit the model, specify `iter=100, warmup=0`
 * Check the fit in ShinyStan.
+
 
 
 
