@@ -223,7 +223,7 @@ ans  10.49    0.09 5.7    1   6  11  15    20  3794    1</pre>
 
 <pre >&gt; d20_outcomes = as.vector(as.array(fit_8ball, pars=c(&quot;ans&quot;)))
 
-# bin the outcomes
+# tabulate the outcomes (number of times rolled &quot;1&quot; ... &quot;20&quot;)
 &gt; cts = as.vector(table(d20_outcomes))
 &gt; cts
  [1] 198 195 192 169 216 222 198 213 185 198 226 222 185 212 196 200 185 206 181 201
@@ -258,7 +258,7 @@ p2;</pre>
 <ul>
 <li>Use RStan function <code>stan</code> to generate a sample consisting of 4000 draws</li>
 <li>Get the vector of all 4000 outcomes</li>
-<li>Bin the outcomes, retrieve observed values for parameter <code>theta</code></li>
+<li>Tabulate the outcomes, retrieve observed values for parameter <code>theta</code></li>
 </ul></li>
 </ul>
 
@@ -270,7 +270,7 @@ p2;</pre>
 <ul>
 <li>Use RStan function <code>stan</code> to generate a sample consisting of 4000 draws</li>
 <li>Get the vector of all 4000 outcomes</li>
-<li>Bin the outcomes, retrieve observed values for parameter <code>theta</code> - do they correspond to your loading of the die?</li>
+<li>Tabulate the outcomes, retrieve observed values for parameter <code>theta</code> - do they correspond to your loading of the die?</li>
 </ul></li>
 </ul>
 
@@ -282,9 +282,9 @@ p2;</pre>
 <li>Generalize program <code>gen_d6.stan</code> to <code>gen_rollsN_facesK.stan</code> so that it outputs the sum of N rolls of any platonic solid with number of faces K.
 
 <ul>
-<li>calculate the expectation of the sum of 4 rolls of a D6</li>
-<li>calculate the expectation of the sum of 2 rolls of a D12</li>
-<li>use histograms to visualize the distribution of the sums - compare and constrast</li>
+<li>Calculate the expectation of the sum of 4 rolls of a D6</li>
+<li>Calculate the expectation of the sum of 2 rolls of a D12</li>
+<li>Use histograms to visualize the distribution of the sums - compare and constrast</li>
 </ul></li>
 </ul>
 
@@ -297,7 +297,7 @@ p2;</pre>
 <ul>
 <li>Use RStan function <code>stan</code> to generate a sample consisting of 4000 draws for each model</li>
 <li>Get the vector of all 4000 outcomes</li>
-<li>use histograms to visualize the distribution of the sums - compare and constrast</li>
+<li>Use histograms to visualize the distribution of the sums - compare and constrast</li>
 </ul></li>
 </ul></article></slide>
 

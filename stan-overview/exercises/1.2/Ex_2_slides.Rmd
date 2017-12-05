@@ -10,14 +10,14 @@ output:
 
 The Normal distribution is a continuous probability distribution with two parameters:
 
-* the mean ("average") of the distribution which defines which its *location*, usually written $\mu$ (`mu`)
-* the standard deviation ("variability") which defines the *scale*, usually written ${\sigma}$ (`sigma`).
+* the mean ("average"), usually written $\mu$ (`mu`)
+* the standard deviation ("variability"), usually written ${\sigma}$ (`sigma`).
 (Note: standard deviation is $\sigma$, variance is ${\sigma}^2$).
 
 The *standard normal distribution* is the normal distribution with a mean of zero and a variance of one.
 
-Stan provides the function `normal_rng` which takes two real-values arguments `mu` and `sigma`
-which specify the location and scale, respectively.  (Note:  `sigma` must be positive).
+Stan provides the function `normal_rng` which takes two real-values arguments `mu` and `sigma`,
+(_note:_ `sigma` must be positive).
 This function may only be used in generated quantities block.
 
 ## Other "Bell Curve" Distributions: Cauchy, Logistic, Student's t
@@ -78,7 +78,7 @@ library(knitr)
 include_graphics("ex2_p1.png")
 ```
 
-## Exercise 1:  Choice of location and scale parameters for the Normal distribution
+## Exercise 1:  Choice of parameters for the Normal distribution
 
 * Write a program `gen_norm_variate.stan` which generates a random variate `x`
 for some choice of `mu` and `sigma`.  You can either specify `mu` and `sigma`
@@ -90,7 +90,7 @@ when `mu` is 0 and `sigma` is 1.
 * Repeat this several times, choosing both positive and negative values of `mu`,
   and values for `sigma` less than 1 as well as greater than 1.
 
-## Exercise 2:  Choice of location and scale parameters for the Cauchy, Student's t, and logistic distributions
+## Exercise 2:  Choice of parameters for the Cauchy, Student's t, and logistic distributions
 
 * Write a program `gen_cauchy_variate.stan` which generates a random variate `x` for some choice
 of `mu` and `sigma`.
@@ -104,7 +104,7 @@ of `mu` and `sigma`.
 * Use the ggplot magic to overlay the normal density curve, discuss.
 
 
-## Exercise 3:  Expectations of the MultiNormal distribution and the curse of dimensionality
+## Exercise 3:  The curse of dimensionality
 
 * Write a program `gen_std_norm_vector.stan` which generates a standard normal random vector `X`
 of length N for some choice of N and computes its distance to the origin vector
@@ -114,5 +114,3 @@ all standard normal random vectors of length 1 through N.
 
 * Generate an x,y plot for x in 1:256 where x is the length of the random vector X and
 y is the expectation of the distance to the origin when X is a standard normal random vector.
-
-
