@@ -11,7 +11,10 @@ height_data = read.csv("heights.csv")
 height_data = height_data[height_data$age >= 18, ]
 hdata = height_data
 library(rstan)
+rstan_options(auto_write = TRUE)
+options(mc.cores = parallel::detectCores())
 library(shinystan)
+library(bayesplot)
 library("ggplot2")
 set.seed(1234)
 ```
@@ -54,7 +57,8 @@ mcmc_areas(height_data,
 
 ## Resources
 - http://mc-stan.org > Users > Documentation > Stan Manual (pdf)
-
+- We think adult heights are normally distributed, 
+$y \sim \mathcal{N}(\mu, \sigma)$
 ```{r}
 writeLines(readLines("heights1.stan")[1:4])
 ```
@@ -67,7 +71,7 @@ model { ??? }
 ```{r}
 writeLines(readLines("heights1.stan"))
 ```
-```{r results='hide', cache=T}
+```{r cache=T, include=F}
 model1 = stan_model("heights1.stan")
 ```
 - Priors
@@ -79,6 +83,16 @@ fit1 = sampling(model1, list(num_people=nrow(hdata),
 ```
 ```{r}
 print(fit1, prob = c(0.025, .50, 0.975))
+```
+
+## How far off are we, roughly?
+- Pretend we got point estimates - take the mean of the samples of the parameter
+- Use alpha as our prediction, $\hat{y_i} = \alpha$
+- Sum the residuals/error between the true values and the "prediction"
+```{r, echo=T}
+samples.simple = extract(fit1)
+alpha.simple = mean(samples.simple$height_location)
+sum(abs(height_data$height - alpha.simple))
 ```
 
 ## Let's see if we can get a better fit
@@ -103,6 +117,19 @@ fit2 = sampling(model2, list(num_people = nrow(hdata), heights = hdata$height,
 print(fit2, probs = c(0.025, 0.975))
 ```
 
+## How are we doing?
+```{r echo=T}
+sum(abs(height_data$height - alpha.simple))
+```
+Now incorporate `weight_coeff` to get
+$\hat{y_i} = \beta x_i + \alpha$
+```{r echo=T}
+samples = extract(fit2)
+alpha = mean(samples$height_location_avg_weight)
+beta = mean(samples$weight_coeff)
+sum(abs(height_data$height - (beta * height_data$weight + alpha)))
+```
+
 ## Interpretation
 - height_location_avg_weight
 - weight_coeff
@@ -110,7 +137,14 @@ print(fit2, probs = c(0.025, 0.975))
 sd(height_data$weight) #kg
 ```
 
-## Unidentified models have correlations
+<!--
+## Unidentified models have correlated parameter posteriors
 ```{r, echo=T}
 pairs(fit2, pars = c("height_location_avg_weight", "weight_coeff"))
+```
+-->
+
+## Futher directions?
+```{r}
+ggplot(hdata, aes(height)) + geom_density()
 ```

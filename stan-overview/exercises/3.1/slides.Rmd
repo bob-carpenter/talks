@@ -3,11 +3,14 @@ title: "Exercise 1.1"
 output: 
   ioslides_presentation:
     widescreen: true
+    transition: faster
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, comment="")
 library(rstan)
+rstan_options(auto_write = TRUE)
+options(mc.cores = parallel::detectCores())
 library(shinystan)
 library("ggplot2")
 
@@ -45,10 +48,10 @@ write.csv(df, file="dist/data.csv", row.names = F)
 
 ## EPA Study
 - 80,000 houses
-- Two predictors:
-    - measument on lowest floor?
-    - county uranium level (positive corr with radon levels)
-- We'll focus on Minnesota, which has 919 households in 85 counties
+> - Two predictors:
+>    - measument on lowest floor?
+>    - county uranium level (positive corr with radon levels)
+> - We'll focus on Minnesota, which has 919 households in 85 counties
 
 ## Distribution of radon levels in MN (log scale)
 ```{r}
@@ -58,10 +61,10 @@ ggplot(df, aes(log.radon)) + geom_histogram(bins = 25)
 ## Conventional approaches
 * Complete pooling
     - Treat all counties the same and estimate a single radon level,
-    $y_i = \mathcal{N}(\alpha + \beta x_i, \sigma)$
+    $y_i \sim \mathcal{N}(\alpha + \beta x_i, \sigma)$
 * No pooling
     - Model radon in each county independently,
-    $y_i = \mathcal{N}(\alpha_{j[i]} + \beta x_i, \sigma)$, where $j = 1, ..., 85$ 
+    $y_i \sim \mathcal{N}(\alpha_{j[i]} + \beta x_i, \sigma)$, where $j = 1, ..., 85$
     
 As usual, we can think of $\sigma$ as capturing all of the variance we aren't modeling.
 
@@ -81,7 +84,7 @@ pooled.fit = sampling(pooled.model, list(y=df$log.radon,
 print(pooled.fit, probs = c(0.025, 0.5, 0.975))
 ```
 ## Pooled fit
-```{r}
+```{r pooled.fit}
 pooled.sample = extract(pooled.fit)
 b = mean(pooled.sample$beta[,1])
 m = mean(pooled.sample$beta[,2])
@@ -90,13 +93,16 @@ ggplot(df, aes(floor.measure, log.radon)) + geom_count() +
   geom_abline(intercept = b, slope = m, linetype=2)
 ```
 
+## Let's try writing an unpooled model
+- We want a separate intercept for each county, but we can share beta and sigma.
+
 ## Unpooled model
 ```{r}
 writeLines(readLines("unpooled.stan"))
 ```
 
 ## Unpooled fit
-```{r, cache=T, include=F}
+```{r unpooled.fit1, cache=T, include=F}
 unpooled.model = stan_model("unpooled.stan")
 unpooled.fit = sampling(unpooled.model, list(y=df$log.radon,
                            x = df$floor.measure,
@@ -108,7 +114,7 @@ print(unpooled.fit, probs = c(0.025, 0.5, 0.975))
 ```
 
 ## Unpooled fit
-```{r}
+```{r unpooled.fit}
 unpooled.samples = extract(unpooled.fit)
 unpooled.estimates = apply(unpooled.samples$a, 2, mean)
 unpooled.se = apply(unpooled.samples$a, 2, sd)
@@ -122,8 +128,28 @@ ggplot(unpooled.df, aes(x=1:85, y=a)) + geom_pointrange(aes(ymin = lower, ymax =
 ```
 <!--
 ## Visual comparisons between pooled and unpooled
-- TODO
+- TODO ?
 -->
 
-## Meh
+## meh
+- Pooling is useless for identifying high-radon counties
+- We don't trust unpooled estimates especially for counties with little data
 
+## DIY partial pooling
+Let's say that each county should get its own intercept $\alpha_j$ and effect of floor measurement $\beta_j$ and code $y_i \sim ~ \mathcal{N}(\alpha_{j[i]} + \beta_{j[i]} x_i, \, \sigma)$
+
+## Varying slopes and intercepts by group
+```{r}
+writeLines(readLines("partial_max.stan"))
+```
+
+```{r, include=F, cache=T}
+partial.model = stan_model("partial_max.stan")
+partial.fit = sampling(partial.model,
+                       list(N = nrow(df), y = df$log.radon,
+                            x = df$floor.measure, county = df$county,
+                            J = length(unique(df$county)))
+                       , control=list(adapt_delta=0.98))
+```
+
+## 

@@ -15,7 +15,6 @@ parameters {
 model {
   heights ~ normal(height_location_avg_weight + weight_coeff * weights
                    , height_scale);
-
   height_location_avg_weight ~ normal(183, 120);
   height_scale ~ normal(0, 20);
   weight_coeff ~ normal(7, 10);
