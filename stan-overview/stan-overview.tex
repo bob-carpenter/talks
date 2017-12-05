@@ -244,14 +244,17 @@ $
 %
 \begin{itemize}
 \item Very \myemph{challenging for sampling}
-\item Need large step size to explore mouth of funnel (high
-  hierarchical variance)
+\item Need large step size to explore mouth of funnel
 \item Need small step size to explore neck of funnel
-  (low hierarchical variance)
 \item Even small step sizes lead to divergences
 \begin{subitemize}
 \item numerical failure of Hamiltonian dynamics simulation to conserve the Hamiltonian
 \end{subitemize}
+\item Betancourt and Girolami (2015) analyzed for Hamiltonian Monte Carlo
+\vfill
+{\tiny Betancourt and Girolami. 2015. Hamiltonian Monte Carlo for
+  hierarchical models. \\[-3pt] In {\slshape Current Trends in Bayesian
+    Methodology with Applications}. CRC}
 \end{itemize}
 
 \sld{Non-Centered Parameterization}
@@ -265,11 +268,10 @@ $
 \\[4pt]
 \beta_n & = & \sigma \times \beta^{\mathrm{std}}_n
 \end{eqnarray*}
-\item Removes dependency of $\beta$ and $\sigma$ in prior
-\item Posterior of $\beta$ and $\log \sigma$ independent normal
-\begin{subitemize}
-\item this is how plot of independent draws was generated
-\end{subitemize}
+\item Removes dependency of $\beta$ on $\sigma$ in prior
+\item \footnotesize
+Called it ``Matt trick'' (after Matt Hoffman) before realizing it was
+  well-known
 \end{itemize}
 
 \sld{Adding Data}
@@ -292,6 +294,18 @@ y_j \sim \mathsf{Binomial}(N, \mathrm{logit}^{-1}(\beta_j))
 \item not size of data, but how much it constrains posterior
 \end{subitemize}
 \end{itemize}
+
+
+\sld{Non-Centered + Data = Funnel}
+%
+\begin{itemize}
+\item With more data, centered approaches independent normal
+\item Non-centering ($\beta^{\mathrm{std}} = \beta / \sigma$) produces a funnel
+\item Centered parameterizations dominate with lots of data
+\end{itemize}
+\begin{center}
+\includegraphics[width=0.8\textwidth]{img/non-centering-funnel.pdf}
+\end{center}
 
 \sld{Funnel + Data in the Wild}
 %
@@ -2234,6 +2248,33 @@ complex posteriors (i.e., high curvature and correlation)
 \end{subitemize}
 \end{itemize}
 
+\sld{Events}
+%
+\begin{itemize}
+\item Event is a set of outcomes
+\item Usually subset of random variable values
+\begin{subitemize}
+\item prevalence of disease $\lambda > 0.02$
+\item probability that one player is better than another, $\theta_1 >
+  \theta_2$
+\item probability that team A wins a game against B
+\item probability that team A betas team B by more than 5 points
+\end{subitemize}
+\item Probability is that one of the outcomes occurs
+\end{itemize}
+
+
+\sld{Conditional Probability}
+%
+\begin{itemize}
+\item What is probability a man is taller than 6'?
+\begin{subitemize}
+\item What if I tell you he's Dutch?
+\item What if I tell you he's a professional athlete?
+\item What if I tell you he's a jockey?  or basketball player?
+\item What if I tell you his mother is taller than 6'?
+\end{subitemize}
+\end{itemize}
 
 \sld{Bayesian Data Analysis}
 %
