@@ -1,0 +1,103 @@
+---
+title: "Using Stan and ShinyStan for Posterior Predictive Checking"
+output:
+  ioslides_presentation:
+    widescreen: true
+  pdf_document:
+    pandoc_args: --latex-engine=xelatex
+    toc: no
+    toc_depth: 4
+---
+
+## Overview
+
+[ShinyStan!](http://mc-stan.org/shinystan/)
+
+In this tutorial we do the following:
+
+* Generate some fake data to play with
+* Write code for a simple Stan model
+* Fit the model using RStan
+* Use ShinyStan for graphical posterior predictive checks
+
+
+
+## Fake data for a linear regression with a intercept and single predictor
+
+Model is a vanilla linear regression model, classical formulation:  $Y = \alpha + \beta X + \epsilon$
+
+* $\alpha$ = intercept term
+* $\beta$ = slope
+* $\epsilon$ is error term
+
+Generate fake data (in R):
+```
+N <- 100 # Number of observations 
+alpha = 2;  ## intercept
+beta = 0.5; ## covariate
+sigma = 1;
+x = rnorm(N, 0, 1);
+y = rnorm(N, mean=(alpha + x * beta), sd = sigma);
+```
+
+**********************************************
+
+Plot fake data:
+
+```
+# visual check
+plot(x,y);
+abline(lsfit(x,y), col="blue");
+```
+
+## Stan model `lm.stan`
+
+The usual linear regression model:
+
+```
+data {
+  int N; //number of observations
+  vector[N] x; // single co-variate
+  vector[N] y;  // vector of N observations
+}
+parameters {
+  real<lower=0> sigma;
+  real alpha;
+  real beta;
+}
+model {
+  y ~ normal(alpha + x * beta, sigma); // vectorized likelihood
+  alpha ~ normal(0, 5);
+  beta ~ normal(0, 5);
+  sigma ~ cauchy(0, 2.5);
+}
+```
+
+****************************************
+
+* in generated quantities block replicate the _entire_ set of observations `y`,
+    + uses values of parameters `alpha`, `beta` and `sigma` for that draw
+
+
+```
+generated quantities {
+  vector[N] y_rep ; // vector of same length as the data y
+  for (n in 1:N) 
+    y_rep[n] = normal_rng(alpha + x[n] * beta, sigma);
+}
+```
+
+## Fit the model `lm.stan` with RStan
+
+Using RStan's `stan` function to fit the model.
+* Default sampler is NUTS
+* Default number of chains is 4
+* Specify number of iterations to be 500. By default, equal number of warmup and post-warmup draws - total of 1000 post-warmup draws.
+
+```
+library(rstan)
+library(shinystan)
+
+lm_fit <- stan(file = "lm.stan", data = list(N, x, y), iter=500);
+launch_shinystan(lm_fit)
+```
