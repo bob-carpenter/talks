@@ -1,5 +1,5 @@
 ---
-title: "Exercise 1.1"
+title: "Exercise 3.1"
 output: 
   ioslides_presentation:
     widescreen: true
