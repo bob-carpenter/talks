@@ -5,10 +5,11 @@ options(mc.cores = parallel::detectCores())
 
 y = scan("y.txt")
 X = read.csv("X.csv")
-model = stan_model("../model.stan")
+model = stan_model("model.stan")
 fit = sampling(model, list(y=y, X=X, N=length(y)))
 print(fit)
 
-pairs(fit, pars = c('alpha', 'beta[1]', 'sigma'))
+pairs(fit, pars = c('alpha', 'beta[2]', 'sigma'))
 
-launch_shinystan(fit)
+## For PPCs: 
+#launch_shinystan(fit)

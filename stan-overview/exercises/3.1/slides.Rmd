@@ -4,6 +4,7 @@ output:
   ioslides_presentation:
     widescreen: true
     transition: faster
+    template: tnew.html
 ---
 
 ```{r setup, include=FALSE}
@@ -26,7 +27,7 @@ cty.mn = cty[cty$st=="MN",]
 cty.mn$fips = 1000 * cty.mn$stfips + cty.mn$ctfips
 srrs.mn = merge(srrs.mn, cty.mn[c("fips", "Uppm")], by = 'fips')
 srrs.mn = srrs.mn[!duplicated(srrs.mn[,'idnum']),]
-u = log(srrs.mn$Uppm)
+u = uranium = log(srrs.mn$Uppm)
 n = nrow(srrs.mn)
 head(srrs.mn)
 srrs.mn$county = as.character(srrs.mn$county)
@@ -37,7 +38,7 @@ county = srrs.mn$county.code = unlist(county.lookup[srrs.mn$county], use.names=F
 radon = srrs.mn$activity
 srrs.mn$log.radon = log.radon = log(radon + 0.1)
 floor.measure = srrs.mn$floor
-df = data.frame(log.radon, floor.measure, county)
+df = data.frame(log.radon, floor.measure, county, uranium)
 write.csv(df, file="dist/data.csv", row.names = F)
 ```
 
@@ -48,11 +49,13 @@ write.csv(df, file="dist/data.csv", row.names = F)
 
 ## EPA Study
 - 80,000 houses
-> - Two predictors:
->    - measument on lowest floor?
->    - county uranium level (positive corr with radon levels)
-> - We'll focus on Minnesota, which has 919 households in 85 counties
-
+- Two predictors:
+    - measument on lowest floor?
+    - county uranium level (positive corr with radon levels)
+- We'll focus on Minnesota, which has 919 households in 85 counties
+```{r echo=T}
+str(df)
+```
 ## Distribution of radon levels in MN (log scale)
 ```{r}
 ggplot(df, aes(log.radon)) + geom_histogram(bins = 25)
@@ -96,6 +99,20 @@ ggplot(df, aes(floor.measure, log.radon)) + geom_count() +
 ## Let's try writing an unpooled model
 - We want a separate intercept for each county, but we can share beta and sigma.
 
+$y_i \sim ~ \mathcal{N}(\alpha_{j[i]} + \beta x_i, \, \sigma)$
+
+$\alpha_{j} \sim \mathcal{N}(0, 10)$ (or something uninformative)
+
+```
+data {
+  int<lower=0> N; // number of houses
+  int<lower=0> J; // number of counties
+  vector[N] y; // radon output
+  vector[N] x; // measured on the floor?
+  int county[N]; //county id for each house
+}
+```
+
 ## Unpooled model
 ```{r}
 writeLines(readLines("unpooled.stan"))
@@ -126,6 +143,7 @@ unpooled.df = unpooled.df[order(unpooled.df$a),]
 
 ggplot(unpooled.df, aes(x=1:85, y=a)) + geom_pointrange(aes(ymin = lower, ymax = upper))
 ```
+
 <!--
 ## Visual comparisons between pooled and unpooled
 - TODO ?
@@ -136,20 +154,309 @@ ggplot(unpooled.df, aes(x=1:85, y=a)) + geom_pointrange(aes(ymin = lower, ymax =
 - We don't trust unpooled estimates especially for counties with little data
 
 ## DIY partial pooling
-Let's say that each county should get its own intercept $\alpha_j$ and effect of floor measurement $\beta_j$ and code $y_i \sim ~ \mathcal{N}(\alpha_{j[i]} + \beta_{j[i]} x_i, \, \sigma)$
+Let's take our current model and add hierarchical priors on alpha:
+$y_i \sim ~ \mathcal{N}(\alpha_{j[i]} + \beta x_i, \, \sigma)$
 
-## Varying slopes and intercepts by group
+$\alpha_{j} \sim \mathcal{N}(\mu_\alpha, \sigma_\alpha), \,$
+
+$\mu_\alpha, \sigma_\alpha \sim$ [something uninformative]
+
+```
+data {
+  int<lower=0> N; // number of houses
+  int<lower=0> J; // number of counties
+  vector[N] y; // radon output
+  vector[N] x; // measured on the floor?
+  int county[N]; //county id for each house
+}
+```
+## Varying intercepts by group, CP
 ```{r}
-writeLines(readLines("partial_max.stan"))
+writeLines(readLines("partial_cp0.stan")[-(1:5)])
 ```
-
 ```{r, include=F, cache=T}
-partial.model = stan_model("partial_max.stan")
-partial.fit = sampling(partial.model,
-                       list(N = nrow(df), y = df$log.radon,
-                            x = df$floor.measure, county = df$county,
-                            J = length(unique(df$county)))
-                       , control=list(adapt_delta=0.98))
+partial.cp0.model = stan_model("partial_cp0.stan")
 ```
 
-## 
+## Varying intercepts fit
+```{r, message=F, cache=T}
+partial.cp0.fit = sampling(partial.cp0.model,
+                       list(N = nrow(df), y = df$log.radon,
+                            x = df$floor.measure,
+                            county = df$county,
+                            J = length(unique(df$county))),
+                       seed=456,
+                       chains=4)
+```
+```{r}
+print(partial.cp0.fit, probs = c(0.025, 0.975))
+```
+
+## Lines for each county
+```{r}
+samples = extract(partial.cp0.fit)
+ggplot(df, aes(floor.measure, log.radon)) + geom_count() +
+  sapply(1:85, function(i){
+    geom_abline(intercept = mean(samples$a[,i]),
+                slope = mean(samples$beta),
+                alpha=0.3, color=i %% 6 + 1)
+  })
+```
+
+## DIY partial pooling, now with 8500% more slopes
+Let's say that each county should now also get its own slope for floor measurement, $\beta_j$, and code $y_i \sim ~ \mathcal{N}(\alpha_{j[i]} + \beta_{j[i]} x_i, \, \sigma)$ with hierarchical priors on both $\alpha_j$ and $\beta_j$:
+
+$\alpha_{j} \sim \mathcal{N}(\mu_\alpha, \sigma_\alpha), \,$
+$\beta_{j} \sim \mathcal{N}(\mu_\beta, \sigma_\beta)$
+
+$\mu_\alpha, \mu_\beta, \sigma_\alpha, \sigma_\beta \sim$ [something uninformative]
+
+```
+data {
+  int<lower=0> N; // number of houses
+  int<lower=0> J; // number of counties
+  vector[N] y; // radon output
+  vector[N] x; // measured on the floor?
+  int county[N]; //county id for each house
+}
+```
+## Varying slopes and intercepts by group, CP
+```{r}
+writeLines(readLines("partial_cp.stan")[-(1:5)])
+```
+```{r, include=F, cache=T}
+partial.cp.model = stan_model("partial_cp.stan")
+```
+
+## Uh oh
+```{r, message=F, cache=T}
+partial.cp.fit = sampling(partial.cp.model,
+                       list(N = nrow(df), y = df$log.radon,
+                            x = df$floor.measure,
+                            county = df$county,
+                            J = length(unique(df$county))),
+                       seed=456,
+                       chains=8)
+```
+
+## pairs()
+```{r}
+pairs(partial.cp.fit, pars=c('sigma', 'sigma_b', 'sigma_a', 'mu_a'))
+```
+
+## Shinystan!
+```{r, eval=F, echo=T}
+launch_shinystan(partial.cp.fit)
+```
+
+## Let's non-center \beta!
+- Right now we have $b_j \sim \mathcal{N}(\mu_b, \sigma_b)$
+- We want to add a new parameter, $b_j^{std} \sim \mathcal{N}(0, 1)$
+- Define $b_j$ now as a `transformed parameter`, $b_j = \mu_b + \sigma_b * b_j^{std}$
+
+## Varying slopes and intercepts by group, NCP
+```{r}
+writeLines(readLines("partial_ncp1.stan")[-(1:5)])
+```
+
+```{r, cache=T, message=F}
+partial.ncp.model = stan_model("partial_ncp1.stan")
+partial.ncp.fit = sampling(partial.ncp.model,
+                       list(N = nrow(df), y = df$log.radon,
+                            x = df$floor.measure,
+                            county = df$county,
+                            J = length(unique(df$county))),
+                       seed=1234)
+```
+
+
+## Slopes and intercepts for each county
+```{r}
+samples = extract(partial.ncp.fit)
+ggplot(df, aes(floor.measure, log.radon)) + geom_count() +
+#ggplot() +
+  sapply(1:85, function(i){
+    geom_abline(intercept = mean(samples$a[,i]),
+                slope = mean(samples$b[,i]),
+                alpha=0.3)#, color=i %% 6 + 1)
+  }) + xlim(0, 1) + ylim(0, 2)
+```
+
+## PPCs?
+Generated quantities for $y_i \sim ~ \mathcal{N}(\alpha_{j[i]} + \beta_{j[i]} x_i, \, \sigma)$
+
+## PPCs!
+```{r}
+writeLines(readLines("partial_ncp_ppc.stan")[-(1:16)])
+```
+
+```{r, cache=T, include=F}
+partial.ncp.ppc.model = stan_model("partial_ncp_ppc.stan")
+partial.ncp.ppc.fit = sampling(partial.ncp.ppc.model,
+                       list(N = nrow(df), y = df$log.radon,
+                            x = df$floor.measure,
+                            county = df$county,
+                            J = length(unique(df$county))),
+                       seed=1234)
+```
+
+## House 10 PPC
+```{r, echo=T}
+samples = extract(partial.ncp.ppc.fit)
+sdf = as.data.frame(samples$yppc)
+ggplot(sdf, aes(V10)) + geom_histogram(bins=50) + geom_vline(xintercept = df$log.radon[10])
+```
+
+## House 25 PPC
+```{r, echo=T}
+ggplot(sdf, aes(V25)) + geom_histogram(bins=50) + geom_vline(xintercept = df$log.radon[25])
+```
+
+## Shinystan
+```{r, eval=F, echo=T}
+launch_shinystan(partial.ncp.ppc.fit)
+```
+
+
+## Group-level predictors... Go!
+- County uranium levels available
+- Let's get rid of the per-county floor.measure coefficient for simplicity
+- $y_i \sim ~ \mathcal{N}(\alpha_{j[i]} + \beta x_i + \gamma u_j, \, \sigma)$
+- Add `vector[N] u;` to your data block
+- Pass in `u = df$uranium` in your call to `sampling` like the rest of the data
+- Note that the model has both indicator variables for each county, plus a county-level covariate. In classical regression, this would result in collinearity. In a multilevel model, the partial pooling of the intercepts towards the expected value of the group-level linear model avoids this.
+- Group-level predictors also serve to reduce group-level variation $\sigma_\alpha$. An important implication of this is that the group-level estimate induces stronger pooling.
+
+## Now with a group-level predictor, `u_coeff`
+```{r}
+writeLines(readLines("group_hier.stan")[-(1:15)][-(9:15)])
+```
+```{r, cache=T, include=F}
+group.hier.model = stan_model("group_hier.stan")
+```
+```{r, cache=T, message=F}
+group.hier.fit = sampling(group.hier.model,
+                       list(N = nrow(df), y = df$log.radon,
+                            x = df$floor.measure,
+                            county = df$county,
+                            u = df$uranium,
+                            J = length(unique(df$county))),
+                       seed=1234)
+```
+
+## pairs()
+```{r, echo=T}
+pairs(group.hier.fit, pars=c('sigma', 'sigma_a', 'u_coeff', 'floor_coeff'))
+```
+
+## Shinystan
+```{r, eval=F, echo=T}
+launch_shinystan(group.hier.fit)
+```
+
+## NCP $\alpha$
+```{r}
+writeLines(readLines("group_hier_ncp.stan")[-(1:15)][-(9:15)])
+```
+```{r, cache=T, include=F}
+group.hier.ncp.model = stan_model("group_hier_ncp.stan")
+```
+```{r, cache=T, message=F}
+group.hier.ncp.fit = sampling(group.hier.ncp.model,
+                       list(N = nrow(df), y = df$log.radon,
+                            x = df$floor.measure,
+                            county = df$county,
+                            u = df$uranium,
+                            J = length(unique(df$county))),
+                       seed=1234)
+```
+
+## House 10 PPC
+```{r, echo=T}
+samples = extract(group.hier.ncp.fit)
+sdf = as.data.frame(samples$yppc)
+ggplot(sdf, aes(V10)) + geom_histogram(bins=50) + geom_vline(xintercept = df$log.radon[10])
+```
+
+## House 25 PPC
+```{r, echo=T}
+ggplot(sdf, aes(V25)) + geom_histogram(bins=50) + geom_vline(xintercept = df$log.radon[25])
+```
+
+## Effect of county-level uranium on log(radon)
+```{r, echo=T}
+samples = as.data.frame(group.hier.ncp.fit)
+ggplot(samples, aes(u_coeff)) + geom_histogram(bins=50)
+```
+
+## Uranium coefficient
+```{r}
+samples = extract(group.hier.ncp.fit)
+ggplot(df, aes(uranium, log.radon)) + geom_count() +
+  sapply(1:85, function(i){
+    geom_abline(intercept = mean(samples$a[,i]),
+                slope = mean(samples$u_coeff),
+                alpha=0.3)
+  })
+```
+
+## Floor measure coefficient
+```{r}
+samples = extract(group.hier.ncp.fit)
+ggplot(df, aes(floor.measure, log.radon)) + geom_count() +
+  sapply(1:85, function(i){
+    geom_abline(intercept = mean(samples$a[,i]),
+                slope = mean(samples$floor_coeff),
+                alpha=0.3)
+  })
+```
+
+## Shinystan
+```{r, eval=F, echo=T}
+launch_shinystan(group.hier.ncp.fit)
+```
+
+## Let's add a predictor for % floor measurements per county
+```{r}
+writeLines(readLines("ghxbar.stan")[9:14])
+```
+```{r, cache=T, include=F}
+ghxbar.model = stan_model("ghxbar.stan")
+```
+```{r, cache=T, message=F}
+ghxbar.fit = sampling(ghxbar.model,
+                       list(N = nrow(df), y = df$log.radon,
+                            x = df$floor.measure,
+                            county = df$county,
+                            u = df$uranium,
+                            J = length(unique(df$county))),
+                       seed=1234)
+```
+
+## Launch shinystan!
+```{r, eval=F}
+launch_shinystan(ghxbar.fit)
+```
+
+## Floor measure coefficient
+```{r}
+samples = extract(ghxbar.fit)
+ggplot(df, aes(floor.measure, log.radon)) + geom_count() +
+  sapply(1:85, function(i){
+    geom_abline(intercept = mean(samples$a[,i]),
+                slope = mean(samples$floor_coeff),
+                alpha=0.3)
+  })
+```
+
+## Uranium coefficient
+```{r}
+samples = extract(ghxbar.fit)
+ggplot(df, aes(uranium, log.radon)) + geom_count() +
+  sapply(1:85, function(i){
+    geom_abline(intercept = mean(samples$a[,i]),
+                slope = mean(samples$u_coeff),
+                alpha=0.3)
+  })
+```
+

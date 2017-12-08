@@ -1,7 +1,7 @@
 ---
 title: "Exercise 1.1"
 output: 
-  ioslides_presentation:
+  slidy_presentation:
     widescreen: true
 ---
 
@@ -55,7 +55,7 @@ mcmc_areas(height_data,
            prob = 0.8) + plot_title
 ```
 
-## Resources
+## Exercise
 - Data: http://mc-stan.org/workshops/dec2017/1.1.zip
 - http://mc-stan.org > Users > Documentation > Stan Reference Manual (pdf)
     - List of functions in the index
@@ -68,6 +68,7 @@ writeLines(readLines("heights1.stan")[1:4])
 parameters { ??? }
 model { ??? }
 ```
+Write `heights.stan` (missing) in your working directory by using the above and filling in the model and parameter blocks.
 
 ## A first draft
 ```{r}
@@ -129,7 +130,8 @@ $\hat{y_i} = \beta x_i + \alpha$
 samples = extract(fit2)
 alpha = mean(samples$height_location_avg_weight)
 beta = mean(samples$weight_coeff)
-sum(abs(height_data$height - (beta * height_data$weight + alpha)))
+std_weight = (height_data$weight - mean(height_data$weight)) / sd(height_data$weight)
+sum(abs(height_data$height - (beta * std_weight + alpha)))
 ```
 
 ## Interpretation

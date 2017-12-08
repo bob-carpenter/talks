@@ -7,7 +7,7 @@ df = read.csv("data.csv")
 head(df)
 
 ## Pooled
-pooled.model = stan_model("../pooled.stan")
+pooled.model = stan_model("pooled.stan")
 pooled.fit = sampling(pooled.model, list(y=df$log.radon,
                            x = df$floor.measure,
                            N=nrow(df)))
@@ -40,4 +40,35 @@ names(unpooled.df) = c("a", "county", "upper", "lower")
 unpooled.df = unpooled.df[order(unpooled.df$a),]
 ggplot(unpooled.df, aes(x=1:85, y=a)) + geom_pointrange(aes(ymin = lower, ymax = upper))
 
-## Partial pooling
+## Partial pooling for alpha
+partial.model = stan_model("partial.stan")
+partial.fit = sampling(partial.model, list(y=df$log.radon,
+                                           x = df$floor.measure,
+                                           J=length(unique(df$county)),
+                                           county = df$county,
+                                           uranium = df$uranium,
+                                           N=nrow(df)))
+samples = extract(partial.fit)
+ggplot(df, aes(floor.measure, log.radon)) + geom_count() +
+  sapply(1:85, function(i){
+    geom_abline(intercept = mean(samples$a[,i]),
+                slope = mean(samples$beta),
+                alpha=0.3)
+  })
+
+## Partial pooling for alpha and beta
+partial.model = stan_model("partial.stan")
+partial.fit = sampling(partial.model, list(y=df$log.radon,
+                                           x = df$floor.measure,
+                                           J=length(unique(df$county)),
+                                           county = df$county,
+                                           uranium = df$uranium,
+                                           N=nrow(df)))
+samples = extract(partial.fit)
+ggplot(df, aes(floor.measure, log.radon)) + geom_count() +
+  sapply(1:85, function(i){
+    geom_abline(intercept = mean(samples$a[,i]),
+                slope = mean(samples$beta[,i]),
+                alpha=0.3)
+  })
+#launch_shinystan(partial.fit)

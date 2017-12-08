@@ -6,7 +6,7 @@ hd = read.csv("heights.csv")
 hist(hd$height, breaks=100)
 
 model = stan_model("heights.stan")
-fit = sampling(model, list(num_people = nrow(hdata), heights = hdata$height,
-                           weights = hdata$weight, male = hdata$male))
+fit = sampling(model, list(num_people = nrow(hd), heights = hd$height,
+                           weights = hd$weight, male = hd$male))
 fit
 plot(height ~ weight, hd)
