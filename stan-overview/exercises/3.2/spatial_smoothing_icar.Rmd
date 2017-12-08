@@ -1,0 +1,251 @@
+---
+title: "Spatial Models in Stan"
+subtitle: "Intrinsic Auto-Regressive Models for Areal Data"
+output:
+  ioslides_presentation:
+    widescreen: true
+  pdf_document:
+    pandoc_args: --latex-engine=xelatex
+    toc: no
+    toc_depth: 4
+  html_document:
+    toc: true
+    toc_depth: 2
+---
+
+## Conditional Auto-Regressive (CAR) models
+
+Introduced by Besag, 1974
+
+Used when:
+
+* data consists of per-region observations for area with $n$ fixed regions
+* observations from neighboring regions exhibit higher correlation than observations between distant regions
+
+Intuition:
+
+* for low-information regions, "borrow" information from neighboring regions
+* don't worry about interactions with non-neighboring regions
+
+***************************************
+
+Use an $N \times N$ adjacency matrix $W$ to specify neighborhood structure:
+
+* entries $w_{i,j}$ and $w_{j,i}$ are positive when regions ${n_i}$ and ${n_j}$ are neighbors, zero otherwise
+
+* _neighbor_ relationship $i \sim j$ - the neighbors of a region $i$ are the
+regions which have non-zero entries in row or column $i$ of $W$
+
+$W$ is sparse!
+
+Model spatial interactions as $\mathbf{\phi}$, an $n$-length vector 
+$\mathbf{\phi} = ({\phi}_1, \ldots, {\phi}_n)^T$
+
+Each ${\phi}_i$ is a normal random variate with a mean which is conditional on the values of its neighbors.
+
+$\mathbf{\phi}$ is a Gaussian Markov Random Field  (GMRF)
+
+## Joint specification of the CAR model
+
+$$ \mathbf{\phi} \sim \mathit{N} \left(\mathbf{0}, \left[D_{\tau}(I - \alpha B)\right]^{-1} \right) $$
+
+$\mathbf{\phi}$ is normal, with location parameter $0$,  and scale parameter _big hairy expression_:
+
+* $\tau$ is the precision (scale) parameter
+* $D_{\tau} = \tau D$ where D is an $n \times n$ diagonal matrix
+* $I$ is an $n \times n$ identity matrix
+* $\alpha$ controls the strength of the spatial association. $\alpha$ is between 0 and 1 where $0$ corresponds to spatial independence.
+* $B$ is the $n \times n$ matrix weights matrix $W$ where entries $\{i,i\}$ are zero and the off-diagonal elements
+describe the spatial proximity of regions $n_i$ and $n_j$
+
+## From CAR to ICAR
+
+ICAR models use a 0/1 encoding instead of a real valued measure of spatial proximity.
+This changes the specification of $\mathbf{\phi}$ so that:
+
+* $D$ is a diagonal matrix where element $d_{i,i}$ is number of neighbors for region $n_i$
+
+* $\alpha = 1$
+
+* $B$ is the scaled weights matrix ($W / D$ ) where the weights matrix $W$ has entries:
+    + the diagonal elements $w_{i,i}$ are $0$
+    + the off-diagonal elements $w_{i,j}$ and $w_{j,i}$ are $1$ when $i \sim j$, and $0$ otherwise.
+
+This simplified encoding simplifies the computation of $\phi$.
+
+_But_: ICAR model is non-identifiable, must add the constraint $\sum_{i} {\phi}_i = 0$.
+
+## Conditional specification of an ICAR random variable
+
+The conditional specification of a spatial random variable $\mathbf{\phi}$
+is an $n$-length vector $\mathbf{\phi} = ({\phi}_1, \ldots, {\phi}_n)^T$:
+
+$$ p \left( { \phi }_i \, \vert\, {\phi}_j \, j \neq i, {{\tau}_i}^{-1} \right)
+= \mathit{N} \left( \frac{\sum_{i \sim j} {\phi}_{i}}{d_{i,i}}, \frac{1}{d_{i,i} {\tau}_i} \right)$$
+where $d_{i,i}$ is the number of neighbors for region $n_i$.
+
+The individual spatial random variable ${\phi}_i$ for region $n_i$
+which has a set of neighbors $j \neq i$ whose cardinality is $d_{i,i}$,
+is normally distributed with a mean equal to the average of its neighbors.
+Its variance decreases as the number of neighbors increases.
+
+## Compute ICAR component: _*pairwise*_ interactions
+
+The joint specification of an ICAR spatial random variable $\mathbf{\phi}$ is:
+
+$$\phi \sim N(0, [\tau \, (D - W)]^{-1}).$$
+
+By setting $\tau$ to be 1, we have a unit multivariate Gaussian,
+which rewrites* to the _pairwise difference_ formulation
+
+$$ p(\phi | \tau) \propto \exp \left\{ {- \frac{1}{2}} \sum_{i \sim j}{({\phi}_i - {\phi}_j)}^2 \right\} $$
+
+The pairwise difference is between _unordered pairs_ of neighbors, so for the indices $i$ and $j$ for the summation that $i < j$.
+
+(* after a whole lot of algebra)
+
+## Stan program: ICAR prior
+
+```
+data {
+  int<lower=0> N;
+  int<lower=0> N_edges;
+  int<lower=1, upper=N> node1[N_edges];  // node1[i] adjacent to node2[i]
+  int<lower=1, upper=N> node2[N_edges];  // and node1[i] < node2[i]
+}
+parameters {
+  vector[N - 1] phi_raw;
+}
+transformed parameters {
+  vector[N] phi;
+  phi[1:(N - 1)] = phi_raw;
+  phi[N] = -sum(phi_raw);
+}
+model {
+  target += -0.5 * dot_self(phi[node1] - phi[node2]);
+}
+```
+
+## Example:  Traffic Accidents in Brooklyn
+
+Data:
+
+* N census tracts
+* per-tract population
+* per-tract accidents pedestrians and cyclists hit by cars (99% pedestrians)
+
+Starting out with no co-variates - we don't know anything else about these areas
+
+## Stan model
+
+We'd like to use a linear regression model to fit out data - how do we fit a linear regression to count data?
+```
+data {
+  int N; //number of observations
+  int y[N];  // counts 
+}
+parameters {
+  real<lower=0> sigma ;
+  real alpha;
+  real beta;
+}
+model {
+  y ~ normal(alpha + x * beta, sigma) ; // vectorized likelihood
+```
+
+## Poisson regression
+[Wikipedia definition](https://en.wikipedia.org/wiki/Poisson_distribution):
+the probability of a given number of events occurring in a fixed interval of time or space if these events occur with a known constant rate and independently of the time since the last event
+
+$$ \log(\operatorname {E} (Y\mid \mathbf {x} ))=\alpha +\mathbf {\beta } '\mathbf {x} $$
+
+Data comes in as raw counts per area
+_but_ different areas have different populations, and we are interested in the _rate_ which is $\frac{ cts }{ population }$
+
+$$ \log(\frac{cts}{population}) =\alpha +\mathbf {\beta } '\mathbf {x} $$
+
+which can be rewritten as:
+
+$$ \log(cts) = \log(population) + \alpha +\mathbf {\beta } '\mathbf {x} $$
+
+## Poisson GP in Stan
+
+To model count data, use function `poisson_log`:
+
+```
+data {
+  int<lower=0> N;
+  int<lower=0> y[N];              // count outcomes
+  vector<lower=0>[N] E;           // exposure
+}
+transformed data {
+  vector[N] log_E = log(E);
+}
+parameters {
+  real alpha;                // intercept
+}
+model {
+  y ~ poisson_log(log_E + alpha);  // intercept only, no covariates
+  alpha ~ normal(0.0, 2.5);
+}
+```
+
+## Poisson regression vs. normal regression
+
+Normal:
+```                      
+  y ~ normal(alpha + x * beta, sigma) ; // vectorized likelihood
+```
+
+Poisson - no $\sigma$!
+```                      
+  y ~ poisson_log(alpha + x * beta) ;
+```
+
+## Poisson regression + ICAR component
+
+Data block takes in description of spatial neighborhood:
+
+```                      
+data {
+  int<lower=0> N;
+  int<lower=0> N_edges;
+  int<lower=1, upper=N> node1[N_edges];  // node1[i] adjacent to node2[i]
+  int<lower=1, upper=N> node2[N_edges];  // and node1[i] < node2[i]
+
+  int<lower=0> y[N];              // count outcomes
+  vector<lower=0>[N] E;           // exposure
+}
+```
+Log-transform exposure term:
+
+```
+transformed data {
+  vector[N] log_E = log(E);
+}
+```
+
+***********************************************
+
+Parameters for spatial component as well as regression co-efficients
+```
+parameters {
+  real alpha;             // intercept
+  real<lower=0> sigma;    // overall standard deviation
+  vector[N - 1] phi_raw;  // raw spatial effects
+}
+transformed parameters {
+  vector[N] phi;
+  phi[1:(N - 1)] = phi_raw;
+  phi[N] = -sum(phi_raw);
+}
+```
+Model block:  non-centered parameterization of spatial component:
+```                
+model {
+  y ~ poisson_log(log_E + alpha + phi * sigma);
+  target += -0.5 * dot_self(phi[node1] - phi[node2]);
+  alpha ~ normal(0.0, 2.5);
+  sigma ~ normal(0.0, 5.0);
+}
+```
