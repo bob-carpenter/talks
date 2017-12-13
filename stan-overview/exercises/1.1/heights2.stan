@@ -13,7 +13,7 @@ parameters {
   real<lower=0> height_scale;
 }
 model {
-  heights ~ normal(height_location_avg_weight + weight_coeff * weights
+  heights ~ normal(height_location_avg_weight + weight_coeff * std_weights
                    , height_scale);
   height_location_avg_weight ~ normal(183, 120);
   height_scale ~ normal(0, 20);

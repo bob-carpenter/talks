@@ -34,33 +34,19 @@ h2ppc = stan_model("heights2_ppc.stan")
 h2ppc_fit = sampling(h2ppc, list(num_people = nrow(hdata), heights = hdata$height,
                                  weights = hdata$weight))
 h2samp = extract(h2ppc_fit)
-hist(h2samp$hppc[,1], breaks=50)
-abline(v=hdata$height[1])
-hist(h2samp$hppc[,2], breaks=50)
-abline(v=hdata$height[2])
-
-hist(h2samp$hppc[,3], breaks=50)
-abline(v=hdata$height[3])
-
-hist(h2samp$hppc[,4], breaks=50)
-abline(v=hdata$height[4])
+person = 54
+hist(h2samp$hppc[,person], breaks=50)
+abline(v=hdata$height[person])
 
 launch_shinystan(h2ppc_fit)
 
-
+y = hdata$height
 h3ppc = stan_model("heights3_ppc.stan")
 h3ppc_fit = sampling(h3ppc, list(num_people = nrow(hdata), heights = hdata$height,
                                  weights = hdata$weight, male = hdata$male))
-h3samp = extract(h2ppc_fit)
-hist(h3samp$hppc[,1], breaks=50)
-abline(v=hdata$height[1])
-hist(h3samp$hppc[,2], breaks=50)
-abline(v=hdata$height[2])
-
-hist(h3samp$hppc[,3], breaks=50)
-abline(v=hdata$height[3])
-
-hist(h3samp$hppc[,4], breaks=50)
-abline(v=hdata$height[4])
+h3samp = extract(h3ppc_fit)
+i = 5
+hist(h3samp$hppc[,i], breaks=50)
+abline(v=hdata$height[i])
 
 launch_shinystan(h3ppc_fit)

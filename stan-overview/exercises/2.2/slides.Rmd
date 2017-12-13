@@ -2,11 +2,12 @@
 title: "Exercise 2.2"
 output: 
   ioslides_presentation:
+    template: tnew.html
     widescreen: true
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE, comment="", autodep = T)
+knitr::opts_chunk$set(echo = FALSE, comment="", autodep = T, tidy.opts=list(width.cutoff=60), tidy=TRUE)
 
 library(shinystan)
 library(rstan)
@@ -25,7 +26,18 @@ y = rnorm(N, beta * X + alpha, sigma)
 write(y, file="dist/y.txt")
 ```
 
-## A fun, fairly simple linear regression model
+## Let's write another linear regression.
+We should know this by now, right? $y \sim \mathcal{N}(\beta X + \alpha, \sigma)$
+```
+data {
+  int N;
+  int K;
+  matrix[N, K] X;
+  real y[N];
+}
+```
+
+## Full linear regression model
 ```{r}
 writeLines(readLines("model.stan"))
 model = stan_model("model.stan")
@@ -41,10 +53,11 @@ fit = sampling(model, list(y=y, N=N, X=X), seed=1234)
 - "X divergent transitions; increase adapt_delta"
 - "Y transitions exceeded maximum treedepth"
 - "Examine the pairs() plot"
+- We run multiple chains partially to ensure we find issues
 
 ## The fit itself
 ```{r}
-fit
+print(fit, probs = c())
 ```
 
 ## pairs() plot
@@ -113,7 +126,6 @@ pairs(fit3, pars = c('alpha', 'beta[1]', 'sigma'))
 ```
 
 ## Home safe?
-- No more diagnostic warnings!
 - PPCs
 
 ## PPC model
@@ -132,7 +144,7 @@ library(shinystan)
 launch_shinystan(fit3ppc)
 ```
 
-## So what was that data, anyway?
+## What parameters were used to generate the data?
 ```{r echo=T}
 alpha
 beta
@@ -144,5 +156,18 @@ sigma
 fit3
 ```
 
+## What was our data, anyway?
+```{r, echo=T}
+readLines("dist/y.txt")
+```
+
 ## Non-identified!
 - beta[1:3], alpha, sigma vs. 5 datapoints
+- Prior choice can help fit, but make sure it aligns with your understanding of the system
+- `adapt_delta` safer to tune
+
+## The more careful fit (less informative priors)
+```{r}
+writeLines(readLines("model2.stan")[-(1:13)])
+fit2.1
+```
