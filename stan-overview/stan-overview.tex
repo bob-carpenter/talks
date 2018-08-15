@@ -1267,7 +1267,7 @@ $1 \, / \, \sqrt{M}$
 \sld{The Curse}
 %
 \begin{itemize}
-\item Intuitions formed in low dimensions break down \myemph{do not
+\item Intuitions formed in low dimensions \myemph{do not
     generalize}
 \item In high dimensions, \myemph{everything is far away}
 \begin{subitemize}
@@ -1383,10 +1383,72 @@ in_ball 0.528   0.004 0.499 19400    1
 generated quantities {
   int<lower=0, upper=1> in_ball[10];
   {
-    real len = 0;
+    real len_sq = 0;
     for (n in 1:10) {
-      len = len + uniform_rng(-1, 1)^2;
-      in_ball[n] = (len <= 1);
+      len_sq = len_sq + uniform_rng(-1, 1)^2;
+      in_ball[n] = (len_sq <= 1);
+    }
+  }
+}
+\end{stancode}
+%
+\begin{subitemize}
+\item draw $x_1, \ldots, x_N$ is implicit in \code{uniform\_rng}
+\item \code{in\_ball[n]} is 1 iff $x_1^2 + \cdots + x_n^2 \leq 1$; \
+  coded as indicator \Verb|(len <= 1)|
+\item sum of squares accumulation reduces quadratic time to linear
+\end{subitemize}
+
+\sld{Hyperballs in Hypercubes in RStan}
+\begin{stancode}
+> fit <- stan("hyperballs.stan", algorithm="Fixed_param",
+              iter=1e4)
+
+> print(fit, probs=c())
+
+            mean se_mean   sd n_eff Rhat
+in_ball[1]  1.00       0 0.00 20000  NaN
+in_ball[2]  0.78       0 0.41 20000    1
+in_ball[3]  0.52       0 0.50 20000    1
+in_ball[4]  0.31       0 0.46 20000    1
+in_ball[5]  0.17       0 0.38 20000    1
+in_ball[6]  0.08       0 0.27 20000    1
+in_ball[7]  0.04       0 0.19 18460    1
+in_ball[8]  0.02       0 0.12 19370    1
+in_ball[9]  0.01       0 0.08 20000    1
+in_ball[10] 0.00       0 0.05 20000    1
+\end{stancode}
+\sld{Hyperballs in Hypercubes}
+%
+\begin{itemize}
+\item \myemph{sample uniformly} from container (square, cube, ...)
+\item 2 dimensions $(x, y)$: compute $\mbox{Pr}[X^2 + Y^2 \leq 1]$
+  \begin{subitemize}
+  \item unit \myemph{disc} inscribed in square
+  \item calculate $\pi$ given known area of circle ($2 \pi$)
+  \end{subitemize}
+\item 3 dimensions $(x, y, z)$: compute $\mbox{Pr}[X^2 + Y^2 + Z^2 \leq 1]$
+  \begin{subitemize}
+  \item unit \myemph{ball} inscribed in cube
+  \end{subitemize}
+\item $N$-dimensions $(x_1, \ldots, x_N)$: compute $\mbox{Pr}[X_1^2 +
+  \cdots X_N^2 \leq 1]$
+  \begin{subitemize}
+  \item unit \myemph{hyperball} inscribed in hypercube
+  \end{subitemize}
+\item Code event probability as \myemph{expectation of indicator}
+\end{itemize}
+
+\sld{Hyperballs in Hypercubes in Stan}
+\vspace*{-8pt}
+\begin{stancode}
+generated quantities {
+  int<lower=0, upper=1> in_ball[10];
+  {
+    real len_sq = 0;
+    for (n in 1:10) {
+      len_sq = len_sq + uniform_rng(-1, 1)^2;
+      in_ball[n] = (len_sq <= 1);
     }
   }
 }
@@ -5606,6 +5668,25 @@ y ~ normal(mu_y, sigma);
 \hfill
 {\footnotesize (Hoffman and Gelman 2011, 2014)}
 \end{itemize}
+
+
+
+\sld{Adaptation During Warmup}
+%
+\begin{center}
+\hspace*{12pt}
+\includegraphics[width=0.9\textwidth]{img/adaptation-windows.pdf}
+\end{center}
+\vspace*{-12pt}
+\begin{subitemize}
+\item (I) initial fast interval to find typical set
+\\
+(step size,   default 75 iterations
+\item (II) expanding memoryless windows to estimate metric
+\\
+(step size \& metric, initial 25 its)
+\item (III) final fast interval (step size, default 50 its)
+\end{subitemize}
 
 
 \sld{Posterior Inference}
