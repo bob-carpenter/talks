@@ -1,0 +1,163 @@
+---
+title: "Stan C++ Development: Adding a New Function"
+author: "Bob Carpenter & Sean Talts"
+date: "August 2018"
+output:
+  ioslides_presentation:
+    css: styles.css
+---
+
+```{r echo = FALSE, warning = FALSE}
+library(knitr)
+library(ggplot2)
+
+knitr::opts_knit$set(cache = TRUE)
+```
+
+## Documentation
+
+* `stan-dev/math`: [Adding a new function with known gradients](https://github.com/stan-dev/math/wiki/Adding-a-new-function-with-known-gradients)
+
+* `stan-dev/stan`: [Contributing new functions to Stan](https://github.com/stan-dev/stan/wiki/Contributing-New-Functions-to-Stan)
+
+* `stan-dev/stan`: [Developer process overview](https://github.com/stan-dev/stan/wiki/Developer-process-overview)
+
+
+
+## Coding a distribution in Stan
+
+- Use the Stan language to code the normal log pdf
+    - use `_lpdf` suffix to enable sampling notation
+- Place in file `my-normal.stan`    
+
+```
+functions {
+  real my_normal_lpdf(real y, real mu, real sigma) {
+    return - 0.5 * log(2 * pi())          // params: { }
+           - 2 * log(sigma)               // params: { sigma }
+           - 0.5 * ((y - mu) / sigma)^2;  // params: { y, mu, sigma }
+  }
+}
+parameters { 
+  real y;
+}
+model {
+  y ~ my_normal(0, 3.2);
+}
+```
+
+## What's missing?
+
+- Input validation!
+
+- Implement in Stan with the `reject` function
+
+```
+if (sigma < 0 || is_nan(sigma) || is_inf(sigma))
+  reject("sigma must be finite, positive, found sigma = ", sigma);
+
+if (is_nan(y) || is_inf(y))
+  reject("y must be finite, found y = ", y);
+
+if (is_nan(mu) || is_inf(mu))
+  reject("mu must be finite, found mu = ", mu);
+```
+
+## Restrictions on Stan functions
+
+* Not polymorphic---they work for a single signature
+    - can't duplicate library function vectorization
+    - overloading is coming, but will require multiple definitions
+    
+* No traits branching
+    - can't skip constant terms determined by type analysis
+    
+
+## Loading RStan and compiling
+
+```{r cache = TRUE}
+library(rstan)
+model <- stan_model("my-normal.stan")
+```
+
+## Fit the model
+
+```{r cache = TRUE}
+fit <- sampling(model)
+```
+
+## Summarize the posterior
+```{r cache = TRUE}
+print(fit)
+```
+
+## Coding the distribution in C++
+
+- Looks a lot like Stan, but with explicit templates and references
+- Template `y` & assume `mu` and `sigma` are `double`
+    - `int` promoted to `double` in C++ and to `real` in Stan
+- Name resolution
+    - `log(double)` found through `using std::log`
+    - `log(var)` for autodiff through *argument dependent lookup*
+
+```
+template <typename T>
+double my_normal(const T& y, double mu, double sigma) {
+  using std::log;  // allow std::log as candidate for log(sigma)
+  return - 0.5 * log(2 * pi())
+    - 2 * log(sigma)
+    - 0.5 * ((y - mu) / sigma)^2;
+}
+```
+
+## Includes and main driver
+
+* Need some includes:
+```
+#include <stan/math/rev/mat.hpp>    // Stan math with gradients
+#include <iostream>                 // C++ I/O
+```
+
+* The `main()` provides an example
+```
+int main() {
+  stan::math::var y = 1.2;  // independent var
+  double mu = 0.3;          // constants
+  double sigma = 0.5;
+  stan::math::var lp        // dependent var
+    = my_normal(y, mu, sigma);
+  lp.grad();                // propagate derivatives
+  std::cout << "val = " << lp.val()
+            << "; d.val/d.y = " << y.adj() << std::endl;
+}
+```
+
+## Reverse-mode autodiff: forward pass
+
+* Build up (directed acyclic) expression graph in forward pass
+    - each node represents subexpression linked to operands
+    - template overloads for autodiff variables (`var`)
+    - arena-based memory collected after gradients
+
+<center style="margin:1em 0 0 0">
+<img src="img/agrad-expression-graph.pdf" width = 350/>
+</center>
+
+## Reverse-mode autodiff: reverse pass
+
+*  Calculates adjoint for each node in reverse pass
+    - adjoint is derivative of result w.r.t. expression
+    - start with result adjoint = 1 (because $\frac{\mathrm{d}}{\mathrm{d}y}y = 1$)
+    - for each node in topological order from root
+```
+adjoint[operand]
+  += adjoint[result] * partial_result_wrt_operand;
+```
+*  Gradient is sequence of adjoints of inputs (independent vars)
+
+* Time and space complexity both linear in graph size
+    - times cost of partials
+    - which is usually constant in number of operands
+
+
+
