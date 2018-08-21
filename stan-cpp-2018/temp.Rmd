@@ -14,6 +14,26 @@ library(ggplot2)
 knitr::opts_knit$set(cache = TRUE)
 ```
 
+## Best and Worst Part of Stan
+
+* What are the best and worst decisions you made regarding the implementation of Stan?
+    - Worst decision: using C++
+    - Best decision: using C++
+
+## Why C++?
+
+* It's not the easiest language in the world
+    - the spec is incomplete by design so compilers vary
+    - it's been a moving target from C++03 to C++20
+* But it's very powerful
+    - whole new language with C++11 and beyond
+    - decent matrix and math libs (like Fortran, unlike all else)
+    - control memory for autodiff
+    - template overloads for autodiff
+    - static evaluation of branchpoints (template programs)
+    - elimination of intermediates (expression templates)
+    - native in-memory communication with Python and R
+    
 ## Documentation
 
 * `stan-dev/math`: [Adding a new function with known gradients](https://github.com/stan-dev/math/wiki/Adding-a-new-function-with-known-gradients)
@@ -156,8 +176,11 @@ adjoint[operand]
 *  Gradient is sequence of adjoints of inputs (independent vars)
 
 * Time and space complexity both linear in graph size
-    - times cost of partials
+    - times the cost of partial derivatives of each operation
     - which is usually constant in number of operands
+
+* Slowness stems from interpreted nature, not $\mathcal{O}(N)$ complexity
+
 
 
 
