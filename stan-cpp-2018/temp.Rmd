@@ -5,7 +5,30 @@ date: "August 2018"
 output:
   ioslides_presentation:
     css: styles.css
+widescreen: no
 ---
+
+<style>
+li {
+  font-family: verdana, lucida sans unicode;
+  font-size: 22px;
+  line-height: 1.4em;
+}
+pre {
+  font-family: lucida console, monaco, menlo;
+  font-size: 19px;
+  line-height: 1.5em;
+  font-weight: 500;
+}
+tt {
+  font-family: monaco; lucida console;
+  font-size: 22px;
+}
+code {
+  font-family: monaco; lucida console;
+  font-size: 22px;
+}
+</style>
 
 ```{r echo = FALSE, warning = FALSE}
 library(knitr)
@@ -14,7 +37,7 @@ library(ggplot2)
 knitr::opts_knit$set(cache = TRUE)
 ```
 
-## Best and Worst Part of Stan
+## Best and Worst Part of Stan?
 
 * What are the best and worst decisions you made regarding the implementation of Stan?
     - Worst decision: using C++
@@ -25,6 +48,7 @@ knitr::opts_knit$set(cache = TRUE)
 * It's not the easiest language in the world
     - the spec is incomplete by design so compilers vary
     - it's been a moving target from C++03 to C++20
+    - low-level control makes it dangerous
 * But it's very powerful
     - whole new language with C++11 and beyond
     - decent matrix and math libs (like Fortran, unlike all else)
@@ -50,7 +74,7 @@ knitr::opts_knit$set(cache = TRUE)
     - use `_lpdf` suffix to enable sampling notation
 - Place in file `my-normal.stan`    
 
-```
+```stan
 functions {
   real my_normal_lpdf(real y, real mu, real sigma) {
     return - 0.5 * log(2 * pi())          // params: { }
@@ -72,7 +96,7 @@ model {
 
 - Implement in Stan with the `reject` function
 
-```
+```stan
 if (sigma < 0 || is_nan(sigma) || is_inf(sigma))
   reject("sigma must be finite, positive, found sigma = ", sigma);
 
@@ -113,14 +137,14 @@ print(fit)
 
 ## Coding the distribution in C++
 
-- Looks a lot like Stan, but with explicit templates and references
+- Like Stan, but with explicit templates and references
 - Template `y` & assume `mu` and `sigma` are `double`
     - `int` promoted to `double` in C++ and to `real` in Stan
 - Name resolution
     - `log(double)` found through `using std::log`
-    - `log(var)` for autodiff through *argument dependent lookup*
+    - `log(var)`  through *argument dependent lookup*
 
-```
+```c++
 template <typename T>
 double my_normal(const T& y, double mu, double sigma) {
   using std::log;  // allow std::log as candidate for log(sigma)
@@ -130,16 +154,16 @@ double my_normal(const T& y, double mu, double sigma) {
 }
 ```
 
-## Includes and main driver
+## Includes and main
 
 * Need some includes:
-```
+```c++
 #include <stan/math/rev/mat.hpp>    // Stan math with gradients
 #include <iostream>                 // C++ I/O
 ```
 
-* The `main()` provides an example
-```
+* The `main()` provides a runnable example
+```c++
 int main() {
   stan::math::var y = 1.2;  // independent var
   double mu = 0.3;          // constants
@@ -155,9 +179,9 @@ int main() {
 ## Reverse-mode autodiff: forward pass
 
 * Build up (directed acyclic) expression graph in forward pass
-    - each node represents subexpression linked to operands
-    - template overloads for autodiff variables (`var`)
-    - arena-based memory collected after gradients
+    - each node is an expression with arrows to operands
+    - autodiff variable `stan::math::var` for each $v_n$
+    - arena-based node memory collected after gradients
 
 <center style="margin:1em 0 0 0">
 <img src="img/agrad-expression-graph.pdf" width = 350/>
@@ -169,9 +193,8 @@ int main() {
     - adjoint is derivative of result w.r.t. expression
     - start with result adjoint = 1 (because $\frac{\mathrm{d}}{\mathrm{d}y}y = 1$)
     - for each node in topological order from root
-```
-adjoint[operand]
-  += adjoint[result] * partial_result_wrt_operand;
+```c++
+adjoint[operand] += adjoint[result] * partial_result_wrt_operand;
 ```
 *  Gradient is sequence of adjoints of inputs (independent vars)
 
@@ -179,7 +202,62 @@ adjoint[operand]
     - times the cost of partial derivatives of each operation
     - which is usually constant in number of operands
 
-* Slowness stems from interpreted nature, not $\mathcal{O}(N)$ complexity
+* Slowness stems from interpretation (virtual calls)
+
+
+## Custom derivative implementation
+
+* Each `var` points to `vari`;  *roughly*:
+
+```c++
+struct var {
+  vari* vi_;  // pointer to impl
+};
+```
+
+* Each `vari` holds a value, adjoint, and implements a `chain()` method to propagate derivatives; *roughly*:
+
+```c++
+struct vari {
+  double val_;  // values
+  double adj_;  // adjoints
+  vari(double val, double adj = 0) : val_(val), adj_(adj) { }
+  virtual void chain() { }  // propagate derivs
+};
+```
+
+## Simple Example of vari
+
+* $\frac{\partial}{\partial a} (a \times b) = b \ \ \ \ \ \ \frac{\partial}{\partial b} (a \times b) = a$
+
+```c++
+struct multiply_vari : public vari {
+  vari* op1_, op2_;
+  multiply_vari(vari* op1, vari* op2)
+    : vari(op1.val_ * op2.val_), op1_(op1), op2_(op2) { };
+
+  void chain() {
+    // operand adjoint += partial w.r.t. operand * result adjoint
+    op1_->adj_ += op2_->val_ * this->adj_;
+    op2_->adj_ += op1_->val_ * this->adj_;
+  }
+}
+```
+```c++
+var operator*(const var& a, const var& b) {
+  return var(new vari*(a.vi_, b.vi_));
+}
+```    
+
+## Now lets do the normal distribution
+
+* Need $\frac{\partial}{\partial y} \mathsf{Normal}(y \mid \mu, \sigma)$
+* [Wolfram Alpha](http://wolframalpha.com) is way less error prone at derivatives than me
+ 
+<center style="margin:1em 0 0 0">
+<img src="img/wolfram-alpha-deriv.png" width = 500/>
+</center>
+
 
 
 
