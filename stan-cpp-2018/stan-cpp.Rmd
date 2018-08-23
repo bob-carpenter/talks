@@ -9,7 +9,7 @@ output:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(echo = FALSE, comment = "")
 ```
 
 ## GitHub Resources
@@ -127,6 +127,7 @@ Fairly standard open source flow:
 
 1. (optional) create a branch
 1. write code, tests, and doc
+1. run appropriate checks - cpplint, appropriate unit tests, (optional) `clang-format`
 1. add files
 1. commit with a [message about what you were trying to accomplish](https://chris.beams.io/posts/git-commit/) 
 1. `git push origin <branchname>`
@@ -136,6 +137,50 @@ Fairly standard open source flow:
 ```
 $ git checkout -b descriptive-branch-name
 Switched to a new branch 'descriptive-branch-name'
+```
+
+## Running the checks
+1. `python runTests.py -j{num_cores} path/to/test.cpp /path/to/test/dir`
+1. `make cpplint`
+1. (optional) [Auto-formatting - git hook, editor plugin](https://github.com/stan-dev/stan/wiki/Coding-Style-and-Idioms#clang-format)
+
+## A complicated example
+```
+$ cd <math clone>
+$ find . -name operands_and_partials.hpp
+
+./stan/math/fwd/mat/meta/operands_and_partials.hpp
+./stan/math/fwd/scal/meta/operands_and_partials.hpp
+./stan/math/prim/mat/meta/operands_and_partials.hpp
+./stan/math/prim/scal/meta/operands_and_partials.hpp
+./stan/math/rev/mat/meta/operands_and_partials.hpp
+./stan/math/rev/scal/meta/operands_and_partials.hpp
+```
+
+## Some tests from the example
+```
+$ cd ~/scm/cmdstan/stan/lib/stan_math
+$ find . -name operands_and_partials_test*
+./test/unit/math/fwd/mat/meta/operands_and_partials_test.cpp
+./test/unit/math/fwd/scal/meta/operands_and_partials_test.cpp
+./test/unit/math/mix/mat/meta/operands_and_partials_test.cpp
+./test/unit/math/prim/scal/meta/operands_and_partials_test.cpp
+./test/unit/math/rev/mat/meta/operands_and_partials_test.cpp
+```
+
+## Google test
+`test/unit/math/rev/mat/meta/operands_and_partials_test.cpp`
+```{cpp, eval=FALSE, echo=T}
+TEST(AgradPartialsVari, OperandsAndPartialsVec) {
+  ...
+  vector_d d_vec(4);
+  operands_and_partials<vector_d> o3(d_vec);
+  EXPECT_EQ(6, sizeof(o3));
+  ...
+  EXPECT_FLOAT_EQ(10.0, v.val());
+  EXPECT_FLOAT_EQ(10.0, grad[0]);
+}
+
 ```
 
 ## Add, commit, push
@@ -159,3 +204,9 @@ knitr::include_graphics("img/PR2.png")
 ```{r, out.width = "100%"}
 knitr::include_graphics("img/PR3.png")
 ```
+
+## Stan release process
+1. Pull requests ask for code to be added to the `develop` branch
+1. When creating a release, we choose a point in time along the `develop` branch and tag it as a certain release
+1. We then merge that tag into the `master` branch, such that `master` is always stable
+1. (Additional process for hotfixes to already-released code)
