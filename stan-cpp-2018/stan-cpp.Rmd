@@ -9,7 +9,7 @@ output:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(echo = FALSE, comment = "")
 ```
 
 ## GitHub Resources
@@ -33,9 +33,9 @@ diagram will show something like:
 
 ## Stan language is translated to a C++ model
 * Creates a C++ model class with a known interface
-* Model class is initialized with the data you pass in when you go to fit the model
+* Model class is constructed with the data you pass in when you go to fit the model
 * Primary entry point on the class is the `log_prob` function
-    - Takes in parameter values and returns their log probability (potentially up to a constant)
+    - Takes in parameter values and returns their log probability density (potentially up to a constant)
 
 ## The Stan<>C++ translator
 * Called many things - compiler, transpiler, parser
@@ -59,7 +59,7 @@ CmdStan -> Stan -> Math
 ## A Stan program
 * `Matrix program(Matrix data) {...}`
     - Function from data to a sample of parameter draws typical given that data and model
-* Compiled with a few algorithms that use the model likelihood to find typical parameter draws
+* Compiled with a few algorithms that use the model density to find typical parameter draws
 * Most of the complexity lies in the likelihood and is built using functions in the Math library
 
 ## Most of "Stan" is the Math library
@@ -79,7 +79,7 @@ CmdStan -> Stan -> Math
 * Jenkins at http://d1m1s1b1.stat.columbia.edu:8080/
     - Specified in code, in a top-level file named `Jenkinsfile`
 * [This wiki](https://github.com/stan-dev/stan/wiki/Supported-C---Compilers-and-Language-Features) tries to collate which OSes and toolchains are tested
-    
+
 ## Developer process
 0. For larger changes only: Discourse discussion and/or design review
 1. Github issue describing the problem 
@@ -91,16 +91,122 @@ CmdStan -> Stan -> Math
 ## Setting up GitHub
 * Create an account
 * (optional) [Set up SSH keys](https://help.github.com/articles/connecting-to-github-with-ssh/)
-* Fork CmdStan, Stan, and Math repos
-* `git clone --recursive <your cmdstan fork>`
+* Fork repo(s) from stan-dev
+* `git clone --recursive <cmdstan repo>`
+* Add your fork as a remote on the repo you care about
+
+## Clone CmdStan
+```{r, out.width = "100%"}
+knitr::include_graphics("img/clone cmdstan.png")
+```
+
+## Fork Math repo
+```{r, out.width = "100%"}
+knitr::include_graphics("img/fork.png")
+```
+
+
+## My fork 
+![](img/my fork.png)
+
+## Set up fork as remote in local clone of CmdStan
+```
+$ git remote -v
+origin	git@github.com:stan-dev/math.git (fetch)
+origin	git@github.com:stan-dev/math.git (push)
+$ git remote add sean git@github.com:seantalts/math.git
+$ git remote -v
+origin	git@github.com:stan-dev/math.git (fetch)
+origin	git@github.com:stan-dev/math.git (push)
+sean	git@github.com:seantalts/math.git (fetch)
+sean	git@github.com:seantalts/math.git (push)
+```
 
 ## Creating a PR
 Fairly standard open source flow:
 
-1. `git clone --recursive <your fork>` 
 1. (optional) create a branch
 1. write code, tests, and doc
+1. run appropriate checks - cpplint, appropriate unit tests, (optional) `clang-format`
 1. add files
 1. commit with a [message about what you were trying to accomplish](https://chris.beams.io/posts/git-commit/) 
 1. `git push origin <branchname>`
 1. open PR on appropriate `stan-dev` repo
+
+## Creating a branch
+```
+$ git checkout -b descriptive-branch-name
+Switched to a new branch 'descriptive-branch-name'
+```
+
+## Running the checks
+1. `python runTests.py -j{num_cores} path/to/test.cpp /path/to/test/dir`
+1. `make cpplint`
+1. (optional) [Auto-formatting - git hook, editor plugin](https://github.com/stan-dev/stan/wiki/Coding-Style-and-Idioms#clang-format)
+
+## A complicated example
+```
+$ cd <math clone>
+$ find . -name operands_and_partials.hpp
+
+./stan/math/fwd/mat/meta/operands_and_partials.hpp
+./stan/math/fwd/scal/meta/operands_and_partials.hpp
+./stan/math/prim/mat/meta/operands_and_partials.hpp
+./stan/math/prim/scal/meta/operands_and_partials.hpp
+./stan/math/rev/mat/meta/operands_and_partials.hpp
+./stan/math/rev/scal/meta/operands_and_partials.hpp
+```
+
+## Some tests from the example
+```
+$ cd ~/scm/cmdstan/stan/lib/stan_math
+$ find . -name operands_and_partials_test*
+./test/unit/math/fwd/mat/meta/operands_and_partials_test.cpp
+./test/unit/math/fwd/scal/meta/operands_and_partials_test.cpp
+./test/unit/math/mix/mat/meta/operands_and_partials_test.cpp
+./test/unit/math/prim/scal/meta/operands_and_partials_test.cpp
+./test/unit/math/rev/mat/meta/operands_and_partials_test.cpp
+```
+
+## Google test
+`test/unit/math/rev/mat/meta/operands_and_partials_test.cpp`
+```{cpp, eval=FALSE, echo=T}
+TEST(AgradPartialsVari, OperandsAndPartialsVec) {
+  ...
+  vector_d d_vec(4);
+  operands_and_partials<vector_d> o3(d_vec);
+  EXPECT_EQ(6, sizeof(o3));
+  ...
+  EXPECT_FLOAT_EQ(10.0, v.val());
+  EXPECT_FLOAT_EQ(10.0, grad[0]);
+}
+
+```
+
+## Add, commit, push
+```
+$ git add stan/math/gpu/matrix_gpu.hpp
+$ git commit -m "Informative message..."
+$ git push sean descriptive-branch-name
+```
+
+## PR step 1
+```{r, out.width = "100%"}
+knitr::include_graphics("img/PR1.png")
+```
+
+## PR step 2
+```{r, out.width = "100%"}
+knitr::include_graphics("img/PR2.png")
+```
+
+## PR step 3
+```{r, out.width = "100%"}
+knitr::include_graphics("img/PR3.png")
+```
+
+## Stan release process
+1. Pull requests ask for code to be added to the `develop` branch
+1. When creating a release, we choose a point in time along the `develop` branch and tag it as a certain release
+1. We then merge that tag into the `master` branch, such that `master` is always stable
+1. (Additional process for hotfixes to already-released code)
