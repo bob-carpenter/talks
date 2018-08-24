@@ -258,6 +258,20 @@ var operator*(const var& a, const var& b) {
 <img src="img/wolfram-alpha-deriv.png" width = 500/>
 </center>
 
+## Normal vari for first argument
+
+```c++
+struct my_normal_vari : public vari {
+  vari* y_;  double mu_, sigma_; 
+  my_normal_vari(vari* y, double mu, double sigma)
+    : vari(my_normal(y.val_, mu, sigma)),  // double only
+      y_(y), mu_(mu), sigma_(sigma) { }
+  void chain() {
+      
+  }
+};
+```
+
 
 
 
