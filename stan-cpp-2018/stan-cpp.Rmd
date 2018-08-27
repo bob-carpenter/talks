@@ -36,6 +36,10 @@ diagram will show something like:
 * Model class is constructed with the data you pass in when you go to fit the model
 * Primary entry point on the class is the `log_prob` function
     - Takes in parameter values and returns their log probability density (potentially up to a constant)
+    
+## Check out a model.hpp!
+```
+```
 
 ## The Stan<>C++ translator
 * Called many things - compiler, transpiler, parser
@@ -140,9 +144,12 @@ Switched to a new branch 'descriptive-branch-name'
 ```
 
 ## Running the checks
-1. `python runTests.py -j{num_cores} path/to/test.cpp /path/to/test/dir`
-1. `make cpplint`
+1. `python runTests.py -j<num_cores> path/to/test.cpp /path/to/test/dir`
+1. `make cpplint` - runs a python script that [checks style](https://github.com/stan-dev/stan/wiki/Coding-Style-and-Idioms)
+
+## Autoformatting
 1. (optional) [Auto-formatting - git hook, editor plugin](https://github.com/stan-dev/stan/wiki/Coding-Style-and-Idioms#clang-format)
+
 
 ## A complicated example
 ```
@@ -185,7 +192,7 @@ TEST(AgradPartialsVari, OperandsAndPartialsVec) {
 
 ## Add, commit, push
 ```
-$ git add stan/math/gpu/matrix_gpu.hpp
+$ git add test/unit/math/rev/mat/meta/operands_and_partials_test.cpp
 $ git commit -m "Informative message..."
 $ git push sean descriptive-branch-name
 ```
