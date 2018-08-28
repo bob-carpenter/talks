@@ -9,5 +9,5 @@ parameters {
   real y;
 }
 model {
-  y ~ my_normal(0, 3.2);
+  y ~ my_normal(1.5, 3.2);
 }

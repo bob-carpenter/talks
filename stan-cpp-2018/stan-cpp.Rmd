@@ -4,9 +4,9 @@ author: "Bob Carpenter & Sean Talts"
 date: "August 2018 (StanCon Helsinki)"
 output:
   ioslides_presentation:
+    logo: img/stan-logo.png
     css: styles.css
     incremental: true
-
 widescreen: yes
 ---
 
@@ -19,135 +19,234 @@ library(ggplot2)
 ```
 
 <style>
+.gdbar img {
+  background-color: transparent;
+  color: transparent;
+  width: 150px !important;
+  height: 150px !important;
+  margin: 8px 8px;
+}
+
+.gdbar {
+  background-color: transparent;
+  color: transparent;
+  width: 400px !important;
+  height: 170px !important;
+}
+
+slides > slide:not(.nobackground):before {
+  width: 0px;
+  height: 0px;
+  background-size: 0px 0px;
+}
+
 li {
   font-family: verdana, lucida sans unicode;
-  font-size: 22px;
-  line-height: 1.4em;
+  font-size: 24px;
+  line-height: 1.45em;
 }
 pre {
   font-family: lucida console, monaco, menlo;
-  font-size: 19px;
+  font-size: 20px;
   line-height: 1.5em;
   font-weight: 500;
 }
 tt {
   font-family: monaco; lucida console;
-  font-size: 22px;
+  font-size: 24px;
 }
 code {
   font-family: monaco; lucida console;
-  font-size: 22px;
+  font-size: 24px;
 }
 </style>
 
+# Part I: Introduction
 
-
-## Documentation
-
+## Online documentation
 * `stan-dev/stan`: [Developer process overview](https://github.com/stan-dev/stan/wiki/Developer-process-overview)
-
-* `stan-dev/stan`: [Contributing new functions to Stan](https://github.com/stan-dev/stan/wiki/Contributing-New-Functions-to-Stan)
-
+* `stan-dev/stan`: [Contributing new functions to Stan](https://github.com/stan-dev/stan/wiki/Contributing-New-Functions-to-Stan) <br /> <br />
 * `stan-dev/math`: [Adding a new function with known gradients](https://github.com/stan-dev/math/wiki/Adding-a-new-function-with-known-gradients)
-
 * `stan-dev/math`: [Developer doc](https://github.com/stan-dev/math/wiki/Developer-Doc)
 
 
 
-## Best and Worst Decisions for Stan?
-* What are the best and worst decisions you made regarding the implementation of Stan?
+## Best and worst decisions for Stan?
+<blockquote>
+* We were asked at a conference, <br /> <br />
+"What are the **best and worst decisions** you made regarding the implementation of Stan?"
+
+* We answered
     - *Worst decision*: using C++
     - *Best decision*: using C++
 
 
 ## Why C++?
-* It's **not the easiest language** in the world
-    - the spec is incomplete by design so *compilers vary*, even by optimization
-    - it's been a *moving target* from C++03 to C++20
-    - low-level memory access and pointers makes it *dangerous*
-* But it's **very powerful**
-    - whole *new language with C++11* and beyond
-    - decent *matrix and math libs* (like Fortran, unlike all else)
-    - *control memory* for autodiff
-    - *template overloads* for autodiff
-    - *static evaluation* of branchpoints (template metaprograms are why C++ is fast)
-    - *elimination of intermediates* (via expression templates)
-    - *native in-memory communication* with Python and R
+* It's **very powerful**
+* A whole *new language with C++11* and beyond
+* Performant *matrix and math libs* (like Fortran, unlike all else)
+* *Control of memory* for autodiff arena (collect once w/o destructors)
+* *Template overloads* for autodiff of templated C++ code
+* *Static evaluation* of branchpoints (traits metaprograms)
+* *Unfolding* code (recursive metaprograms)
+* *Elimination of intermediates* (expression templates)
+* *Native in-memory communication* with Python and R
+* *Binary builds* allow native code releases (e.g., RStanArm)
+* *Optimizing compilers* are very good
 
+## Why *not*&nbsp; C++?
+* it's **not the easiest language** in the world
+* the spec is incomplete by design so *compilers vary*, even by optimization level
+* it's been a *moving target* from C++03 to C++20
+* low-level memory access and pointers makes it *dangerous*
+* *binary builds* and distribution are a pain to manage
+* *compile time* is disastrous with templating & optimization
+    - we're working to correct this
     
-## Overall Stan Organization
-* Stan code is translated to a C++ model class
-* C++ model class relies on and includes the Stan math library
-* C++ model class then compiled by C++ compiler, along with C++ algorithms and math library
-* Result is an executable (CmdStan) or dynamically linked object code (RStan, PyStan)
+# Part II: Stan's Code
+    
+## Top level Stan architecture
+* A model in the Stan language is translated into a C++ model class
+* C++ model class relies on and includes the Stan *math library*
+* C++ model class compiled in a single *translation unit* with algorithms and math library
+    - this will change in near future with separate translation units
+* Result is *executable* (CmdStan) or *dynamically linkable* object code (RStan, PyStan)
 
-## Stan Model Class
-* Known interface with a variety of methods the interfaces rely on
-* Constructed with the data you pass in when fitting the model
-* Primary entry point on the class is the `log_prob` function
-    - Takes in parameter values and returns their log probability density (potentially up to a constant)
+## Stan program is translated to a C++ class
+* Creates a C++ model class with fixed *concept* (C++ interface)
+* Model class is *constructed with data*
+* Implements a *function of continuous unconstrained parameters*
+* *Data* may be discrete and/or continuous
+* *Generated quantities* may be discrete and/or continuous
+    
+## Stan C++ class (continued)
+* `log_prob` method on the model concept is key
+    - applies to vector of *unconstrained parameters* (for algorithms)
+    - returns *log posterior* (up to additive constant)
+    - usually *coded as joint log density* with posterior via Bayes's rule
+    - or *log penalized likelihood* for maximum likelihood
+        - turns off Jacobian correction
+* *Constrain and unconstrain* parameters
+    - from constrained to unconstrained for initialization
+    - from unconstrained to constrained to evaluate model block
+    - log Jacobian for change of variables in unconstrained to constrained
+* Produces *transformed parameters* and *generated quantities*
+
 
 ## The Stan to C++ translator
-* Called many things - compiler, transpiler, parser
-* Also written in C++
-* Lives in the Stan repo (`lang`) alongside the algorithms and services
-* Functions are first defined in the Math library and then exposed in the Stan language
+* Known as the compiler, parser, or transpiler
+* Translates Stan program to *C++ class*
+* Written in C++ (with *Boost Spirit Qi* parser)
+* All *code* in `<stan>/src/stan/lang`
+    - parallel to I/O, inference algorithms, service, and memory directories
+    - top-level call in `<stan>/src/stan/lang/compiler.hpp`
+* Transpiler consists of
+    - *parser and semantic actions* (`lang/grammars`): translate Stan to AST
+    - *abstract syntax tree* (AST) (`lang/ast`): C++ representation of code
+    - *generator* (`lang/generator`): convert AST to C++ code
+ 
+
+## Built-in Stan functions
+* Defined using C++ in the math library
+    - definitions may *use autodiff*
+    - or may *define gradients analytically* for efficiency
+* Exposed in the Stan language
+    - all that is needed is *addition of signatures* to symbol table
+    - needed because Stan is *strongly statically typed*
 
 ## C++ Model Compiled to Object Code
-* Includes the Math library - most or all functions and data types are defined there
-* Compiled with the Stan algoirthms
-* Some basic functionality for I/O lives in CmdStan, which presents the interface a user sees on the command line
+* Includes the math library (using `#include`)
+    - Stan functions defined in math library
+    - some functionality directly in `stan/src`, such as transforms
+* Compiled largely *header-only* as a single translation unit
+    - includes Stan model class (translated from Stan to C++)
+    - Stan inference algorithms (MCMC, variational inference, optimization)
+    - Stan services (front-end to Stan used by interfaces RStan, PyStan, CmdStan)
+        - other interfaces call CmdStan directly
+* *Exclusions* from header-only
+    - parallel libaries (threading, MPI, and GPU)
+    - ordinary differential equation solvers (from Sundials lib)
 
 
-## Current Repository Structure
-* Repositories `cmdstan`, `pystan`, `rstan` include `stan`; `stan` includes  `math`
-    - Git submodules
-* CmdStan has the Stan repo as a git submodule at `stan/`
-* Stan has the Math library as a git submodule at `lib/stan_math` 
-    - `stan/lib/stan_math` to CmdStan
-* Math library directly includes some external libraries such as Boost, Eigen, Sundials at `lib/`
-    - `stan/lib/stan_math/lib` to CmdStan
+## CmdStan, RStan, PyStan
+* These are the three *primitive interfaces*
+    - other interfaces (Julia, Stata, MATLAB, Mathematica) *call CmdStan*
+    - ScalaStan is its own *embedded language* that transpiles to a Stan program
+* We'll be concentrating on the command line interface, CmdStan
+* The interfaces *implement callbacks* for
+    - interrupts
+    - data input
+    - data and diagnostic output
+    - runtime console messages
 
+
+## Stan GitHub Repository Structure
+* All repos for Stan are in the `stan-dev` *GitHub organization*
+* *Git submodule* structure
+    - `cmdstan` includes `stan` (path `stan`)
+    - `stan` includes `math` (path `lib/stan_math`)
+* From CmdStan perspective
+    - Stan is at `stan`
+    - Math lib is at `stan/lib/stan_math`
+    - Other libs at `stan/lib/stan_math/lib`
+    
+## Other libraries
+* Math library copies several external libs into its source tree (path `lib`), including
+    - Boost (general C++, math, RNG, stats parser)
+    - Eigen (matrix arithmtic and linear algebra)
+    - Sundials (ordinary differential equation solvers)
+    - OpenCL (GPU calculations)
+    - googletest (C++ test framework)
 
 ## A Stan Program
 * `Matrix program(Matrix data) {...}`
     - Function from data to a sample of parameter draws typical given that data and model
 * Compiled with a few algorithms that use the model density to find typical parameter draws
-* Most of the complexity lies in the likelihood and is built using functions in the Math library
+* Most of the complexity lies in the likelihood, which is built using functions in the Math library
 
 
-## Most of Stan's code is in the Math library
+## Most of Stan's *code* is in the Math library
 * Provides users with many functions to express complicated likelihoods
 * Autodiff system gives the algorithms the gradients they need automatically for any Stan or Math library code
-* Split up into `stan` and `test`
-* Then split by autodiff mode: `prim`, `rev`, `fwd`, `mix`
-* Then further split by container type: `scal`, `arr`, `mat` (this is going away)
-* Sometimes further split up by functionality: `err`, `fun`, `meta`, `prob`, ...
-
+* Split first into `stan` and `test`
+* Stan split into `math`
+* Split by container type: `scal`, `arr`, `mat` (this is going away)
+* Split by functionality: `err`, `fun`, `meta`, `prob`, ...
+    - e.g., from CmdStan:
+    - `stan/lib/stan_math/stan/math/rev/scal/fun/log1p.hpp`
+    
 ## Tests and continuous integration
 * We use [googletest](https://github.com/google/googletest), a C++ testing framework for unit tests
-    - tests end in `_test.cpp`
-    - provides macros like `TEST(SuiteName, TestName)` and `EXPECT_EQ(actual, expected)`
-* Test directory structure parallel to `src` stucture
-* Run tests locally with `runTests.py` helper script on a directory or test
-* Jenkins at http://d1m1s1b1.stat.columbia.edu:8080/
+    - test files *end in* `_test.cpp`
+    - *macros* like `TEST(SuiteName, TestName)` and `EXPECT_EQ(actual, expected)`
+* Test *directory structure* parallel to `src` stucture
+* *Run tests locally* with `runTests.py` helper script on a directory or test
+* *Jenkins* continuous integration server
+    - at http://d1m1s1b1.stat.columbia.edu:8080/
     - Specified in code, in a top-level file named `Jenkinsfile`
-* [This wiki](https://github.com/stan-dev/stan/wiki/Supported-C---Compilers-and-Language-Features) tries to collate which OSes and toolchains are tested
+* [This wiki](https://github.com/stan-dev/stan/wiki/Supported-C---Compilers-and-Language-Features) describes the OSs and toolchains tested
+
+    
+# Part III: Process
 
 ## Developer process
-0. For larger changes only: Discourse discussion and/or design review
-1. Github issue describing the problem 
-2. Add a description of the proposed technical solution to the github issue
-3. Create a GitHub pull request
-4. [Code Review](https://github.com/stan-dev/math/wiki/Developer-Doc#code-review-guidelines)
-5. Merge
+0. For *larger changes only*: Discourse discussion and/or design review
+1. *GitHub issue* describing the problem (i.e., functional specification)
+2. Add a description of the *proposed technical solution* to the GitHub issue
+3. Code the solution *on a branch*
+4. Create a *GitHub pull request* with *BSD license details*
+    - developers maintain copyright, but must BSD license contributions before approval
+5. [Code review](https://github.com/stan-dev/math/wiki/Developer-Doc#code-review-guidelines)
+    - if changes requested, return to (3)
+5. *Merge* only after approval and the tests pass on Jenkins
 
 ## Setting up GitHub
 * Create an account
 * (optional) [Set up SSH keys](https://help.github.com/articles/connecting-to-github-with-ssh/)
-* Fork repo(s) from stan-dev
+* *Fork the relevant repositories* from the `stan-dev` organization
 * `git clone --recursive <cmdstan repo>`
-* Add your fork as a remote on the repo you care about
+    - the recursive bit takes care of submodules
+* *Add your fork as a remote* on the repo you care about
 
 ## Clone CmdStan
 ```{r, echo=F, out.width = "100%"}
@@ -167,7 +266,9 @@ knitr::include_graphics("img/fork.png")
 $ git remote -v
 origin	git@github.com:stan-dev/math.git (fetch)
 origin	git@github.com:stan-dev/math.git (push)
+
 $ git remote add sean git@github.com:seantalts/math.git
+
 $ git remote -v
 origin	git@github.com:stan-dev/math.git (fetch)
 origin	git@github.com:stan-dev/math.git (push)
@@ -175,8 +276,8 @@ sean	git@github.com:seantalts/math.git (fetch)
 sean	git@github.com:seantalts/math.git (push)
 ```
 
-## Creating a PR
-Fairly standard open source flow:
+## Creating a pull request (PR)
+Fairly *standard open source flow*:
 
 1. (optional) create a branch
 1. write code, tests, and doc
@@ -184,26 +285,13 @@ Fairly standard open source flow:
 1. add files
 1. commit with a [message about what you were trying to accomplish](https://chris.beams.io/posts/git-commit/) 
 1. `git push origin <branchname>`
-1. open PR on appropriate `stan-dev` repo
+1. open pull request on appropriate `stan-dev` repo
 
 ## Creating a branch
 ```
 $ git checkout -b descriptive-branch-name
 Switched to a new branch 'descriptive-branch-name'
 ```
-
-## Running the checks
-1. `python runTests.py -j<num_cores> path/to/test.cpp /path/to/test/dir`
-1. `make cpplint` - runs a python script that [checks style](https://github.com/stan-dev/stan/wiki/Coding-Style-and-Idioms)
-
-## Autoformatting
-* Project standardized on formatting for readaibility and to avoid arguments
-* Uses `clang-format` to automatically format code
-* Jenkins is set up to do this automatically on PRs and commit back to your branch
-    - So if you get an email about this, you can `git pull` to incorporate those formatting fixes
-* Once `clang-format` is installed, you can install a git hook to run it on any files you commit:
-    - (from Math repo) `$ bash hooks/install_hook.sh`
-* https://github.com/stan-dev/stan/wiki/Coding-Style-and-Idioms#clang-format
 
 ## A complicated example
 ```
@@ -244,6 +332,20 @@ TEST(AgradPartialsVari, OperandsAndPartialsVec) {
 
 ```
 
+
+## Running the checks
+1. `python runTests.py -j<num_cores> path/to/test.cpp /path/to/test/dir`
+1. `make cpplint` - runs a python script that [checks style](https://github.com/stan-dev/stan/wiki/Coding-Style-and-Idioms)
+
+## Autoformatting
+* Project standardized on formatting for readaibility and to avoid arguments
+* Uses `clang-format` to automatically format code
+* Jenkins is set up to do this automatically on PRs and commit back to your branch
+    - So if you get an email about this, you can `git pull` to incorporate those formatting fixes
+* Once `clang-format` is installed, you can install a git hook to run it on any files you commit:
+    - (from Math repo) `$ bash hooks/install_hook.sh`
+* https://github.com/stan-dev/stan/wiki/Coding-Style-and-Idioms#clang-format
+
 ## Add, commit, push
 ```
 $ git add test/unit/math/rev/mat/meta/operands_and_partials_test.cpp
@@ -267,24 +369,24 @@ knitr::include_graphics("img/PR3.png")
 ```
 
 ## Stan release process
-1. Pull requests ask for code to be added to the `develop` branch
-1. When creating a release, we choose a point in time along the `develop` branch and tag it as a certain release
-1. We then merge that tag into the `master` branch, such that `master` is always stable
-1. (Additional process for hotfixes to already-released code)
+1. *Pull requests* ask for code to be added to the `develop` branch
+    - `develop` is maintained in a releasable state at all times
+1. Choose a point in time along the `develop` branch and *tag it with version number*
+    - semantic versioning:  Major.Minor.Patch
+    - only *major* changes *break backward compatibility*
+    - *minor* numbers indicate new functionality
+    - *patch* incremented for bugfix-only releases
+1. We then *merge that tag* into the `master` branch
+    - makes sure `master` is always stable
+    - and always pointing at latest release
+1. Additional processes used for hotfix patch releases
 
 
-
-
-
-
-
+# Part IV: Coding Functions in Stan
 
 ## Coding a distribution in Stan
 
-- Use the Stan language to code the normal log pdf
-    - use `_lpdf` suffix to enable sampling notation
-- Place in file `my-normal.stan`    
-
+- Use the Stan language to code the normal log pdf with `_lpdf` suffix
 ```stan
 functions {
   real my_normal_lpdf(real y, real mu, real sigma) {
@@ -297,7 +399,7 @@ parameters {
   real y;
 }
 model {
-  y ~ my_normal(0, 3.2);
+  y ~ my_normal(1.5, 3.2);
 }
 ```
 
@@ -326,30 +428,138 @@ if (is_nan(mu) || is_inf(mu))
     
 * No traits branching
     - can't skip constant terms determined by type analysis
-    
+    - hope to add this, too    
 
-## Loading RStan and compiling
 
-```{r cache = TRUE}
-library(rstan)
-model <- stan_model("my-normal.stan")
+## Compiling model in CmdStan
+* Model placed in `~/temp2/my-normal.stan`;  `stanc` is transpiler
+* compiled *without optimization* at `-O0` for compile speed
+```
+$ cd ~/cmdstan
+~/cmdstan(develop)$ git pull
+...
+~/cmdstan(develop)$ make stan-update
+...
+~/cmdstan(develop)$ make -j5 O=0 ~/temp2/my-normal
+    ...transpiler built on first call with 5 processes...
+--- Translating Stan model to C++ code ---
+bin/stanc  /Users/carp/temp2/my-normal.stan --o=/Users/carp/temp2/my-normal.hpp
+Model name=my_normal_model
+Input file=/Users/carp/temp2/my-normal.stan
+Output file=/Users/carp/temp2/my-normal.hpp
+--- Linking C++ model ---
+c++ -Wall -I . -isystem stan/lib/stan_math/lib/eigen_3.3.3 ... -O0 ...
 ```
 
-## Fit the model
+## Sampling from posterior in CmdStan
 
-```{r cache = TRUE}
-fit <- sampling(model)
+* Use make target as executable; writes draws to `output.csv` by default
+```
+~/cmdstan(develop)$ cd ~/temp2
+
+~/temp2$ ~/temp2$ ./my-normal sample num_samples=10000
+
+method = sample (Default)
+  sample
+    num_samples = 10000
+    num_warmup = 1000 (Default)
+...
+Iteration:     1 / 11000 [  0%]  (Warmup)
+...
+Iteration:  1001 / 11000 [  9%]  (Sampling)
+...
+Iteration: 11000 / 11000 [100%]  (Sampling)
 ```
 
 ## Summarize the posterior
-```{r cache = TRUE}
-print(fit)
+
+* Use the `stansummary` command in CmdStan (elided some rows)
+* converged to true posterior: $\mathsf{Normal}(y \mid 1.5, 3.2)$
+```
+~/temp2$ ~/cmdstan/bin/stansummary output.csv
+Inference for Stan model: my_normal_model
+1 chains: each with iter=(10000); warmup=(0); thin=(1); 10000 iterations saved.
+Warmup took (0.064) seconds, 0.064 seconds total
+Sampling took (1.0) seconds, 1.0 seconds total
+                Mean     MCSE   StdDev    5%   50%   95%    N_Eff  N_Eff/s    R_hat
+y                1.5  4.8e-02  3.2e+00  -3.8   1.6   6.8  4.5e+03  4.3e+03  1.0e+00
+lp__            -3.8  1.2e-02  7.0e-01  -5.2  -3.5  -3.2  3.5e+03  3.4e+03  1.0e+00
+accept_stat__   0.94  8.2e-04  8.4e-02  0.76  0.97   1.0  1.1e+04  1.0e+04  1.0e+00
+stepsize__      0.83  3.8e-14  2.7e-14  0.83  0.83  0.83  5.0e-01  4.8e-01  1.0e+00
+n_leapfrog__     2.9  1.8e-02  1.7e+00   1.0   3.0   7.0  9.4e+03  9.1e+03  1.0e+00
+divergent__     0.00      nan  0.0e+00  0.00  0.00  0.00      nan      nan      nan
 ```
 
-## Coding the distribution in C++
+# Part V:  Coding Functions in C++ (Templated)
+
+## Code produced by Stan transpiler
+* Heavily templated and complicated
+* Reformatted a bit here for readability (this is improving)
+```
+template <bool propto, typename T0__, typename T1__, typename T2__>
+typename boost::math::tools::promote_args<T0__, T1__, T2__>::type
+my_normal_lpdf(const T0__& y,
+                   const T1__& mu,
+                   const T2__& sigma, std::ostream* pstream__) {
+    typedef typename boost::math::tools::promote_args<T0__, T1__, T2__>::type local_scalar_t__;
+    typedef local_scalar_t__ fun_return_scalar_t__;
+    const static bool propto__ = true;
+    (void) propto__;
+    local_scalar_t__ DUMMY_VAR__(std::numeric_limits<double>::quiet_NaN());
+    (void) DUMMY_VAR__;  // suppress unused var warning
+    int current_statement_begin__ = -1;
+    ...
+```
+
+## Transpiler produced function (continued)
+
+```
+   ...
+    try {
+        current_statement_begin__ = 3;
+        return stan::math::promote_scalar<fun_return_scalar_t__>(
+          (((-(0.5) * stan::math::log((2 * stan::math::pi()))) 
+            - (2 * stan::math::log(sigma))) 
+            - (0.5 * pow(((y - mu) / sigma),2))));
+    } catch (const std::exception& e) {
+        stan::lang::rethrow_located(e, current_statement_begin__, prog_reader__());
+        // Next line prevents compiler griping about no return
+        throw std::runtime_error("*** IF YOU SEE THIS, PLEASE REPORT A BUG ***");
+    }
+}
+```
+
+# Part V: 
+## What does the transpiled C++ look like?
+
+```
+
+    
+
+## Direct coding of functions in C++
+* Template everything
+    - uses *autodiff to take partials* of output(s) w.r.t. input(s)
+    - *easiest*, but *least efficient*
+    - technique *used for functions defined in Stan* language
+    - works for *any order autodiff* (reverse, forward, mixed)
+* Implement custom `vari` 
+    - allows *most efficient* and *customizable* analytic partials
+    - may *lazily evaluate* partials on reverse pass
+    - *reverse mode only*, so still *need templated* version
+    
+## Helper implementations
+* Precomputed gradients structure
+    - compute and *store full Jacobian* on forward pass
+    - *reverse mode only*, so still *need templated* version
+* Operands and partials structure  
+    - custom tool for *computing vectorized log densities*
+    - may be used for any single-output, vectorized function
+    - works for *any order autodiff*
+
+## Coding the distribution in C++ with 
 
 - Like Stan, but with explicit templates and references
-- Template `y` & assume `mu` and `sigma` are `double`
+- Template `y` and assume `mu` and `sigma` are `double`
     - `int` promoted to `double` in C++ and to `real` in Stan
 - Name resolution
     - `log(double)` found through `using std::log`
@@ -358,12 +568,15 @@ print(fit)
 ```c++
 template <typename T>
 double my_normal(const T& y, double mu, double sigma) {
-  using std::log;  // allow std::log as candidate for log(sigma)
+  using std::log;
   return - 0.5 * log(2 * pi())
     - 2 * log(sigma)
     - 0.5 * ((y - mu) / sigma)^2;
 }
 ```
+
+
+
 
 ## Includes and main
 
@@ -448,17 +661,36 @@ struct multiply_vari : public vari {
     : vari(op1.val_ * op2.val_), op1_(op1), op2_(op2) { };
 
   void chain() {
-    // operand adjoint += partial w.r.t. operand * result adjoint
-    op1_->adj_ += op2_->val_ * this->adj_;
-    op2_->adj_ += op1_->val_ * this->adj_;
+    // operand adjoint += result adjoint * partial w.r.t. operand
+    op1_->adj_ += adj_ * op2_->val_;
+    op2_->adj_ += adj_ * op1_->val_;
   }
-}
+};
 ```
 ```c++
-var operator*(const var& a, const var& b) {
-  return var(new vari*(a.vi_, b.vi_));
+inline var operator*(const var& a, const var& b) {
+  return var(new multiply_vari*(a.vi_, b.vi_));
 }
 ```    
+
+## Stan's multiplication operator
+* `<stan-math>/stan/math/rev/core/operator_multiplication.hpp`
+```c++
+class multiply_vv_vari : public op_vv_vari {                   // superclass
+ public:                                                       // privacy
+  multiply_vv_vari(vari* avi, vari* bvi)
+      : op_vv_vari(avi->val_ * bvi->val_, avi, bvi) {}         // store operands
+  void chain() {
+    if (unlikely(is_nan(avi_->val_) || is_nan(bvi_->val_))) {  // assembler hint
+      avi_->adj_ = std::numeric_limits<double>::quiet_NaN();   // propagate NaN
+      bvi_->adj_ = std::numeric_limits<double>::quiet_NaN();
+    } else {                                
+      avi_->adj_ += bvi_->val_ * adj_;                         // same as example
+      bvi_->adj_ += avi_->val_ * adj_;
+    }
+  }
+};
+```
 
 ## Now lets do the normal distribution
 
@@ -471,6 +703,11 @@ var operator*(const var& a, const var& b) {
 
 ## Normal vari for first argument
 
+* Store operand `vari*` and values needed for partial
+* $\frac{\partial}{\partial y} \mathtt{my\_normal\_lpdf}(y, \mu, \sigma)
+   \ = \ (\mu - y) / \sigma^2$
+
+
 ```c
 struct my_normal_vari : public vari {
   vari* y_;  double mu_, sigma_; 
@@ -478,7 +715,7 @@ struct my_normal_vari : public vari {
     : vari(my_normal(y.val_, mu, sigma)),  // double only
       y_(y), mu_(mu), sigma_(sigma) { }
   void chain() {
-      
+    y_.adj_ += this->adj_ * (mu_ - y_.val_) / (sigma_ * sigma_);
   }
 };
 ```
