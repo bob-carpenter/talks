@@ -4,7 +4,9 @@ author: "Bob Carpenter & Sean Talts"
 date: "August 2018 (StanCon Helsinki)"
 output:
   ioslides_presentation:
+    logo: img/stan-logo.png
     css: styles.css
+#   incremental: true
 widescreen: yes
 ---
 
@@ -17,10 +19,31 @@ library(ggplot2)
 ```
 
 <style>
+.gdbar img {
+  background-color: transparent;
+  color: transparent;
+  width: 150px !important;
+  height: 150px !important;
+  margin: 8px 8px;
+}
+
+.gdbar {
+  background-color: transparent;
+  color: transparent;
+  width: 400px !important;
+  height: 170px !important;
+}
+
+slides > slide:not(.nobackground):before {
+  width: 0px;
+  height: 0px;
+  background-size: 0px 0px;
+}
+
 li {
   font-family: verdana, lucida sans unicode;
-  font-size: 22px;
-  line-height: 1.4em;
+  font-size: 24px;
+  line-height: 1.45em;
 }
 pre {
   font-family: lucida console, monaco, menlo;
@@ -30,15 +53,15 @@ pre {
 }
 tt {
   font-family: monaco; lucida console;
-  font-size: 22px;
+  font-size: 24px;
 }
 code {
   font-family: monaco; lucida console;
-  font-size: 22px;
+  font-size: 24px;
 }
 </style>
 
-
+# Part I: Introduction
 
 ## Online documentation
 * `stan-dev/stan`: [Developer process overview](https://github.com/stan-dev/stan/wiki/Developer-process-overview)
@@ -62,13 +85,14 @@ code {
 * It's **very powerful**
 * A whole *new language with C++11* and beyond
 * Performant *matrix and math libs* (like Fortran, unlike all else)
-* *control of memory* for autodiff arena (collect once w/o destructors)
-* *template overloads* for autodiff of templated C++ code
-* *static evaluation* of branchpoints (template metaprograms are why C++ is fast)
-* *elimination of intermediates* (via expression templates)
-* *native in-memory communication* with Python and R
-* *binary builds* allow native code releases (e.g., RStanArm)
-* *optimizing compilers* are very good
+* *Control of memory* for autodiff arena (collect once w/o destructors)
+* *Template overloads* for autodiff of templated C++ code
+* *Static evaluation* of branchpoints (traits metaprograms)
+* *Unfolding* code (recursive metaprograms)
+* *Elimination of intermediates* (expression templates)
+* *Native in-memory communication* with Python and R
+* *Binary builds* allow native code releases (e.g., RStanArm)
+* *Optimizing compilers* are very good
 
 ## Why *not*&nbsp; C++?
 * it's **not the easiest language** in the world
@@ -80,33 +104,45 @@ code {
     - we're working to correct this
 * lacks the *cool factor* to attract open source hobbyists
     
+# Part II: Code 
+    
 ## Top level Stan architecture
-* Stan transpiler converts Stan program to C++ class for model
-    - standard parser, abstract syntax tree, generator design
-* C++ class includes the Stan math library
-* C++ class compiled mostly header only along with algorithms and math library
-* Result is executable (CmdStan) or dynamically linked object code (RStan, PyStan)
+* Stan *transpiler* converts Stan program to C++ class for model
+    - *standard* parser, abstract syntax tree, generator design
+* C++ model class includes the Stan *math library*
+* C++ model class compiled *mostly header-only*
+    - along with algorithms and math library
+    - this will change in near future with separate translation units
+* Result is *executable* (CmdStan) or *dynamically linkable* object code (RStan, PyStan)
 
-## Stan language is translated to a C++ class
-* Creates a C++ model class with a known concept (C++ interface requirement)
-* Model implements a `log_prob` function over *data and constrained parameters*
-    - log posterior as function of data up to constant (usually joint via Bayes's rule)
-    - or log penalized likelihood for maximum likelihood applications
-    - applies to vector of unconstrained parameters
-    - only required up to proportion (additive constant on log scale)
-* Model class is constructed with the data
-    - resulting function defines log posterior (or penalized likelihood) up to constant
-* Also transforms parameters from unconstrained to constrained and back
-    - with automatic log Jacobian corrections
-    - algorithms work with unconstrained parameters
+## Stan program is translated to a C++ class
+* Creates a C++ model class with fixed *concept* (C++ interface)
+* Model class is *constructed with data*
+* Implements a *function of continuous unconstrained parameters*
+* *Data* may be discrete and/or continuous
+* *Generated quantities* may be discrete and/or continuous
+    
+## Stan C++ class (continued)
+* Details of `log_prob` function
+    - applies to vector of *unconstrained parameters* (for algorithms)
+    - returns *log posterior* (up to additive constant)
+    - usually *coded as joint log density* with posterior via Bayes's rule
+    - or *log penalized likelihood* for maximum likelihood
+        - turns off Jacobian correction
+* *Constrain and unconstrain* parameters
+    - from constrained to unconstrained for initialization
+    - from unconstrained to constrained to evaluate model block
+    - log Jacobian for change of variables in unconstrained to constrained
+* Produces *transformed parameters* and *generated quantities*
 
 
 ## The Stan to C++ transpiler
 * Also known informally as the compiler or translator
 * Translates Stan program to *C++ class*
 * Written in C++ (with *Boost Spirit Qi* parser)
-* In `stan/lang` directory of the Stan repository
-   - with I/O, inference algorithms, service and memory management code
+* All *code* in `<stan>/src/stan/lang`
+    - parallel to I/O, inference algorithms, service, and memory directories
+    - top-level call in `<stan>/src/stan/lang/compiler.hpp`
 * Transpiler consists of
     - *parser and semantic actions* (`lang/grammars`): translate Stan to AST
     - *abstract syntax tree* (AST) (`lang/ast`): C++ representation of code
@@ -188,6 +224,9 @@ code {
     - at http://d1m1s1b1.stat.columbia.edu:8080/
     - Specified in code, in a top-level file named `Jenkinsfile`
 * [This wiki](https://github.com/stan-dev/stan/wiki/Supported-C---Compilers-and-Language-Features) describes the OSs and toolchains tested
+
+    
+# Part III: Process
 
 ## Developer process
 0. For *larger changes only*: *Discourse discussion* and/or design review
@@ -334,6 +373,7 @@ knitr::include_graphics("img/PR3.png")
 1. Additional processes used for hotfix patch releases
 
 
+# Part IV: Examples
 
 ## Coding a distribution in Stan
 
@@ -353,7 +393,7 @@ parameters {
   real y;
 }
 model {
-  y ~ my_normal(0, 3.2);
+  y ~ my_normal(1.5, 3.2);
 }
 ```
 
@@ -398,6 +438,10 @@ fit <- sampling(model)
 ```
 
 ## Summarize the posterior
+
+* recall the posterior density is $\mathsf{Normal}(y \mid 1.5, 3.2)$
+    - 3.2 is scale/std-dev, not variance or precision
+    
 ```{r cache = TRUE}
 print(fit)
 ```
