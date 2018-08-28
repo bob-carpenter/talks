@@ -47,7 +47,7 @@ li {
 }
 pre {
   font-family: lucida console, monaco, menlo;
-  font-size: 19px;
+  font-size: 20px;
   line-height: 1.5em;
   font-weight: 500;
 }
@@ -373,14 +373,11 @@ knitr::include_graphics("img/PR3.png")
 1. Additional processes used for hotfix patch releases
 
 
-# Part IV: Examples
+# Part IV: Coding Functions in Stan
 
 ## Coding a distribution in Stan
 
-- Use the Stan language to code the normal log pdf
-    - use `_lpdf` suffix to enable sampling notation
-- Place in file `my-normal.stan`    
-
+- Use the Stan language to code the normal log pdf with `_lpdf` suffix
 ```stan
 functions {
   real my_normal_lpdf(real y, real mu, real sigma) {
@@ -422,34 +419,138 @@ if (is_nan(mu) || is_inf(mu))
     
 * No traits branching
     - can't skip constant terms determined by type analysis
-    
+    - hope to add this, too    
 
-## Loading RStan and compiling
 
-```{r cache = TRUE}
-library(rstan)
-model <- stan_model("my-normal.stan")
+## Compiling model in CmdStan
+* Model placed in `~/temp2/my-normal.stan`;  `stanc` is transpiler
+* compiled *without optimization* at `-O0` for compile speed
+```
+$ cd ~/cmdstan
+~/cmdstan(develop)$ git pull
+...
+~/cmdstan(develop)$ make stan-update
+...
+~/cmdstan(develop)$ make -j5 O=0 ~/temp2/my-normal
+    ...transpiler built on first call with 5 processes...
+--- Translating Stan model to C++ code ---
+bin/stanc  /Users/carp/temp2/my-normal.stan --o=/Users/carp/temp2/my-normal.hpp
+Model name=my_normal_model
+Input file=/Users/carp/temp2/my-normal.stan
+Output file=/Users/carp/temp2/my-normal.hpp
+--- Linking C++ model ---
+c++ -Wall -I . -isystem stan/lib/stan_math/lib/eigen_3.3.3 ... -O0 ...
 ```
 
-## Fit the model
+## Sampling from posterior in CmdStan
 
-```{r cache = TRUE}
-fit <- sampling(model)
+* Use make target as executable; writes draws to `output.csv` by default
+```
+~/cmdstan(develop)$ cd ~/temp2
+
+~/temp2$ ~/temp2$ ./my-normal sample num_samples=10000
+
+method = sample (Default)
+  sample
+    num_samples = 10000
+    num_warmup = 1000 (Default)
+...
+Iteration:     1 / 11000 [  0%]  (Warmup)
+...
+Iteration:  1001 / 11000 [  9%]  (Sampling)
+...
+Iteration: 11000 / 11000 [100%]  (Sampling)
 ```
 
 ## Summarize the posterior
 
-* recall the posterior density is $\mathsf{Normal}(y \mid 1.5, 3.2)$
-    - 3.2 is scale/std-dev, not variance or precision
-    
-```{r cache = TRUE}
-print(fit)
+* Use the `stansummary` command in CmdStan (elided some rows)
+* converged to true posterior: $\mathsf{Normal}(y \mid 1.5, 3.2)$
+```
+~/temp2$ ~/cmdstan/bin/stansummary output.csv
+Inference for Stan model: my_normal_model
+1 chains: each with iter=(10000); warmup=(0); thin=(1); 10000 iterations saved.
+Warmup took (0.064) seconds, 0.064 seconds total
+Sampling took (1.0) seconds, 1.0 seconds total
+                Mean     MCSE   StdDev    5%   50%   95%    N_Eff  N_Eff/s    R_hat
+y                1.5  4.8e-02  3.2e+00  -3.8   1.6   6.8  4.5e+03  4.3e+03  1.0e+00
+lp__            -3.8  1.2e-02  7.0e-01  -5.2  -3.5  -3.2  3.5e+03  3.4e+03  1.0e+00
+accept_stat__   0.94  8.2e-04  8.4e-02  0.76  0.97   1.0  1.1e+04  1.0e+04  1.0e+00
+stepsize__      0.83  3.8e-14  2.7e-14  0.83  0.83  0.83  5.0e-01  4.8e-01  1.0e+00
+n_leapfrog__     2.9  1.8e-02  1.7e+00   1.0   3.0   7.0  9.4e+03  9.1e+03  1.0e+00
+divergent__     0.00      nan  0.0e+00  0.00  0.00  0.00      nan      nan      nan
 ```
 
-## Coding the distribution in C++
+# Part V:  Coding Functions in C++ (Templated)
+
+## Code produced by Stan transpiler
+* Heavily templated and complicated
+* Reformatted a bit here for readability (this is improving)
+```
+template <bool propto, typename T0__, typename T1__, typename T2__>
+typename boost::math::tools::promote_args<T0__, T1__, T2__>::type
+my_normal_lpdf(const T0__& y,
+                   const T1__& mu,
+                   const T2__& sigma, std::ostream* pstream__) {
+    typedef typename boost::math::tools::promote_args<T0__, T1__, T2__>::type local_scalar_t__;
+    typedef local_scalar_t__ fun_return_scalar_t__;
+    const static bool propto__ = true;
+    (void) propto__;
+    local_scalar_t__ DUMMY_VAR__(std::numeric_limits<double>::quiet_NaN());
+    (void) DUMMY_VAR__;  // suppress unused var warning
+    int current_statement_begin__ = -1;
+    ...
+```
+
+## Transpiler produced function (continued)
+
+```
+   ...
+    try {
+        current_statement_begin__ = 3;
+        return stan::math::promote_scalar<fun_return_scalar_t__>(
+          (((-(0.5) * stan::math::log((2 * stan::math::pi()))) 
+            - (2 * stan::math::log(sigma))) 
+            - (0.5 * pow(((y - mu) / sigma),2))));
+    } catch (const std::exception& e) {
+        stan::lang::rethrow_located(e, current_statement_begin__, prog_reader__());
+        // Next line prevents compiler griping about no return
+        throw std::runtime_error("*** IF YOU SEE THIS, PLEASE REPORT A BUG ***");
+    }
+}
+```
+
+# Part V: 
+## What does the transpiled C++ look like?
+
+```
+
+    
+
+## Direct coding of functions in C++
+* Template everything
+    - uses *autodiff to take partials* of output(s) w.r.t. input(s)
+    - *easiest*, but *least efficient*
+    - technique *used for functions defined in Stan* language
+    - works for *any order autodiff* (reverse, forward, mixed)
+* Implement custom `vari` 
+    - allows *most efficient* and *customizable* analytic partials
+    - may *lazily evaluate* partials on reverse pass
+    - *reverse mode only*, so still *need templated* version
+    
+## Helper implementations
+* Precomputed gradients structure
+    - compute and *store full Jacobian* on forward pass
+    - *reverse mode only*, so still *need templated* version
+* Operands and partials structure  
+    - custom tool for *computing vectorized log densities*
+    - may be used for any single-output, vectorized function
+    - works for *any order autodiff*
+
+## Coding the distribution in C++ with 
 
 - Like Stan, but with explicit templates and references
-- Template `y` & assume `mu` and `sigma` are `double`
+- Template `y` and assume `mu` and `sigma` are `double`
     - `int` promoted to `double` in C++ and to `real` in Stan
 - Name resolution
     - `log(double)` found through `using std::log`
@@ -458,12 +559,15 @@ print(fit)
 ```c++
 template <typename T>
 double my_normal(const T& y, double mu, double sigma) {
-  using std::log;  // allow std::log as candidate for log(sigma)
+  using std::log;
   return - 0.5 * log(2 * pi())
     - 2 * log(sigma)
     - 0.5 * ((y - mu) / sigma)^2;
 }
 ```
+
+
+
 
 ## Includes and main
 
@@ -548,17 +652,36 @@ struct multiply_vari : public vari {
     : vari(op1.val_ * op2.val_), op1_(op1), op2_(op2) { };
 
   void chain() {
-    // operand adjoint += partial w.r.t. operand * result adjoint
-    op1_->adj_ += op2_->val_ * this->adj_;
-    op2_->adj_ += op1_->val_ * this->adj_;
+    // operand adjoint += result adjoint * partial w.r.t. operand
+    op1_->adj_ += adj_ * op2_->val_;
+    op2_->adj_ += adj_ * op1_->val_;
   }
-}
+};
 ```
 ```c++
-var operator*(const var& a, const var& b) {
-  return var(new vari*(a.vi_, b.vi_));
+inline var operator*(const var& a, const var& b) {
+  return var(new multiply_vari*(a.vi_, b.vi_));
 }
 ```    
+
+## Stan's multiplication operator
+* `<stan-math>/stan/math/rev/core/operator_multiplication.hpp`
+```c++
+class multiply_vv_vari : public op_vv_vari {                   // superclass
+ public:                                                       // privacy
+  multiply_vv_vari(vari* avi, vari* bvi)
+      : op_vv_vari(avi->val_ * bvi->val_, avi, bvi) {}         // store operands
+  void chain() {
+    if (unlikely(is_nan(avi_->val_) || is_nan(bvi_->val_))) {  // assembler hint
+      avi_->adj_ = std::numeric_limits<double>::quiet_NaN();   // propagate NaN
+      bvi_->adj_ = std::numeric_limits<double>::quiet_NaN();
+    } else {                                
+      avi_->adj_ += bvi_->val_ * adj_;                         // same as example
+      bvi_->adj_ += avi_->val_ * adj_;
+    }
+  }
+};
+```
 
 ## Now lets do the normal distribution
 
@@ -571,6 +694,11 @@ var operator*(const var& a, const var& b) {
 
 ## Normal vari for first argument
 
+* Store operand `vari*` and values needed for partial
+* $\frac{\partial}{\partial y} \mathtt{my\_normal\_lpdf}(y, \mu, \sigma)
+   \ = \ (\mu - y) / \sigma^2$
+
+
 ```c
 struct my_normal_vari : public vari {
   vari* y_;  double mu_, sigma_; 
@@ -578,7 +706,7 @@ struct my_normal_vari : public vari {
     : vari(my_normal(y.val_, mu, sigma)),  // double only
       y_(y), mu_(mu), sigma_(sigma) { }
   void chain() {
-      
+    y_.adj_ += this->adj_ * (mu_ - y_.val_) / (sigma_ * sigma_);
   }
 };
 ```
