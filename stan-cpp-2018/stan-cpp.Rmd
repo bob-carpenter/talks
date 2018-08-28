@@ -1118,3 +1118,218 @@ for (size_t i = 0; i < vector_types.size(); ++i)
 
 * Other than testing, that's it
 
+# Part IX: Testing
+
+## Required testing for Stan functions
+
+* Every function submitted to the math library must be unit tested
+* Every function added to the language must be instantiated in a Stan model
+   - for every available signature 
+   - tests ability to instantiate with relevant autodiff variables
+   - e.g., 125 signatures for `normal_lpdf` (with `int` to `double` promotion)
+   
+## Example: two argument arctangent
+
+* `atan2(x, y) =def= atan(x / y)` but it's more stable
+* convenient example
+    - structure is simple like `multiply`
+    - not built into basic language tests like `multiply`
+
+## Unit tests
+
+* Reverse mode unit tests
+   - `<stan-math>/test/unit/math/rev/scal/fun/atan2_test.cpp`
+   - name must end in `_test.cpp` to be picked up by test harness
+
+* Include math top-level header, test framework, and utilities for testing
+
+```c++
+#include <stan/math/rev/scal.hpp>
+#include <gtest/gtest.h>
+#include <boost/math/special_functions/fpclassify.hpp>
+#include <test/unit/math/rev/scal/fun/nan_util.hpp>
+#include <test/unit/math/rev/scal/util.hpp>
+```
+
+## Unit tests (continued)
+
+* May directly test known values
+
+```
+TEST(AgradRev, atan2_var_var) {
+  AVAR a = 1.2;
+  AVAR b = 3.9;
+  AVAR f = atan2(a, b);
+  EXPECT_FLOAT_EQ(atan2(1.2, 3.9), f.val());
+
+  AVEC x = createAVEC(a, b);
+  VEC g;
+  f.grad(x, g);
+  EXPECT_FLOAT_EQ(3.9 / (1.2 * 1.2 + 3.9 * 3.9), g[0]);
+  EXPECT_FLOAT_EQ(-1.2 / (1.2 * 1.2 + 3.9 * 3.9), g[1]);
+}
+```
+
+## Unit tests (continued)
+
+* Need this for all the instantations
+
+```c++
+TEST(AgradRev, atan2_double_var) {
+...
+TEST(AgradRev, atan2_var_double) {
+...
+```
+
+## Unit tests (continued)
+
+* Generic not-a-number propagation tests
+
+```c++
+struct atan2_fun {
+  template <typename T0, typename T1>
+  inline typename stan::return_type<T0, T1>::type operator()(
+      const T0& arg1, const T1& arg2) const {
+    return atan2(arg1, arg2);
+  }
+};
+
+TEST(AgradRev, atan2_nan) {
+  atan2_fun atan2_;
+  test_nan(atan2_, 3.0, 5.0, false, true);
+}
+```
+
+## Unit testing (continued)
+
+* Check for autodiff memory leaks on stack
+
+```c++
+TEST(AgradRev, check_varis_on_stack) {
+  AVAR a = 1.2;
+  AVAR b = 3.9;
+  test::check_varis_on_stack(stan::math::atan2(a, b));
+  test::check_varis_on_stack(stan::math::atan2(a, 3.9));
+  test::check_varis_on_stack(stan::math::atan2(1.2, b));
+}
+```
+
+## Running unit tests
+
+* Use testing framework `runTests.py` with multiple cores (calls make)
+```
+<stan-math>$ ./runTests.py -j5 test/unit/math/rev/scal/fun/atan2_test.cpp 
+make ...
+Running main() from gtest_main.cc
+[==========] Running 7 tests from 1 test case.
+[----------] Global test environment set-up.
+[----------] 7 tests from AgradRev
+[ RUN      ] AgradRev.atan2_var_var
+[       OK ] AgradRev.atan2_var_var (0 ms)
+...
+[ RUN      ] AgradRev.check_varis_on_stack
+[       OK ] AgradRev.check_varis_on_stack (0 ms)
+...
+[  PASSED  ] 7 tests.
+```
+
+## Unit testing distributions
+
+* These have a test framework
+    - code generates multiple instantiations
+    - checks for errors and values
+    - for reverse, forward, an mixed autodiff
+    
+* Example in `<math>/test/prob/normal/normal_test.hpp`
+   - plug in legal and illegal values
+   - test all combinations
+
+
+## Test cpplint
+
+* Tests form and some semantics of code for standards compliance
+* From both libraries, test cpplint
+
+```
+<stan>$ make cpplint
+
+<math>$ make cpplint
+```
+
+* Make sure there are zero errors
+
+## Running doxygen documentation
+
+* Make the math library API documentation using doxygen
+    - requires installation
+
+```
+<math>$ make doxygen
+```
+
+* Make sure there are no errors
+
+## Running header tests
+
+* Makes sure all the includes are complete per header file
+* Same in math library and Stan
+
+```
+<stan>$ make test-headers
+
+<math>$ make test-headers
+```
+
+
+## Running model tests
+
+## Model instantiation tests
+
+* Must be under `<stan>/src/test/test-models/good`
+* First test all *data instantiations (`int` and `real`)
+
+```c++
+data { 
+  int d_int;
+  real d_real;
+}
+transformed data {
+  real td1 = atan2(d_int, d_int);
+  real td2 = atan2(d_int, d_real);
+  real td3 = atan2(d_real, d_int);
+  real td4 = atan2(d_real, d_real);
+}  
+```
+
+## Model tests (continued)
+
+* Then test all *parameter instantiations*
+
+```
+parameters {
+  real p_real;
+}
+transformed parameters {
+  real tp1 = atan2(d_int, p_real);
+  real tp2 = atan2(d_real, p_real);
+  real tp3 = atan2(p_real, d_int);
+  real tp4 = atan2(p_real, d_real);
+  real tp5 = atan2(p_real, p_real);
+}
+```
+
+## Running model instantiation tests
+
+* Usually run informal tests using CmdStan
+* Then leave the real tests to the continuous integration servers
+    - kicked off automatically for pull requests
+```
+<stan>$ make test/integration/compile_models
+...
+```
+
+* Make sure they all compile
+
+
+   
+# Part X: Questions and Discussion
