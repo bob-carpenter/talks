@@ -5,6 +5,8 @@ date: "August 2018 (StanCon Helsinki)"
 output:
   ioslides_presentation:
     css: styles.css
+    incremental: true
+
 widescreen: yes
 ---
 
@@ -74,29 +76,22 @@ code {
 
     
 ## Overall Stan Organization
-* Stan transpiler converts Stan program to C++ class for model
-    - standard parser, abstract syntax tree, generator design
-* C++ class includes the Stan math library
-* C++ class compiled mostly header only along with algorithms and math library
-* Result is executable (CmdStan) or dynamically linked object code (RStan, PyStan)
+* Stan code is translated to a C++ model class
+* C++ model class relies on and includes the Stan math library
+* C++ model class then compiled by C++ compiler, along with C++ algorithms and math library
+* Result is an executable (CmdStan) or dynamically linked object code (RStan, PyStan)
 
-## Stan language is translated to a C++ model
-* Creates a C++ model class with a known interface
-* Model class is constructed with the data you pass in when you go to fit the model
+## Stan Model Class
+* Known interface with a variety of methods the interfaces rely on
+* Constructed with the data you pass in when fitting the model
 * Primary entry point on the class is the `log_prob` function
     - Takes in parameter values and returns their log probability density (potentially up to a constant)
-    
-## Check out a model.hpp!
-```
-```
-
 
 ## The Stan to C++ translator
 * Called many things - compiler, transpiler, parser
 * Also written in C++
-* Lives in the Stan repo alongside the algorithms and services (`lang`)
+* Lives in the Stan repo (`lang`) alongside the algorithms and services
 * Functions are first defined in the Math library and then exposed in the Stan language
-
 
 ## C++ Model Compiled to Object Code
 * Includes the Math library - most or all functions and data types are defined there
@@ -110,7 +105,7 @@ code {
 * CmdStan has the Stan repo as a git submodule at `stan/`
 * Stan has the Math library as a git submodule at `lib/stan_math` 
     - `stan/lib/stan_math` to CmdStan
-* Math library directly includes Boost, Eigen, Sundials at `lib/`
+* Math library directly includes some external libraries such as Boost, Eigen, Sundials at `lib/`
     - `stan/lib/stan_math/lib` to CmdStan
 
 
@@ -155,15 +150,14 @@ code {
 * Add your fork as a remote on the repo you care about
 
 ## Clone CmdStan
-```{r, out.width = "100%"}
+```{r, echo=F, out.width = "100%"}
 knitr::include_graphics("img/clone cmdstan.png")
 ```
 
 ## Fork Math repo
-```{r, out.width = "100%"}
+```{r, echo=F, out.width = "100%"}
 knitr::include_graphics("img/fork.png")
 ```
-
 
 ## My fork 
 ![](img/my fork.png)
@@ -203,8 +197,13 @@ Switched to a new branch 'descriptive-branch-name'
 1. `make cpplint` - runs a python script that [checks style](https://github.com/stan-dev/stan/wiki/Coding-Style-and-Idioms)
 
 ## Autoformatting
-1. (optional) [Auto-formatting - git hook, editor plugin](https://github.com/stan-dev/stan/wiki/Coding-Style-and-Idioms#clang-format)
-
+* Project standardized on formatting for readaibility and to avoid arguments
+* Uses `clang-format` to automatically format code
+* Jenkins is set up to do this automatically on PRs and commit back to your branch
+    - So if you get an email about this, you can `git pull` to incorporate those formatting fixes
+* Once `clang-format` is installed, you can install a git hook to run it on any files you commit:
+    - (from Math repo) `$ bash hooks/install_hook.sh`
+* https://github.com/stan-dev/stan/wiki/Coding-Style-and-Idioms#clang-format
 
 ## A complicated example
 ```
@@ -253,17 +252,17 @@ $ git push sean descriptive-branch-name
 ```
 
 ## PR step 1
-```{r, out.width = "100%"}
+```{r, echo=F, out.width = "100%"}
 knitr::include_graphics("img/PR1.png")
 ```
 
 ## PR step 2
-```{r, out.width = "100%"}
+```{r, echo=F, out.width = "100%"}
 knitr::include_graphics("img/PR2.png")
 ```
 
 ## PR step 3
-```{r, out.width = "100%"}
+```{r, echo=F, out.width = "100%"}
 knitr::include_graphics("img/PR3.png")
 ```
 
