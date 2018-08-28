@@ -373,7 +373,7 @@ knitr::include_graphics("img/PR3.png")
 1. Additional processes used for hotfix patch releases
 
 
-# Part IV: Coding Functions in Stan
+# Part IV: Coding Functions<br />in Stan
 
 ## Coding a distribution in Stan
 
@@ -481,58 +481,15 @@ n_leapfrog__     2.9  1.8e-02  1.7e+00   1.0   3.0   7.0  9.4e+03  9.1e+03  1.0e
 divergent__     0.00      nan  0.0e+00  0.00  0.00  0.00      nan      nan      nan
 ```
 
-# Part V:  Coding Functions in C++ (Templated)
-
-## Code produced by Stan transpiler
-* Heavily templated and complicated
-* Reformatted a bit here for readability (this is improving)
-```
-template <bool propto, typename T0__, typename T1__, typename T2__>
-typename boost::math::tools::promote_args<T0__, T1__, T2__>::type
-my_normal_lpdf(const T0__& y,
-                   const T1__& mu,
-                   const T2__& sigma, std::ostream* pstream__) {
-    typedef typename boost::math::tools::promote_args<T0__, T1__, T2__>::type local_scalar_t__;
-    typedef local_scalar_t__ fun_return_scalar_t__;
-    const static bool propto__ = true;
-    (void) propto__;
-    local_scalar_t__ DUMMY_VAR__(std::numeric_limits<double>::quiet_NaN());
-    (void) DUMMY_VAR__;  // suppress unused var warning
-    int current_statement_begin__ = -1;
-    ...
-```
-
-## Transpiler produced function (continued)
-
-```
-   ...
-    try {
-        current_statement_begin__ = 3;
-        return stan::math::promote_scalar<fun_return_scalar_t__>(
-          (((-(0.5) * stan::math::log((2 * stan::math::pi()))) 
-            - (2 * stan::math::log(sigma))) 
-            - (0.5 * pow(((y - mu) / sigma),2))));
-    } catch (const std::exception& e) {
-        stan::lang::rethrow_located(e, current_statement_begin__, prog_reader__());
-        // Next line prevents compiler griping about no return
-        throw std::runtime_error("*** IF YOU SEE THIS, PLEASE REPORT A BUG ***");
-    }
-}
-```
-
-# Part V: 
-## What does the transpiled C++ look like?
-
-```
-
-    
+# Part V:  Coding Functions in C++<br/> with Templated Scalars
 
 ## Direct coding of functions in C++
-* Template everything
+* Template all scalars independently
     - uses *autodiff to take partials* of output(s) w.r.t. input(s)
     - *easiest*, but *least efficient*
     - technique *used for functions defined in Stan* language
     - works for *any order autodiff* (reverse, forward, mixed)
+    - use traits to determine intermediate and return types
 * Implement custom `vari` 
     - allows *most efficient* and *customizable* analytic partials
     - may *lazily evaluate* partials on reverse pass
@@ -547,18 +504,72 @@ my_normal_lpdf(const T0__& y,
     - may be used for any single-output, vectorized function
     - works for *any order autodiff*
 
-## Coding the distribution in C++ with 
+## Stan transpiler takes templated scalar approach
+* Heavily templated and complicated
+* Reformatted a bit here for readability (this is improving)
+* `pstream` argument supports `print()` statements in Stan code
+```
+template <bool propto, typename T0__, typename T1__, typename T2__>
+typename boost::math::tools::promote_args<T0__, T1__, T2__>::type
+my_normal_lpdf(const T0__& y, const T1__& mu, const T2__& sigma,
+               std::ostream* pstream__) {
+    typedef typename boost::math::tools::promote_args<T0__, T1__, T2__>::type local_scalar_t__;
+    typedef local_scalar_t__ fun_return_scalar_t__;
+    const static bool propto__ = true;
+    (void) propto__;
+    local_scalar_t__ DUMMY_VAR__(std::numeric_limits<double>::quiet_NaN());
+    (void) DUMMY_VAR__;  // suppress unused var warning
+    ...
+```
 
-- Like Stan, but with explicit templates and references
-- Template `y` and assume `mu` and `sigma` are `double`
-    - `int` promoted to `double` in C++ and to `real` in Stan
-- Name resolution
-    - `log(double)` found through `using std::log`
-    - `log(var)`  through *argument dependent lookup*
+## Transpiler produced function (continued)
+* Instrumented with static statement positions from underlying source file(s)
+* `throw`/`catch` to enable line number reporting with `rethrow_located`
+* All this added boilerplate unecessary in direct C++ code
+```
+   ...
+    int current_statement_begin__ = -1;
+    try {
+        current_statement_begin__ = 3;
+        return stan::math::promote_scalar<fun_return_scalar_t__>(
+          (((-(0.5) * stan::math::log((2 * stan::math::pi()))) 
+            - (2 * stan::math::log(sigma))) 
+            - (0.5 * pow(((y - mu) / sigma),2))));
+    } catch (const std::exception& e) {
+        stan::lang::rethrow_located(e, current_statement_begin__, prog_reader__());
+        // Next line prevents compiler griping about no return
+        throw std::runtime_error("*** IF YOU SEE THIS, PLEASE REPORT A BUG ***");
+    }
+}
+```
+
+
+
+## C++ implementation with templated scalar
+
+* Adds explicit templating and references to Stan implementation
+* Simple example with a single template variable (avoids trait metaprograms)
+* `y` and assume `mu` and `sigma` are `double`
+    - supports `int` through promotion to `double` or instantiation of `T`
+    - `y` can be parameter (autodiff type) or data (only `double`) 
+    - *not* a valid way to write a Stan program; scaffolding to get there
+* Non-primitive parameters are passed by *constant reference*
+* Return type is same as templated argument type
+```
+template <typename T>
+inline T my_normal(const T& y, double mu, double sigma);
+```
+
+## C++ code for normal lpdf
+
+* Name resolution
+    - `std::log(double)` found through explicit `using` statement
+    - `stan::math::log(stan::math::var)` through *argument dependent lookup* (ADL)
+        - argument in namespace `stan::math` looks for function in `stan::math`
 
 ```c++
 template <typename T>
-double my_normal(const T& y, double mu, double sigma) {
+inline T my_normal(const T& y, double mu, double sigma) {
   using std::log;
   return - 0.5 * log(2 * pi())
     - 2 * log(sigma)
@@ -566,19 +577,14 @@ double my_normal(const T& y, double mu, double sigma) {
 }
 ```
 
+## Includes and main function for evaluation
 
-
-
-## Includes and main
-
-* Need some includes:
+* Need some includes before and a `main()` after to run it
 ```c++
 #include <stan/math/rev/mat.hpp>    // Stan math with gradients
 #include <iostream>                 // C++ I/O
-```
 
-* The `main()` provides a runnable example
-```c++
+... my_normal implementation here ...
 int main() {
   stan::math::var y = 1.2;  // independent var
   double mu = 0.3;          // constants
@@ -591,46 +597,94 @@ int main() {
 }
 ```
 
+## Compile and Run
+
+* Place in file `my-normal.cpp`
+* Compile using `clang++` with C++1y standard (pre C++14 for R compatibility)
+```
+~/github/.../stan-cpp-2018(master)$ clang++ -std=c++1y -O0          \
+  -isystem ~/cmdstan/stan/lib/stan_math                             \
+  -isystem ~/cmdstan/stan/lib/stan_math/lib/eigen_3.3.3             \
+  -isystem ~/cmdstan/stan/lib/stan_math/lib/boost_1.66.0            \
+  -isystem ~/cmdstan/stan/lib/stan_math/lib/sundials_3.1.0/include  \
+  my-normal.cpp
+```
+* Gets the *correct result*
+```
+~/github/.../stan-cpp-2018(master)$ ./a.out
+val = -1.15264; d.val/d.y = -3.6
+```
+
+## Flexible types
+
+* Requires all arguments to be templated
+* Use traits metaprogram as used in Stan's generated code
+* `promote_args` computes maximum of input arg types, where
+    - `int` < `double` < `var`
+
+```c++
+template <typename T_y, typename T_mu, typename T_sigma>
+inline 
+typename boost::math::tools::promote_args<T0__, T1__, T2__>::type
+my_normal(const T_y& y, const T_mu& mu, const T_mu& sigma) {
+  using std::log;
+  return - 0.5 * log(2 * pi())
+    - 2 * log(sigma)
+    - 0.5 * ((y - mu) / sigma)^2;
+}
+```
+
+
+# Part VI:  How autodiff works
+
 ## Reverse-mode autodiff: forward pass
-
 * Build up (directed acyclic) expression graph in forward pass
-    - each node is an expression with arrows to operands
-    - autodiff variable `stan::math::var` for each $v_n$
-    - arena-based node memory collected after gradients
-
+    - each node is a subexpression of log density connected to its operands
+    - autodiff variable `stan::math::var` for each subexpression node $v_n$
 <center style="margin:1em 0 0 0">
 <img src="img/agrad-expression-graph.pdf" width = 350/>
 </center>
 
 ## Reverse-mode autodiff: reverse pass
-
 *  Calculates adjoint for each node in reverse pass
-    - adjoint is derivative of result w.r.t. expression
-    - start with result adjoint = 1 (because $\frac{\mathrm{d}}{\mathrm{d}y}y = 1$)
-    - for each node in topological order from root
+    - adjoint is derivative of final value w.r.t. node's expression
+    - start with resulting value adjoint = 1 (because $\frac{\mathrm{d}}{\mathrm{d}y}y = 1$)
+    - for each node, in topological order from root
 ```c++
 adjoint[operand] += adjoint[result] * partial_result_wrt_operand;
 ```
 *  Gradient is sequence of adjoints of inputs (independent vars)
-
 * Time and space complexity both linear in graph size
-    - times the cost of partial derivatives of each operation
-    - which is usually constant in number of operands
+    - times the cost of partial derivatives of each operation (usually constant)
+* Slowness stems from interpretation
+    - virtual function calls and memory nonlocality
 
-* Slowness stems from interpretation (virtual calls)
-
+# Part VII: Coding Functions in C++<br/> with Custom Variables
 
 ## Custom derivative implementation
 
-* Each `var` points to `vari`;  *roughly*:
+* Each `var` points to `vari` (pointer to implementation, aka PIMPL)
 
 ```c++
 struct var {
   vari* vi_;  // pointer to impl
+  var(double val) : vi_(new vari(val)) { }
 };
 ```
 
-* Each `vari` holds a value, adjoint, and implements a `chain()` method to propagate derivatives; *roughly*:
+* Values and adjoints are found by delegating to `vari*`
+* Without virtual methods, `var` is the same size and content as pointer
+    - 8 bytes (64 bits) on almost all systems these days
+    - *efficient to copy*
+    
+## Variable implementations
+
+* Each `vari` holds a value, adjoint, and implements `chain()` for derivatives
+* Allocated with custom *arena-based memory*
+    - using `operator new` overload (`<stan-math>/stan/math/{memory, rev}`)
+* *May not allocate* their own memory (e.g., no `std::vector` members)
+    - custom arena-based arrays from `stan/math/memory` for containers
+* Destructors will *not be called*
 
 ```c++
 struct vari {
@@ -658,11 +712,23 @@ struct multiply_vari : public vari {
   }
 };
 ```
+
+## Using vari to implement a function
+
+* Call to `new` invokes arena-based `operator new` by inheritance
+* Declared `inline` to allow across translation units
+    - and hopefully to inline
+    
 ```c++
-inline var operator*(const var& a, const var& b) {
+inline var op(const var& a, const var& b) {
   return var(new multiply_vari*(a.vi_, b.vi_));
 }
-```    
+```
+
+* This only works for parameter/parameter args
+    - also need `(var, double)` and `(double, var)` implementations
+    - which require a new `vari` (symmetry allows a single one)
+
 
 ## Stan's multiplication operator
 * `<stan-math>/stan/math/rev/core/operator_multiplication.hpp`
