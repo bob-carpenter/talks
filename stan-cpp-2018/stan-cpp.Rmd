@@ -6,7 +6,7 @@ output:
   ioslides_presentation:
     logo: img/stan-logo.png
     css: styles.css
-#   incremental: true
+    incremental: true
 widescreen: yes
 ---
 
@@ -66,6 +66,10 @@ code {
   background-color: #f9f9f9;
 }
 </style>
+
+## Slides online
+
+* http://mc-stan.org/workshops/cppFunctions2018/stan-cpp.html
 
 # Part I: Introduction
 
@@ -1280,8 +1284,6 @@ Running main() from gtest_main.cc
 <math>$ make test-headers
 ```
 
-
-## Running model tests
 
 ## Model instantiation tests
 
