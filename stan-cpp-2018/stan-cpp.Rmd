@@ -112,16 +112,13 @@ code {
 * *binary builds* and distribution are a pain to manage
 * *compile time* is disastrous with templating & optimization
     - we're working to correct this
-* lacks the *cool factor* to attract open source hobbyists
     
-# Part II: Code 
+# Part II: Stan's Code
     
 ## Top level Stan architecture
-* Stan *transpiler* converts Stan program to C++ class for model
-    - *standard* parser, abstract syntax tree, generator design
-* C++ model class includes the Stan *math library*
-* C++ model class compiled *mostly header-only*
-    - along with algorithms and math library
+* A model in the Stan language is translated into a C++ model class
+* C++ model class relies on and includes the Stan *math library*
+* C++ model class compiled in a single *translation unit* with algorithms and math library
     - this will change in near future with separate translation units
 * Result is *executable* (CmdStan) or *dynamically linkable* object code (RStan, PyStan)
 
@@ -133,7 +130,7 @@ code {
 * *Generated quantities* may be discrete and/or continuous
     
 ## Stan C++ class (continued)
-* Details of `log_prob` function
+* `log_prob` method on the model concept is key
     - applies to vector of *unconstrained parameters* (for algorithms)
     - returns *log posterior* (up to additive constant)
     - usually *coded as joint log density* with posterior via Bayes's rule
@@ -146,8 +143,8 @@ code {
 * Produces *transformed parameters* and *generated quantities*
 
 
-## The Stan to C++ transpiler
-* Also known informally as the compiler or translator
+## The Stan to C++ translator
+* Known as the compiler, parser, or transpiler
 * Translates Stan program to *C++ class*
 * Written in C++ (with *Boost Spirit Qi* parser)
 * All *code* in `<stan>/src/stan/lang`
@@ -167,12 +164,11 @@ code {
     - all that is needed is *addition of signatures* to symbol table
     - needed because Stan is *strongly statically typed*
 
-
 ## C++ Model Compiled to Object Code
 * Includes the math library (using `#include`)
     - Stan functions defined in math library
     - some functionality directly in `stan/src`, such as transforms
-* Compiled largely *header-only* as a unit
+* Compiled largely *header-only* as a single translation unit
     - includes Stan model class (translated from Stan to C++)
     - Stan inference algorithms (MCMC, variational inference, optimization)
     - Stan services (front-end to Stan used by interfaces RStan, PyStan, CmdStan)
@@ -180,7 +176,8 @@ code {
 * *Exclusions* from header-only
     - parallel libaries (threading, MPI, and GPU)
     - ordinary differential equation solvers (from Sundials lib)
-    
+
+
 ## CmdStan, RStan, PyStan
 * These are the three *primitive interfaces*
     - other interfaces (Julia, Stata, MATLAB, Mathematica) *call CmdStan*
@@ -198,23 +195,27 @@ code {
 * *Git submodule* structure
     - `cmdstan` includes `stan` (path `stan`)
     - `stan` includes `math` (path `lib/stan_math`)
-* Math library *directly includes* (path `lib`)
-    - Boost (general C++, math, RNG, stats parser)
-    - Eigen (matrix arithmtic and linear algebra)
-    - Sundials (ordinary differential equation solvers)
 * From CmdStan perspective
     - Stan is at `stan`
     - Math lib is at `stan/lib/stan_math`
     - Other libs at `stan/lib/stan_math/lib`
+    
+## Other libraries
+* Math library copies several external libs into its source tree (path `lib`), including
+    - Boost (general C++, math, RNG, stats parser)
+    - Eigen (matrix arithmtic and linear algebra)
+    - Sundials (ordinary differential equation solvers)
+    - OpenCL (GPU calculations)
+    - googletest (C++ test framework)
 
 ## A Stan Program
 * `Matrix program(Matrix data) {...}`
     - Function from data to a sample of parameter draws typical given that data and model
 * Compiled with a few algorithms that use the model density to find typical parameter draws
-* Most of the complexity lies in the likelihood and is built using functions in the Math library
+* Most of the complexity lies in the likelihood, which is built using functions in the Math library
 
 
-## Most of Stan's code is in the Math library
+## Most of Stan's *code* is in the Math library
 * Provides users with many functions to express complicated likelihoods
 * Autodiff system gives the algorithms the gradients they need automatically for any Stan or Math library code
 * Split first into `stan` and `test`
@@ -239,15 +240,15 @@ code {
 # Part III: Process
 
 ## Developer process
-0. For *larger changes only*: *Discourse discussion* and/or design review
+0. For *larger changes only*: Discourse discussion and/or design review
 1. *GitHub issue* describing the problem (i.e., functional specification)
 2. Add a description of the *proposed technical solution* to the GitHub issue
 3. Code the solution *on a branch*
 4. Create a *GitHub pull request* with *BSD license details*
     - developers maintain copyright, but must BSD license contributions before approval
 5. [Code review](https://github.com/stan-dev/math/wiki/Developer-Doc#code-review-guidelines)
-    - if changes requirested, return to (3)
-5. *Merge* only after approval
+    - if changes requested, return to (3)
+5. *Merge* only after approval and the tests pass on Jenkins
 
 ## Setting up GitHub
 * Create an account
@@ -258,15 +259,14 @@ code {
 * *Add your fork as a remote* on the repo you care about
 
 ## Clone CmdStan
-```{r, out.width = "100%"}
+```{r, echo=F, out.width = "100%"}
 knitr::include_graphics("img/clone cmdstan.png")
 ```
 
 ## Fork Math repo
-```{r, out.width = "100%"}
+```{r, echo=F, out.width = "100%"}
 knitr::include_graphics("img/fork.png")
 ```
-
 
 ## My fork 
 ![](img/my fork.png)
@@ -302,11 +302,6 @@ Fairly *standard open source flow*:
 $ git checkout -b descriptive-branch-name
 Switched to a new branch 'descriptive-branch-name'
 ```
-
-## Running the checks
-1. `python runTests.py -j{num_cores} path/to/test.cpp /path/to/test/dir`
-1. `make cpplint`
-1. (optional) [Auto-formatting - git hook, editor plugin](https://github.com/stan-dev/stan/wiki/Coding-Style-and-Idioms#clang-format)
 
 ## A complicated example
 ```
@@ -347,25 +342,39 @@ TEST(AgradPartialsVari, OperandsAndPartialsVec) {
 
 ```
 
+
+## Running the checks
+1. `python runTests.py -j<num_cores> path/to/test.cpp /path/to/test/dir`
+1. `make cpplint` - runs a python script that [checks style](https://github.com/stan-dev/stan/wiki/Coding-Style-and-Idioms)
+
+## Autoformatting
+* Project standardized on formatting for readaibility and to avoid arguments
+* Uses `clang-format` to automatically format code
+* Jenkins is set up to do this automatically on PRs and commit back to your branch
+    - So if you get an email about this, you can `git pull` to incorporate those formatting fixes
+* Once `clang-format` is installed, you can install a git hook to run it on any files you commit:
+    - (from Math repo) `$ bash hooks/install_hook.sh`
+* https://github.com/stan-dev/stan/wiki/Coding-Style-and-Idioms#clang-format
+
 ## Add, commit, push
 ```
-$ git add stan/math/gpu/matrix_gpu.hpp
+$ git add test/unit/math/rev/mat/meta/operands_and_partials_test.cpp
 $ git commit -m "Informative message..."
 $ git push sean descriptive-branch-name
 ```
 
 ## PR step 1
-```{r, out.width = "100%"}
+```{r, echo=F, out.width = "100%"}
 knitr::include_graphics("img/PR1.png")
 ```
 
 ## PR step 2
-```{r, out.width = "100%"}
+```{r, echo=F, out.width = "100%"}
 knitr::include_graphics("img/PR2.png")
 ```
 
 ## PR step 3
-```{r, out.width = "100%"}
+```{r, echo=F, out.width = "100%"}
 knitr::include_graphics("img/PR3.png")
 ```
 
