@@ -34,6 +34,10 @@ library(ggplot2)
   height: 170px !important;
 }
 
+.prettyprint {
+  padding: 0 0 0 5em;
+  background-color: #f9f9f9;
+}
 slides > slide:not(.nobackground):before {
   width: 0px;
   height: 0px;
@@ -50,6 +54,7 @@ pre {
   font-size: 20px;
   line-height: 1.5em;
   font-weight: 500;
+  background-color: #f9f9f9;
 }
 tt {
   font-family: monaco; lucida console;
@@ -58,6 +63,7 @@ tt {
 code {
   font-family: monaco; lucida console;
   font-size: 24px;
+  background-color: #f9f9f9;
 }
 </style>
 
@@ -390,7 +396,7 @@ knitr::include_graphics("img/PR3.png")
 ```stan
 functions {
   real my_normal_lpdf(real y, real mu, real sigma) {
-    return - 0.5 * log(2 * pi())          // params: { }
+    return -0.5 * log(2 * pi())          // params: { }
            - 2 * log(sigma)               // params: { sigma }
            - 0.5 * ((y - mu) / sigma)^2;  // params: { y, mu, sigma }
   }
@@ -580,7 +586,7 @@ inline T my_normal(const T& y, double mu, double sigma);
 template <typename T>
 inline T my_normal(const T& y, double mu, double sigma) {
   using std::log;
-  return - 0.5 * log(2 * pi())
+  return -0.5 * log(2 * pi())
     - 2 * log(sigma)
     - 0.5 * ((y - mu) / sigma)^2;
 }
@@ -624,22 +630,21 @@ int main() {
 val = -1.15264; d.val/d.y = -3.6
 ```
 
-## Flexible types
+## Flexible template types
 
-* Requires all arguments to be templated
-* Use traits metaprogram as used in Stan's generated code
-* `promote_args` computes maximum of input arg types, where
-    - `int` < `double` < `var`
-
+* Requires all arguments to be templated (not common in libraries)
+* Use traits metaprogram found in Stan's generated code
+* `promote_args` computes max, where `int` < `double` < `var`
+* Left associativity of `-` ensures maximum efficiency 
 ```c++
 template <typename T_y, typename T_mu, typename T_sigma>
 inline 
-typename boost::math::tools::promote_args<T0__, T1__, T2__>::type
-my_normal(const T_y& y, const T_mu& mu, const T_mu& sigma) {
-  using std::log;
-  return - 0.5 * log(2 * pi())
-    - 2 * log(sigma)
-    - 0.5 * ((y - mu) / sigma)^2;
+typename boost::math::tools::promote_args<T_y, T_mu, T_sigma>::type
+my_normal(const T_y& y, const T_mu& mu, const T_sigma& sigma) {
+  using std::log;                  // type of expression
+  return -0.5 * log(2 * pi())      // double
+    - 2 * log(sigma)               // T_sigma
+    - 0.5 * ((y - mu) / sigma)^2;  // promote_args<T_y, T_mu, T_sigma>::type
 }
 ```
 
@@ -729,12 +734,12 @@ struct multiply_vari : public vari {
     - and hopefully to inline
     
 ```c++
-inline var op(const var& a, const var& b) {
+inline var multiply(const var& a, const var& b) {
   return var(new multiply_vari*(a.vi_, b.vi_));
 }
 ```
 
-* This only works for parameter/parameter args
+* This only works for `(var, var)` args
     - also need `(var, double)` and `(double, var)` implementations
     - which require a new `vari` (symmetry allows a single one)
 
@@ -758,36 +763,582 @@ class multiply_vv_vari : public op_vv_vari {                   // superclass
 };
 ```
 
-## Now lets do the normal distribution
+## The normal distribution
 
-* Need $\frac{\partial}{\partial y} \mathsf{Normal}(y \mid \mu, \sigma)$
+* Need $\frac{\partial}{\partial y} \mathsf{Normal}(y \mid \mu, \sigma)$ for current application
 * [Wolfram Alpha](http://wolframalpha.com) is way less error prone at derivatives than me
  
 <center style="margin:1em 0 0 0">
 <img src="img/wolfram-alpha-deriv.png" width = 500/>
 </center>
 
-## Normal vari for first argument
+## Normal with differentiable first argument
 
-* Store operand `vari*` and values needed for partial
-* $\frac{\partial}{\partial y} \mathtt{my\_normal\_lpdf}(y, \mu, \sigma)
-   \ = \ (\mu - y) / \sigma^2$
+* Same pattern as for `multiply`
 
-
-```c
+```c++
 struct my_normal_vari : public vari {
   vari* y_;  double mu_, sigma_; 
   my_normal_vari(vari* y, double mu, double sigma)
     : vari(my_normal(y.val_, mu, sigma)),  // double only
       y_(y), mu_(mu), sigma_(sigma) { }
   void chain() {
-    y_.adj_ += this->adj_ * (mu_ - y_.val_) / (sigma_ * sigma_);
+    y_.adj_ += adj_ * (mu_ - y_.val_) / (sigma_ * sigma_);
   }
 };
+
+var my_normal(const var& y, double mu, double sigma) {
+  return var(new my_normal_vari(y.vi_, mu, sigma);
+}
+```
+
+# Part VII: Coding Functions in C++<br/> with Precomputed Gradients
+
+## Using Precomputed Gradients
+* Precomputed gradients supplies following function
+```c++
+inline var precomputed_gradients(double value, const std::vector<var>& operands,
+                                 const std::vector<double>& gradients);
+```
+* So you only need to supply value, operands, and gradient
+    - works for any number of arguments
+    
+```c++
+#include <stan/math/rev/core/precomputed_gradients.hpp>
+
+var my_normal(const var& y, double mu, double sigma) {
+  double val = my_normal(y.val_, mu, sigma);  // assume pure double impl
+  double dval_dy = (mu - y.val_) / (sigma * sigma);
+  return stan::math::precomputed_gradients(val, { y }, { dval_dy });
+}
+```
+
+# Part VII: Coding Functions in C++<br/> with operands_and_partials
+
+## Signature
+* Straight from `stan/math/prim/scal/prob/normal_lpdf.hpp`
+```c++
+template <bool propto, typename T_y, typename T_loc, typename T_scale>
+typename return_type<T_y, T_loc, T_scale>::type 
+normal_lpdf(const T_y& y, const T_loc& mu, const T_scale& sigma) {
+  ...   
+```
+* `stan::return_type` is a type traits metaprogram
+    - extracts scalar types from `T_y`, `T_loc`, and `T_scale`
+    - delegates to `boost::promote_args`
+
+
+## Documentation
+
+* First line is description of the arguments and what it returns
+
+```c++
+/**
+ * Return the log of the normal density for the specified variate(s)
+ * given the specified location(s) and scales(s).  The arguments
+ * may be scalars or one-dimensional containers; all container arguments
+ * must be the same size and any scalars will be broadcast to that size.
+ ...
+ *
+ * <p>The result log density is the sum of the log densities for
+ * each triple of arguments.
+```
+
+## Documentation (continued)
+
+* Template parameters get their own documentation
+
+```c++
+ * @tparam T_y scalar type of variate
+ * @tparam T_loc scalar type of location
+ * @tparam T_scale scalar type of scale
+
+```
+
+* Arguments get their own doc
+
+```c++
+ * @param y variate(s)
+ * @param mu location(s)
+ * @param sigma scale(s)
+```
+
+## Documentation (continued)
+* The return value is documented (unless `void`)
+```c++
+ * @return sum of the log densities of the arguments
+```
+
+* Any exceptions that are thrown are documented
+```c++
+ * @throw std::domain_error if any of the arguments is not-a-number
+ * @throw std::domain_error if the location argument is not finite
+ * @throw std::domain_error if the scale argument is not positive and finite
+ * @throw std::domain_error if container sizes do not match
+ */
+ ```
+ 
+## Convenience definitions, using statements
+
+* `using` statements only allowed within function scope
+
+```c++
+  static const char* function = "normal_lpdf";
+  
+  typedef typename stan::partials_return_type<T_y, T_loc, T_scale>::type
+      T_partials_return;
+
+  using stan::is_constant_struct;
+  using std::log;
 ```
 
 
+## Test for exceptions
+
+* Vectorized test functions for basic argument structures
+
+```c++
+  check_not_nan(function, "Random variable", y);
+  
+  check_finite(function, "Location parameter", mu);
+  
+  check_positive(function, "Scale parameter", sigma);
+  
+  check_consistent_sizes(function, "Random variable", y, 
+      "Location parameter", mu, "Scale parameter", sigma);
+```
+
+## Test for edge cases
+
+* Runtime tests for all arguments being size zero containers
+
+```c++
+  if (size_zero(y, mu, sigma))  
+    return 0.0;
+```
+
+* Compile time (static) test that 
+    - all arguments are constant (`double` or `int` scalar type)
+    - the proportional to `propto` template parameter is `true`
+
+```c++
+  if (!include_summand<propto, T_y, T_loc, T_scale>::value)  
+    return 0.0;    
+```
+
+## Construct operands and partials
+
+* A builder utility to
+    - construct, modify, then produce `vari`
+* Follows resource allocation is initialization (RAII) pattern
+* Expression template-like views of values and derivatives for `y`, `mu`, and `sigma`
+* Constructed with types of arguments
+
+```c++
+  operands_and_partials<T_y, T_loc, T_scale> ops_partials(y, mu, sigma);
+```
+
+## Views of arguments as sequences
+
+* Expression template views provide *broadcasting*
+    * provides `operator[](int n)`
+    * specialized for scalars, arrays, vectors, row vectors
+    * for container: returns element `n` of container
+    * for scalar: returns scalar (for every `n`)
+
+```c++
+  scalar_seq_view<T_y> y_vec(y);
+  scalar_seq_view<T_loc> mu_vec(mu);
+  scalar_seq_view<T_scale> sigma_vec(sigma);
+```
+
+* Store number of elements in containers or 1
+
+```c++
+  size_t N = max_size(y, mu, sigma);
+```
+
+## Vector builders for intermediate values
+
+* Modifiable views with type determined by promotion
+    - first template argument determines if should be included
+    - `include_summand` is a nested traits metaprogram call
+    - `length` is overloaded for all arguments types
+* `T_partials_return` is type of derivatives
+    - works for `double` and all autodiff types (forward, reverse, mixed)
+
+```c++
+  VectorBuilder<true, T_partials_return, T_scale> inv_sigma(length(sigma));
+  
+  VectorBuilder<include_summand<propto, T_scale>::value,
+                T_partials_return, T_scale> log_sigma(length(sigma));
+```
+
+## Use vector builders to set intermediates
+
+* Only loop over the length of `sigma`
+    - vector builders overloaded for scalars and containers
+    - setting `[i]` sets scalar or `i`-th element of container
+    - `log(sigma)` only computed once if `sigma` is scalar
+* `value_of` returns the `double`-based value of any Stan type
+* Implementations of `log` and `operator/` found as before for autodiff types    
+
+```c++
+  for (size_t i = 0; i < length(sigma); i++) {
+    inv_sigma[i] = 1.0 / value_of(sigma_vec[i]);
+    if (include_summand<propto, T_scale>::value)
+      log_sigma[i] = log(value_of(sigma_vec[i]));
+  }
+```
+
+## Loop over total size
+
+* Inside, compute values and necessary intermediates
+    - uses same `T_partials_return` types for values and derivatives
+
+```c++
+  for (size_t n = 0; n < N; n++) {
+    const T_partials_return y_dbl = value_of(y_vec[n]);
+    const T_partials_return mu_dbl = value_of(mu_vec[n]);
+
+    // only do each computation once, then reuse
+    const T_partials_return y_minus_mu_over_sigma
+        = (y_dbl - mu_dbl) * inv_sigma[n];
+
+    const T_partials_return y_minus_mu_over_sigma_squared
+        = y_minus_mu_over_sigma * y_minus_mu_over_sigma;
+```        
+
+## Constants defined near where they're used
+
+```c++
+    static const double NEGATIVE_HALF = -0.5;
+```
+
+## Compute value
+
+* Broken down into additive terms
+* Template traits program condition to drop terms if
+   - template `propto` is `true` or relevant arguments constant (not autodiff)
+
+```c++
+    if (include_summand<propto>::value)
+      logp += NEG_LOG_SQRT_TWO_PI;
+
+    if (include_summand<propto, T_scale>::value)
+      logp -= log_sigma[n];
+
+    if (include_summand<propto, T_y, T_loc, T_scale>::value)
+      logp += NEGATIVE_HALF * y_minus_mu_over_sigma_squared;
+```      
+
+## Calculate partials
+
+* Operands and partials provides views of derivatives
+    - works for all autodiff types
+* Uses traits to exclude derivatives w.r.t. constants
 
 
+```c++
+    T_partials_return scaled_diff = inv_sigma[n] * y_minus_mu_over_sigma;
+    
+    if (!is_constant_struct<T_y>::value)
+      ops_partials.edge1_.partials_[n] -= scaled_diff;
+
+    if (!is_constant_struct<T_loc>::value)
+      ops_partials.edge2_.partials_[n] += scaled_diff;
+
+    if (!is_constant_struct<T_scale>::value)
+      ops_partials.edge3_.partials_[n]
+          += -inv_sigma[n] + inv_sigma[n] * y_minus_mu_over_sigma_squared;
+```
+
+## Build and return
+
+* Operands and partials specialized for primitives and autodiff types
+* The `build()` method returns the appropriate type
+    - calculated by metaprogram, shown in return type
+
+```c++
+  return ops_partials.build(logp);
+}  // end normal_lpdf() !!!
+```
 
 
+## Declared in Stan's math namespace
+
+```c++
+namespace stan {
+namespace math {
+
+...everything but includes...
+
+}
+}
+```
+
+## Need include in relevant location
+
+* Based on path of file
+* Here add to `stan/math/prim/scal.hpp`
+
+```c++
+#include <stan/math/prim/scal/prob/normal_lpdf.hpp>
+```
+
+* This gets propgated up to external includes and language
+
+
+# Part VIII:  Adding a Function<br /> to the Stan Language
+
+## Add to symbol table
+
+* Add to `<stan>/src/stan/lang/function_signatures.h`
+* Use classes and utilities in this file and in `<stan>/src/stan/lang/ast`
+* `vector_types` is a collection of scalars and 1D containers
+    - includes legal arguments to vectorized continuous arguments
+    - uses included AST types and constructors
+* Other types can be constructed out of pieces    
+
+```c++
+std::vector<expr_type> vector_types 
+  = { expr_type(double_type()),        // real
+      expr_type(double_type(), 1U),    // real[]
+      expr_type(vector_type()),        // vector
+      expr_type(row_vector_type()) };  // row_vector
+```
+
+## Add to symbol table (continued)
+
+
+* Helper function `add()` takes
+    - name of function (must match C++ name in `stan::math`)
+    - return type
+    - sequence of argument types
+* As a side effect, it adds to symbol table of legal function signatures
+
+```c++
+for (size_t i = 0; i < vector_types.size(); ++i)
+  for (size_t j = 0; j < vector_types.size(); ++j)
+    for (size_t k = 0; k < vector_types.size(); ++k)
+      add("normal_lpdf", expr_type(double_type()),
+          vector_types[i], vector_types[j], vector_types[k]);
+```
+
+* Other than testing, that's it
+
+# Part IX: Testing
+
+## Required testing for Stan functions
+
+* Every function submitted to the math library must be unit tested
+* Every function added to the language must be instantiated in a Stan model
+   - for every available signature 
+   - tests ability to instantiate with relevant autodiff variables
+   - e.g., 125 signatures for `normal_lpdf` (with `int` to `double` promotion)
+   
+## Example: two argument arctangent
+
+* `atan2(x, y) =def= atan(x / y)` but it's more stable
+* convenient example
+    - structure is simple like `multiply`
+    - not built into basic language tests like `multiply`
+
+## Unit tests
+
+* Reverse mode unit tests
+   - `<stan-math>/test/unit/math/rev/scal/fun/atan2_test.cpp`
+   - name must end in `_test.cpp` to be picked up by test harness
+
+* Include math top-level header, test framework, and utilities for testing
+
+```c++
+#include <stan/math/rev/scal.hpp>
+#include <gtest/gtest.h>
+#include <boost/math/special_functions/fpclassify.hpp>
+#include <test/unit/math/rev/scal/fun/nan_util.hpp>
+#include <test/unit/math/rev/scal/util.hpp>
+```
+
+## Unit tests (continued)
+
+* May directly test known values
+
+```
+TEST(AgradRev, atan2_var_var) {
+  AVAR a = 1.2;
+  AVAR b = 3.9;
+  AVAR f = atan2(a, b);
+  EXPECT_FLOAT_EQ(atan2(1.2, 3.9), f.val());
+
+  AVEC x = createAVEC(a, b);
+  VEC g;
+  f.grad(x, g);
+  EXPECT_FLOAT_EQ(3.9 / (1.2 * 1.2 + 3.9 * 3.9), g[0]);
+  EXPECT_FLOAT_EQ(-1.2 / (1.2 * 1.2 + 3.9 * 3.9), g[1]);
+}
+```
+
+## Unit tests (continued)
+
+* Need this for all the instantations
+
+```c++
+TEST(AgradRev, atan2_double_var) {
+...
+TEST(AgradRev, atan2_var_double) {
+...
+```
+
+## Unit tests (continued)
+
+* Generic not-a-number propagation tests
+
+```c++
+struct atan2_fun {
+  template <typename T0, typename T1>
+  inline typename stan::return_type<T0, T1>::type operator()(
+      const T0& arg1, const T1& arg2) const {
+    return atan2(arg1, arg2);
+  }
+};
+
+TEST(AgradRev, atan2_nan) {
+  atan2_fun atan2_;
+  test_nan(atan2_, 3.0, 5.0, false, true);
+}
+```
+
+## Unit testing (continued)
+
+* Check for autodiff memory leaks on stack
+
+```c++
+TEST(AgradRev, check_varis_on_stack) {
+  AVAR a = 1.2;
+  AVAR b = 3.9;
+  test::check_varis_on_stack(stan::math::atan2(a, b));
+  test::check_varis_on_stack(stan::math::atan2(a, 3.9));
+  test::check_varis_on_stack(stan::math::atan2(1.2, b));
+}
+```
+
+## Running unit tests
+
+* Use testing framework `runTests.py` with multiple cores (calls make)
+```
+<stan-math>$ ./runTests.py -j5 test/unit/math/rev/scal/fun/atan2_test.cpp 
+make ...
+Running main() from gtest_main.cc
+[==========] Running 7 tests from 1 test case.
+[----------] Global test environment set-up.
+[----------] 7 tests from AgradRev
+[ RUN      ] AgradRev.atan2_var_var
+[       OK ] AgradRev.atan2_var_var (0 ms)
+...
+[ RUN      ] AgradRev.check_varis_on_stack
+[       OK ] AgradRev.check_varis_on_stack (0 ms)
+...
+[  PASSED  ] 7 tests.
+```
+
+## Unit testing distributions
+
+* These have a test framework
+    - code generates multiple instantiations
+    - checks for errors and values
+    - for reverse, forward, an mixed autodiff
+    
+* Example in `<math>/test/prob/normal/normal_test.hpp`
+   - plug in legal and illegal values
+   - test all combinations
+
+
+## Test cpplint
+
+* Tests form and some semantics of code for standards compliance
+* From both libraries, test cpplint
+
+```
+<stan>$ make cpplint
+
+<math>$ make cpplint
+```
+
+* Make sure there are zero errors
+
+## Running doxygen documentation
+
+* Make the math library API documentation using doxygen
+    - requires installation
+
+```
+<math>$ make doxygen
+```
+
+* Make sure there are no errors
+
+## Running header tests
+
+* Makes sure all the includes are complete per header file
+* Same in math library and Stan
+
+```
+<stan>$ make test-headers
+
+<math>$ make test-headers
+```
+
+
+## Running model tests
+
+## Model instantiation tests
+
+* Must be under `<stan>/src/test/test-models/good`
+* First test all *data instantiations (`int` and `real`)
+
+```c++
+data { 
+  int d_int;
+  real d_real;
+}
+transformed data {
+  real td1 = atan2(d_int, d_int);
+  real td2 = atan2(d_int, d_real);
+  real td3 = atan2(d_real, d_int);
+  real td4 = atan2(d_real, d_real);
+}  
+```
+
+## Model tests (continued)
+
+* Then test all *parameter instantiations*
+
+```
+parameters {
+  real p_real;
+}
+transformed parameters {
+  real tp1 = atan2(d_int, p_real);
+  real tp2 = atan2(d_real, p_real);
+  real tp3 = atan2(p_real, d_int);
+  real tp4 = atan2(p_real, d_real);
+  real tp5 = atan2(p_real, p_real);
+}
+```
+
+## Running model instantiation tests
+
+* Usually run informal tests using CmdStan
+* Then leave the real tests to the continuous integration servers
+    - kicked off automatically for pull requests
+```
+<stan>$ make test/integration/compile_models
+...
+```
+
+* Make sure they all compile
+
+
+   
+# Part X: Questions and Discussion
