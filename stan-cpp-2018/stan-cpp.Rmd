@@ -144,7 +144,7 @@ code {
 
 
 ## The Stan to C++ translator
-* Known as the compiler, parser, or transpiler
+* Known as the compiler, parser, or transpiler (`stanc`)
 * Translates Stan program to *C++ class*
 * Written in C++ (with *Boost Spirit Qi* parser)
 * All *code* in `<stan>/src/stan/lang`
@@ -174,7 +174,7 @@ code {
     - Stan services (front-end to Stan used by interfaces RStan, PyStan, CmdStan)
         - other interfaces call CmdStan directly
 * *Exclusions* from header-only
-    - parallel libaries (threading, MPI, and GPU)
+    - parallel libaries (MPI and GPU)
     - ordinary differential equation solvers (from Sundials lib)
 
 
