@@ -1,0 +1,10 @@
+Taking Uncertainty Seriously for Calibrated Forecasting and Decision Making
+---------------------------------------------------------------------------
+Bob Carpenter
+Columbia University
+
+As scientists, we want to understand the world.  As engineers and policymakers, we need to make concrete decisions.  Yet we are faced with convenience samples based on noisy measurements and limited knowledge of underlying processes.
+
+In this talk, I'll demonstrate how to formulate scientific models, couple them with measurement models, and then solve the resulting inverse problem to drive prediction and decision analysis.  I'll illustrate with classical examples involving Laplace's model of birth sex-ratio, Galileo's model of gravity, Lotka & Volterra's model of population dynamics, and the Efron-Morris model of batting ability.  I'll also discuss my own ongoing work on soil-carbon respiration, differential expression of gene splice variants, and crowdsourced corpus labeling for machine learning.  In all cases, I'll focus on empirical evaluation of calibration and sharpness, which generalize bias and variance to probabilistic forecasts.
+
+To solve problems like these, we developed Stan, an expressive probabilistic programming language, efficient differentiable mathematics library, and robust statistical inference engine.  In the second part of the talk, I'll provide an overview of Stan's foundations in automatic differentiation, automatic constrained variable transformations, adaptive Hamiltonian Monte Carlo sampling, diagnostic robustness checks, and general posterior predictive inference.

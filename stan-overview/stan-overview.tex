@@ -3,48 +3,69 @@
 \usepackage{stan-talks}
 
 \begin{document}
-\sf
-
-
-
-% TITLE SLIDE
-%
+\sf%
 \vspace*{-12pt}
+%
 \noindent
-\spc{\LARGE\bfseries \color{MidnightBlue}{Stan:}}
-\\[3pt]
-\spc{\large\bfseries \color{MidnightBlue}{Probabilistic Modeling
-    \& Bayesian Inference}}
-\\[12pt]
+\spc{\LARGE\bfseries \color{MidnightBlue}{Stan Overview}}
+\\[4pt]
 \noindent
-\spc{\bfseries Development Team}
-  \\[2pt]
-  \spc{\footnotesize Andrew Gelman, \ \myemph{Bob Carpenter}, \ Daniel
-    Lee, \ Ben Goodrich, }
-  \\
-  \spc{\footnotesize Michael Betancourt, \ Marcus Brubaker, \ Jiqiang
-    Guo, \ Allen Riddell,}
-  \\
-  \spc{\footnotesize Marco Inacio, \ Jeffrey Arnold, \ \myemph{Mitzi Morris}, \
-    Rob Trangucci,}
-  \\
-  \spc{\footnotesize Rob Goedman, \ Brian Lau, \, Jonah Sol Gabry, \
-    Robert L.\ Grant, \ }
-  \\
-  \spc{\footnotesize Krzysztof Sakrejda, \ Aki Vehtari, \ Rayleigh
-    Lei, \ Sebastian Weber, }
-  \\
-  \spc{\footnotesize Charles Margossian, \ Vincent Picaud, \ Imad
-    Ali, \ \myemph{Sean Talts},}
-  \\
-  \spc{\footnotesize Ben Bales, \ Ari Hartikainen, \ Matthijs
-    V\`ak\`ar, \ Andrew Johnson,}
-  \\
-  \spc{\footnotesize Dan Simpson}
-\\[-20pt] \noindent
-  \spc{\small Stan 2.17 \ \footnotesize (November 2017)
-    \hfill \url{http://mc-stan.org}} \hfill
-\includegraphics[width=0.45in]{img/new-logo.png}
+\spc{\slshape Stan Development Team {\small (in order of joining)}:}
+\\[2pt]
+\spc{\footnotesize
+Andrew Gelman,
+\  \myemph{Bob Carpenter},
+\ \myemph{Daniel Lee},
+\ \myemph{Ben Goodrich},
+\ Michael
+\\ \spc
+Betancourt,
+\ Marcus Brubaker,
+\ Jiqiang Guo,
+\ Allen Riddell,
+\ Marco
+\\ \spc
+Inacio,
+\ \myemph{Mitzi Morris},
+\ Rob Trangucci,
+\ Rob Goedman,
+\ \myemph{Jonah Sol Gabry},
+\\ \spc
+\myemph{Robert L.\ Grant},
+\ Brian Lau,
+\ Krzysztof Sakrejda,
+\ \myemph{Aki Vehtari},
+\ Rayleigh
+\\ \spc Lei,
+\ {Sebastian Weber},
+\ {Charles Margossian},
+\ Vincent Picaud,
+\ Imad Ali,
+\\ \spc
+\myemph{Sean Talts},
+\ \myemph{Ben Bales},
+\ \myemph{Ari Hartikainen},
+\ \myemph{Matthijs V\'ak\'ar},
+\\ \spc
+Andrew Johnson,
+\ \myemph{Dan Simpson},
+\ \myemph{Yi Zhang},
+\ \myemph{Paul B\"urkner},
+\ \myemph{Steve Bronder},
+\\ \spc
+\myemph{Rok Cesnovar},
+\ \myemph{Erik Strumbelj},
+\ Edward Roualdes
+}
+\\[4pt]
+\spc{\footnotesize\slshape 34 active devs, \ $\approx 10$ full-time equivalents}
+\\[-0.35in]
+\\[-0.1in]
+\spc{\small Stan 2.18.0 \ {\footnotesize (June 2018)} \hfill \url{http://mc-stan.org}}
+\hfill
+\includegraphics[width=0.5in]{img/new-logo.png}
+
+
 
 
 \mypart{}{Reparameterizations}
@@ -3664,12 +3685,13 @@ model {
 %
 \begin{stancode}
 data {
-  int<lower=0> N;               int<lower=0> K;
-  matrix[N, K] x;               vector[N] y;
-  matrix[N_tilde, K] x_tilde;
+  int<lower=0> K;
+  int<lower=0> N;           int<lower=0> N_tilde;
+  matrix[N, K] x;           matrix[N_tilde, K] x_tilde;
+  vector[N] y;
 }
 parameters {
-  vector[K] beta;               real<lower=0> sigma;
+  vector[K] beta;           real<lower=0> sigma;
 }
 model {
   y ~ normal(x * beta, sigma);
@@ -5702,7 +5724,8 @@ y ~ normal(mu_y, sigma);
   \item split-$\hat{R}$ multi-chain convergence diagnostic (Gelman/Rubin)
   \item multi-chain effective sample size estimation (FFT algorithm)
   \end{itemize}
-\item Model comparison with \myemph{WAIC}
+\item Model comparison with leave-one-out cross-validation (loo) [in
+  sample only]
 \begin{subitemize}
 \item in-sample approximation to cross-validation
 \end{subitemize}
@@ -5736,11 +5759,11 @@ y ~ normal(mu_y, sigma);
 \item \myemph{Black box} so can fit any Stan model
 \item Multivariate \myemph{normal approx to unconstrained} posterior
 \begin{subitemize}
-\item covariance: diagonal mean-field or full rank
+\item covariance: diagonal (aka mean-field) or full rank
 \item not Laplace approx --- around posterior mean, not mode
 \item transformed back to constrained space (built-in Jacobians)
 \end{subitemize}
-\item Stochastic \myemph{gradient-descent} optimization
+\item \myemph{Gradient-descent} optimization
 \begin{subitemize}
 \item ELBO gradient estimated via Monte Carlo + autodiff
 \end{subitemize}
