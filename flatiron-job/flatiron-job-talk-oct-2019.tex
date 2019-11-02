@@ -1,4 +1,4 @@
-\documentclass[11pt]{report}
+\documentclass[10pt]{report}
 
 \usepackage{stan-talks}
 
@@ -121,31 +121,31 @@ p(y \mid \theta) \cdot p(\theta).
 \end{subitemize}
 }
 
-\sld{Estimators, predictions, and events}
+\sld{Estimates, events, and predictions}
 \begin{itemize}
 \item Parameter estimate
-{\footnotesize $$
+$$
 \hat{\theta}
-\ = \ \mathbb{E}[\theta \mid y]
-\ = \ \textstyle
-\int_{\Theta} \theta \cdot p(\theta \mid y) \, \textrm{d}\theta.
-$$}
-\item Event probability ($A \subseteq \Theta$, \ \ {\footnotesize e.g., $A = \{ \theta \in \Theta : \theta > 0\}$})
-{\footnotesize $$
+\ = \ \mathbb{E}\!\left[\theta \mid y\right]
+\ = \
+\int_{\Theta} \theta \cdot p(\theta \mid y) \, \textrm{d}\theta
+$$
+\item Event probability ($A \subseteq \Theta$, \ \ {\footnotesize e.g., $A = \{ \theta : \theta > 0\}$})
+$$
 \textrm{Pr}[A \mid y]
-\ = \ \mathbb{E}[\textrm{I}_A(\theta) \mid y]
-\ = \ \textstyle
+\ = \ \mathbb{E}\!\left[\textrm{I}_A(\theta) \mid y\right]
+\ = \
 \int_{\Theta} \textrm{I}_A(\theta) \cdot p(\theta \mid y)
-\, \textrm{d}\theta.
-$$}
+\, \textrm{d}\theta
+$$
 \item Predictive inference
-{\footnotesize $$
+$$
 p(\tilde{y} \mid y)
-\ = \ \mathbb{E}[p(\tilde{y} \mid \theta) \mid y]
-\ = \ \textstyle
+\ = \ \mathbb{E}\!\left[p(\tilde{y} \mid \theta) \ \middle| \ y\right]
+\ = \
 \int_{\Theta} p(\tilde{y} \mid \theta) \cdot p(\theta \mid y)
-\, \textrm{d} \theta.
-$$}
+\, \textrm{d} \theta
+$$
 \end{itemize}
 
 \sld{(Markov chain) Monte Carlo}
@@ -167,7 +167,7 @@ $$}
 \item (MCMC) central limit theorem: finite approx error $\propto \frac{\displaystyle 1}{\displaystyle \sqrt{M}}$
 \end{subitemize}
 
-\mypart{}{Examples}
+\mypart{Example 1}{Birth Ratio}
 
 \sld{Birth ratio \hfill {\Large (Laplace, 1781)}}
 \begin{itemize}
@@ -190,7 +190,7 @@ $p(\theta \mid y)
 \hfill {\footnotesize (``morally certain'' more boys)}
 \end{itemize}
 
-\sld{Birth ratio in Stan}
+\sld{Coding in Stan}
 \begin{stancode}
 transformed data {
   int y = 251527;  int N = 493472;
@@ -207,7 +207,7 @@ generated quantities {
 }
 \end{stancode}
 
-\sld{And the answer is...}
+\sld{Executing}
 %
 \begin{codein}
 > fit <- stan("laplace.stan")
@@ -227,6 +227,113 @@ y_sim              50.902   0.081 38.000  64.000
 \item {\texttt y\_sim} estimated forecast for next 100 births
 \end{subitemize}
 
+\mypart{Example 2}{Linear Models}
+
+\sld{Logistic regression}
+%
+\begin{stancode}
+ data {
+   int<lower = 1> K;
+   int<lower = 0> N;
+   matrix[N, K] x;                  // predictors
+   int<lower=0, upper=1> y[N];      // observations
+ }
+ parameters {
+   vector[K] beta;                  // regression coeffs
+ }
+ model {
+   beta ~ normal(0, 2);            // prior
+   y ~ bernoulli_logit(x * beta);  // likelihood
+ }
+\end{stancode}
+
+\sld{Linear regression with prediction}
+%
+\begin{stancode}
+data {
+  int<lower=0> K;
+  int<lower=0> N;           int<lower=0> N_tilde;
+  matrix[N, K] x;           matrix[N_tilde, K] x_tilde;
+  vector[N] y;
+}
+parameters {
+  vector[K] beta;           real<lower=0> sigma;
+}
+model {
+  y ~ normal(x * beta, sigma);
+}
+generated quantities {
+  vector[N_tilde] y_tilde
+    = normal_rng(x_tilde * beta, sigma);
+}
+\end{stancode}
+
+\sld{Time series autoregressive: AR(1)}
+%
+\begin{stancode}
+  data {
+    int<lower=0> N;   vector[N] y;
+  }
+  parameters {
+    real alpha;  real beta;  real sigma;
+  }
+  model {
+    y[2:n] ~ normal(alpha + beta * y[1:(n-1)], sigma);
+  }
+\end{stancode}
+
+\sld{Priors with covariance}
+%
+\vspace*{-3pt}
+\begin{subitemize}
+\item $G$ groups w.\ varying slope and intercept; \code{gg[n]} indicates group
+\vspace*{-4pt}
+\item LKJ prior concentrates around unit correlation
+ (${ } \propto \textrm{det}(\Omega)^{\eta - 1}$)
+\vspace*{-4pt}
+\item Cholesky-factor parameterization for efficiency ($\Omega = \textrm{L}_{\Omega} \cdot \textrm{L}_{\Omega}^{\top}$)
+\end{subitemize}
+\vspace*{-8pt}
+\begin{stancode}
+parameters {
+  vector[2] beta[G];
+  cholesky_factor_corr[2] L_Omega;
+  vector<lower = 0>[2] sigma;
+
+model {
+  matrix[2, 2] L_Sigma = diag_pre_multiply(sigma, L_Omega);
+  sigma ~ normal(0, 2);
+  L_Omega ~ lkj_cholesky(4);
+  beta ~ multi_normal_cholesky(zeros(2), L_Sigma);
+
+  y ~ bernoulli_logit(... + x .* beta[gg]);
+\end{stancode}
+
+\sld{Gaussian process}
+%
+\vspace*{-5pt}
+\begin{stancode}
+data {
+  int<lower=1> N;  vector[N] x; vector[N] y;
+} parameters {
+  real<lower=0> eta_sq, inv_rho_sq, sigma_sq;
+} transformed parameters {
+  real<lower=0> rho_sq; rho_sq = inv(inv_rho_sq);
+} model {
+  matrix[N,N] Sigma;
+  for (i in 1:(N-1)) {
+    for (j in (i+1):N) {
+      Sigma[i,j] = eta_sq * exp(-rho_sq * square(x[i] - x[j]));
+      Sigma[j,i] = Sigma[i,j];
+  }}
+  for (k in 1:N) Sigma[k,k] = eta_sq + sigma_sq;
+  eta_sq, inv_rho_sq, sigma_sq ~ cauchy(0,5);
+  y ~ multi_normal(rep_vector(0,N), Sigma);
+}
+\end{stancode}
+
+\mypart{Example 3}{Population Dynamics}
+
 \sld{Population Dynamics \hfill {\large (Volterra 1926)}}
 \begin{itemize}
 \item populations at $t$ of prey $u(t)$ \& predator $v(t)$
@@ -243,13 +350,13 @@ $$
 \end{subitemize}
 \end{itemize}
 
-\sld{Analytic solutions \hfill {\large (Volterra 1926)}}
+\sld{Analytic solution \hfill {\large (Volterra 1926)}}
 
 \begin{center}
 \includegraphics[width=0.6\textwidth]{img/volterra-solutions.jpg}
 \end{center}
 
-\sld{Measurement error model}
+\sld{Measurement error}
 \begin{itemize}
 \item $u, v$ are observed
 \item $\hat{u}, \hat{v}$ predicted by mechanistic model
@@ -266,12 +373,12 @@ $\beta, \delta \sim \textrm{normal}(0.05, 0.05)$
 \end{subitemize}
 \end{itemize}
 
-\sld{Hudson's Bay Co.\ Pelts \hfill {\large (Hewitt 1921)}}
+\sld{Hudson's Bay Co.\ pelts \hfill {\large (Hewitt 1921)}}
 \begin{center}
 \includegraphics[width=0.9\textwidth]{img/hudons-bay-data.png}
 \end{center}
 
-\sld{Munged and plotted}
+\sld{Plotted pelt data}
 \begin{center}
 \includegraphics[width=0.45\textwidth]{img/lynx-hares-1.png}~\includegraphics[width=0.45\textwidth]{img/lynx-hares-2.png}
 \end{center}
@@ -282,7 +389,7 @@ $\beta, \delta \sim \textrm{normal}(0.05, 0.05)$
 (line per species) \hfill (over time)
 \end{itemize}
 
-\sld{Stan dynamics \& meas.\ error}
+\sld{Stan dynamics \& error}
 \begin{stancode}
 real[] dz_dt(real t, real[] uv, real[] theta,
              real[] theta, real[] x_r, int[] x_i) {
@@ -303,19 +410,112 @@ y[1:T, 2] ~ lognormal(z[1:T, 2], sigma_v);
 \includegraphics[width=0.8\textwidth]{img/lotka-volterra-posterior.pdf}
 \end{center}
 
-\sld{As evolving over time}
+\sld{100 predictive draws}
 \begin{center}
 \includegraphics[width=0.8\textwidth]{img/lotka-volterra-posterior-time.png}
 \end{center}
 
+\mypart{Example 4}
+       {Baseball Batting Ability}
+
+\sld{Predicting success {\large (Efron \& Morris 1975)}}
+\begin{itemize}
+\item Observe number of successes $y_n$ in 50 trials (at bats) per item (player) $n \in 1:N$
+\item estimate success in remaining trials
+\end{itemize}
+
+\mypart{}{Stan}
+
+\sld{What is Stan?}
+%
+\begin{itemize}
+\item Stan's a domain-specific \myemph{probabilistic programming language}
+\item Stan \myemph{program} defines a \myemph{differentiable} probability model
+  \begin{subitemize}
+  \item declares data and (constrained) parameter variables
+  \item defines log posterior (or penalized likelihood)
+  \item defines predictive quantities
+  \end{subitemize}
+\item Stan \myemph{inference} fits model \& makes predictions
+  \begin{subitemize}
+  \item MCMC for full Bayesian inference
+  \item variational and Laplace approximate Bayes
+  \end{subitemize}
+\end{itemize}
+
+
+\sld{Availability \& Usage}
+\begin{subitemize}
+\item \textit{Platforms:} \ Linux, Mac OS X, Windows
+\vspace*{-4pt}
+\item \textit{Interfaces:} \ R, Python, Julia, MATLAB, Mathematica
+\vspace*{-4pt}
+\item \textit{Developers (academia \& industry):} 40+ \ {\small (15+ FTEs)}
+\vspace*{-4pt}
+\item \textit{Users:}\ tens or hundreds of thousands
+\vspace*{-4pt}
+\item \textit{Companies using:} \ hundreds or thousands
+\vspace*{-4pt}
+\item \textit{Downloads:}\ millions
+\vspace*{-4pt}
+\item \textit{User's Group:} \ 3000+ registered; 6000+ non-bot views/day
+\vspace*{-4pt}
+\item \textit{Books using:} \ 10+
+\vspace*{-4pt}
+\item \textit{Courses using:} \ 100+
+\vspace*{-4pt}
+\item \textit{Case studies about:} 100+
+\vspace*{-4pt}
+\item \textit{Articles using:} \ 3000+
+\vspace*{-4pt}
+\item \textit{Conferences:} 4 (800+ attendance)
+\end{subitemize}
+
+\sld{Some published applications}
+%
+\begin{itemize}
+\item \myemph{Physical sciences}: {\footnotesize
+astrophysics, particle physics, chemistry, geology, oceanography,
+climatology, biogeochemistry, materials science, $\ldots$
+}
+\item \myemph{Biological sciences}: {\footnotesize
+molecular biology, clinical drug trials, entomology, pharmacology,
+toxicology, opthalmology, neurology, genomics, agriculture, botany, fisheries,
+epidemiology, population ecology, neurology, psychiatry, $\ldots$
+}
+\vspace*{-3pt}
+\item \myemph{Social sciences}: {\footnotesize
+ econometrics (macro and micro), population dynamics, cognitive
+ science, psycholinguistics, social networks, political science,
+ survey sampling, anthropology, sociology, social work, $\ldots$
+}
+\vspace*{-3pt}
+\item \myemph{Other}: {\footnotesize education, public health,
+government, finance, machine learning, logistics, electrical engineering,  transportation, actuarial science, sports, advertising, marketing, $\ldots$}
+\end{itemize}
+
+\sld{Why is Stan so Popular?}
+\begin{subitemize}
+\item \myemph{Community}: large, friendly, helpful, and sharing
+\item \myemph{Documentation}:  novice to expert; breadth of fields
+\item \myemph{Robustness}:  industrial-strength code; user diagnostics
+\item \myemph{Flexibility}:  highly expressive language;  large math lib
+\item \myemph{Portability}: popular OS, language, and cloud support
+\item \myemph{Extensibility}: developer friendly; derived packages
+\item \myemph{Speed}:  $2-\infty$ orders of magnitude faster
+\item \myemph{Scalability}:  2+ orders of magnitude more scalable
+\item \myemph{Openness}: permissive code and doc licensing
+\end{subitemize}
 
 \mypart{}{Projects}
 
 \sld{Methodology}
 \begin{itemize}
-\item Bayes vs. all contenders for proper scoring evaluation
-\item Model evaluation and comparison with uncertain crowdsourced data
-\item Partial pooling to estimate performance with multiple comparisons
+\item Bayes vs.\ point estimation \& proper scoring
+\item Evaluation via calibration and entropy
+\item Evaluation with uncertain (crowdsourced) data
+\item Partially pool performance estimates
+\item Report uncertainty
 \end{itemize}
 
 \sld{Algorithms}
@@ -327,7 +527,7 @@ y[1:T, 2] ~ lognormal(z[1:T, 2], sigma_v);
 \item Higher-order automatic differentiation
 \end{itemize}
 
-\sld{Applications}
+\sld{Applications (1/3)}
 \begin{itemize}
 \item Arctic soil-carbon response to environmental change
 \begin{subitemize}
@@ -341,7 +541,7 @@ y[1:T, 2] ~ lognormal(z[1:T, 2], sigma_v);
 \end{subitemize}
 \end{itemize}
 
-\sld{Applications (II)}
+\sld{Applications (2/3)}
 \begin{itemize}
 \item Virtual database completion for the National Election Survey
 \begin{subitemize}
@@ -355,7 +555,7 @@ y[1:T, 2] ~ lognormal(z[1:T, 2], sigma_v);
 \end{subitemize}
 \end{itemize}
 
-\sld{Applications (III)}
+\sld{Applications (3/3)}
 \begin{itemize}
 \item Equilibrium and rational decision making in auction pricing
 \begin{subitemize}
