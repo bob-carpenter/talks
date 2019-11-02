@@ -507,15 +507,131 @@ government, finance, machine learning, logistics, electrical engineering,  trans
 \item \myemph{Openness}: permissive code and doc licensing
 \end{subitemize}
 
+\mypart{}{What Stan Does}
+
+\sld{No-U-turn sampler}
+%
+\begin{itemize}
+\item \myemph{Hamiltonian Monte Carlo} (HMC)
+\begin{subitemize}
+\item \myemph{Potential Energy}: negative log posterior $\log p(\theta \mid y)$
+\item \myemph{Kinetic Energy}: random standard normal each iteration
+\end{subitemize}
+  %
+\item Adapt leapfrog algorithm \myemph{during warmup}
+  \vspace*{-4pt}
+  \begin{itemize}\small
+  \item step size adapted to target acceptance rate
+  \item Euclidean metric estimated w.\ sample covariance
+  \end{itemize}
+  %
+\item Adapt leapfrog algorithm  \myemph{during sampling}
+  \begin{subitemize}
+  \item simulate forward and backward in time until U-turn
+  \end{subitemize}
+\item Multinomial sample trajectory propto energy; bias furthest
+  %
+\vfill
+\hfill
+{\footnotesize (Hoffman and Gelman 2011, 2014; Betancourt 2019)}
+\end{itemize}
+
+\sld{NUTS vs.\ Gibbs and Metropolis}
+%
+\begin{center}
+\includegraphics[width=0.9\textwidth]{img/nuts-vs.pdf}
+\end{center}
+\begin{subitemize}
+\item Two dimensions from highly correlated 250-dim normal
+\item \myemph{1,000,000 draws} from Metropolis and Gibbs (thinned to 1000)
+\item \myemph{1000 draws} from NUTS; 1000 independent draws
+\end{subitemize}
+
+\sld{Reverse-mode autodiff (adjoint)}
+\begin{itemize}
+\item Build up expression graph with values $x$ and adjoints $\overline{x}$
+\item Differentiating $f:\mathbb{R}^N \rightarrow \mathbb{R}$ is additional $\mathcal{O}(1)$
+\item Set final result $y$'s adjoint $\overline{y} = 1$ and proceed in reverse
+\item Example:  scalar $c = \log a$
+\begin{subitemize}
+\item $\overline{a} \ {+}{=} \ \overline{c} \cdot \frac{\displaystyle 1}{\displaystyle a}$
+\end{subitemize}
+\item Example: scalar $c = a \cdot b$
+\begin{subitemize}
+\item $\overline{a} \ {+}{=} \ \overline{c} \cdot b$; \ \ \ \ \
+$\overline{b} \ {+}{=} \ \overline{c} \cdot a$
+\end{subitemize}
+\item Example: matrix $C = A^{-1}$
+\begin{subitemize}
+\item $\overline{A} \ {+}{=} \ -C^{\top} \cdot \overline{C} \cdot C^{\top}$
+\end{subitemize}
+\end{itemize}
+
+\sld{Stan's Autodiff vs.\ Alternatives}
+%
+\vspace*{-4pt}
+\begin{itemize}
+\item Stan is \myemph{fastest} (and uses least memory)
+\begin{subitemize}
+\item among open-source C++ alternatives
+\end{subitemize}
+\end{itemize}
+\vspace*{-8pt}
+\mbox{ } \hfill \hfill
+\includegraphics[width=0.48\textwidth]{img/autodiff-eval-matrix-product-eigen.pdf}
+\hfill
+\includegraphics[width=0.48\textwidth]{img/autodiff-eval-normal-density.pdf}
+\hfill \hfill
+
+\sld{Forward-mode autodiff (tangent)}
+\begin{itemize}
+\item Build tangents forward with values $x$ and tangents $\dot{x}$
+\item Differentiating $f:\mathbb{R} \rightarrow \mathbb{R}^M$ is additional $\mathcal{O}(1)$
+\item To differentiate w.r.t.\ $x$, set $\dot{x} = 1$ and work forward
+\item Example:  scalar $c = \log a$
+\begin{subitemize}
+\item $\dot{c} = \dot{a} \cdot \frac{\displaystyle 1}{\displaystyle a}$
+\end{subitemize}
+\item Example: scalar $c = a \cdot b$
+\begin{subitemize}
+\item $\dot{c} = \dot{a} \cdot b + \dot{b} \cdot a$
+\end{subitemize}
+\item Example: matrix $C = A^{-1}$
+\begin{subitemize}
+\item $\dot{C} = -C \cdot \dot{A} \cdot C$
+\end{subitemize}
+\end{itemize}
+
+\sld{Higher-order autodiff}
+\begin{itemize}
+\item Open up new algorithms exploiting curvature
+\item Considering log densities $f :\mathbb{R}^N \rightarrow \mathbb{R}$
+\item Second order derivatives
+\begin{subitemize}
+\item nest reverse in forward adds $\mathcal{O}(N)$
+\item nest forward in forward $\mathcal{O}(N^2)$
+\end{subitemize}
+\item Third order derivatives
+\begin{subitemize}
+\item nest reverse in forward in forward $\mathcal{O}(N^2)$
+\item nest forward in forward in forward $\mathcal{O}(N^3)$
+\end{subitemize}
+\end{itemize}
+
 \mypart{}{Projects}
 
-\sld{Methodology}
+\sld{Language}
 \begin{itemize}
-\item Bayes vs.\ point estimation \& proper scoring
-\item Evaluation via calibration and entropy
-\item Evaluation with uncertain (crowdsourced) data
-\item Partially pool performance estimates
-\item Report uncertainty
+\item Language features
+\begin{subitemize}
+\item lqmbdas with closure by value
+\item ragged arrays
+\item sparse matrices
+\item tuples \& structures
+\item user-defined gradients
+\end{subitemize}
+\item Blockless language
+\item Formal specification and denotational semantics
 \end{itemize}
 
 \sld{Algorithms}
@@ -524,7 +640,19 @@ government, finance, machine learning, logistics, electrical engineering,  trans
 \item Sequential HMC for filtering (i.e., online learning)
 \item Matrix automatic differentiation
 \item Parallel automatic differentiation
+\begin{subitemize}
+\item GPU, multi-core, and multi-machine
+\end{subitemize}
 \item Higher-order automatic differentiation
+\end{itemize}
+
+\sld{Methodology}
+\begin{itemize}
+\item Bayes vs.\ point estimation \& proper scoring
+\item Model/data evaluation via calibration and sharpenss (entropy)
+\item Model/data evaluation with uncertain (crowdsourced) data
+\item Partially pool performance estimates for multiple comparison
+\item Push uncertainty through decision making
 \end{itemize}
 
 \sld{Applications (1/3)}
