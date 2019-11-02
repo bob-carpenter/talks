@@ -531,43 +531,128 @@ government, finance, machine learning, logistics, electrical engineering,  trans
 \begin{itemize}
 \item Arctic soil-carbon response to environmental change
 \begin{subitemize}
-\item Kathe Todd-Brown (U.\ Florida, env. engnr)
-\item Sean Schaeffer (U.\ Tennessee, ag.)
+\item Kathe Todd-Brown (U.\ Florida, environmental engineering)
+\item Sean Schaeffer (U.\ Tennessee, agriculture)
 \end{subitemize}
-\item Differential expression of gene splice variants with biological replicates
+\item Differential expression of gene splice variants
 \begin{subitemize}
-\item Shuonan Chen (Columbia, biostats)
+\item Shuonan Chen (Columbia, biostatistics)
 \item Chaolin Zhang (Columbia, genomics)
 \end{subitemize}
 \end{itemize}
 
 \sld{Applications (2/3)}
 \begin{itemize}
-\item Virtual database completion for the National Election Survey
+\item Virtual database completion for National Election Survey
 \begin{subitemize}
-\item Andrew Gelman (Columbia, stats \& poli sci)
-\item Steve Ansolabehere (Harvard, poli sci)
+\item Andrew Gelman (Columbia, statistics \& political science)
+\item Steve Ansolabehere (Harvard, political science))
 \end{subitemize}
 \item Educational testing and teacher evaluation
 \begin{subitemize}
-\item Andrew Gelman (Columbia, stats \& poli sci)
-\item Sophia Rabe-Hesketh (UC Berkeley, ed and biostats)
+\item Andrew Gelman (Columbia, statistics \& political science)
+\item Sophia Rabe-Hesketh (UC Berkeley, education \& biostatistics)
 \end{subitemize}
 \end{itemize}
 
 \sld{Applications (3/3)}
 \begin{itemize}
-\item Equilibrium and rational decision making in auction pricing
+\item Equilibrium \& rational decision making in auction pricing
 \begin{subitemize}
 \item Tom Sargent (NYU, economics)
 \item Shoshanna Vasserman (Stanford, business)
 \item Rachel Meager (LSE, economics)
 \end{subitemize}
-\item Crowdsourced training and evaluation in machine learning
+\item Crowdsourced training \& evaluation in machine learning
 \begin{subitemize}
-\item Massimo Poesio (U. Essex, comp sci)
-\item Becky Passonneau (Penn State, comp sci)
+\item Massimo Poesio (U. Essex, computer science)
+\item Becky Passonneau (Penn State, computer science)
 \end{subitemize}
 \end{itemize}
+
+\mypart{}{The End}
+
+\mypart{}{Questions?}
+
+\mypart{}{Answers}
+
+\sld{TensorFlow or PyTorch?}
+\begin{itemize}
+\item embedded in Python
+\item similar scope to Stan's differentiable math library
+\item TensorFlow optimizes static autodiff; Pytorch dynamic (like Stan)
+\item focused on approximate optimization algorithms
+\item optimized for neural networks on distributed architecture
+\end{itemize}
+
+\sld{TensorFlow Probability?}
+\begin{itemize}
+\item embedded in Python
+\item similar performance to Stan
+\item adds stats functions to TensorFlow
+\begin{subitemize}
+\item catching up to Stan with growing staffing
+\end{subitemize}
+\item adds inference algorithms on top
+\begin{subitemize}
+\item main focus is approximate inference \& deep neural nets
+\item recently added static parallel NUTS implementation
+\end{subitemize}
+\item Edward(2) moribund
+\end{itemize}
+
+\sld{PyMC4?}
+\begin{itemize}
+\item embedded in Python
+\item replacing Theano analytic diff with TensorFlow autodiff
+\item supported by Google
+\item more limited library and control flow than Stan
+\item more flexible sampling algorithm combination (e.g., discrete)
+\item borrowed Stan's HMC algorithms and diagnostics
+\item {advantage} is {embedding of language} as Python API
+\item {disadvantage} is {limited flexibility} (not arbitrary Python)
+\end{itemize}
+
+\sld{Pyro}
+\begin{itemize}
+\item embedded in Python
+\item based on dynamic PyTorch, so most like Stan
+\item main focus approximate inference \& deep neural nets
+\item borrowed Stan's HMC algorithms and diagnostics
+\end{itemize}
+
+\sld{Discrete parameters?}
+\begin{itemize}
+\item \myemph{Stan's focus}: tractably \myemph{marginalized}
+\begin{subitemize}
+\item e.g., state-space models (forward algorithm)
+\item \myemph{efficient} in theory due to Rao-Blackwell; in practice by eliminating combinatorics; much better tail behavior
+\item marginalizations available wherever you find EM \& MML
+\end{subitemize}
+\item \myemph{Out of scope}: combinatorially \myemph{intractable}
+\begin{subitemize}
+\item e.g., selection, clustering, random trees, neural nets
+\item optimization is NP-hard or worse
+\item thus \myemph{nobody knows how to get right} answer in general
+\item some special cases can be fit
+\end{subitemize}
+\item \myemph{In between}: missing count data
+\end{itemize}
+
+\sld{Roll my own sampler?}
+\begin{itemize}
+\item It's a tricky business, so only as a last resort
+\begin{subitemize}
+\item specific difficulties arise from non-determinism,
+floating point, and failures of geometric ergodicity
+\end{subitemize}
+\item Sometimes it's the only option
+\begin{subitemize}
+\item known scalable algorithms require derivatives at first-order or higher
+\item carefully validate with simulation-based calibration
+\item when it works, let us know, and we can put it in Stan!
+\end{subitemize}
+\end{itemize}
+
 
 \end{document}
