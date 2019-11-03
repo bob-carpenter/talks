@@ -24,45 +24,46 @@
 
 \sld{Scientists}
 \begin{itemize}
-\item want to understand the world,
-\item bring mechanistic theories,
-\item bring data in the form of measurements, and
-\item need to make predictions and evaluate theories.
+\item want to \myemph{understand} the world,
+\item bring mechanistic \myemph{theories},
+\item bring data in the form of \myemph{measurements}, and
+\item need to make \myemph{predictions} and \myemph{evaluate theories}.
 \end{itemize}
 
 \sld{Policymakers}
 \begin{itemize}
-\item control the social world,
-\item bring hypotheses about interventions,
-\item bring data in the form of measurements, and
-\item need to make decisions and evaluate results.
+\item want to \myemph{control} the social world,
+\item bring hypotheses about \myemph{interventions},
+\item bring data in the form of \myemph{measurements}, and
+\item need to \myemph{make decisions} and \myemph{evaluate impact}.
 \end{itemize}
 
 \sld{Uncertainty}
 \begin{itemize}
-\item permeates science and decision making
+\item \myemph{permeates science} and decision making
 \item in the form of
 \begin{subitemize}
-\item sampling uncertainty,
-\item measurement uncertainty, and
-\item modeling uncertainty.
+\item \myemph{sampling} uncertainty,
+\item \myemph{measurement} uncertainty, and
+\item \myemph{modeling} uncertainty.
 \end{subitemize}
-\item The alternative to good statistics is
+\vfill
+\item The \myemph{alternative to good statistics} is
 \begin{subitemize}
 \item not no statistics,
-\item but bad statistics.
+\item but \myemph{bad statistics}.
 \end{subitemize}
 \end{itemize}
 
 \sld{Probability \& Statistics}
 \begin{itemize}
-\item Probability uses math to quantify uncertainty.
-\item Bayesian statistics applies probability theory to
+\item Probability theory uses math to \myemph{quantify uncertainty}.
+\item \myemph{Bayesian statistics} applies probability theory to
 \begin{subitemize}
-\item data analysis,
-\item prediction \& forecasting,
-\item decision theory, and
-\item model evaluation.
+\item data \myemph{analysis},
+\item \myemph{prediction} \& forecasting,
+\item model \myemph{evaluation}, and
+\item \myemph{decision} theory.
 \end{subitemize}
 \end{itemize}
 
@@ -70,17 +71,104 @@
 \begin{itemize}
 \item How to combine data, theory, and probability to
 \begin{subitemize}
-\item make calibrated predictions,
-\item optimal decisions under uncertainty, and
-\item solve the replication crisis.
+\item make \myemph{calibrated predictions},
+\item \myemph{optimal decisions} under uncertainty, and
+\item solve the \myemph{replication} crisis.
 \end{subitemize}
-\item Plus a summary of my current work on
+\item With \myemph{Stan}, an open probabilistic programming framework
+\item Plus a preview of my \myemph{forthcoming work} on
 \begin{subitemize}
 \item algorithms,
-\item methodology, and
-\item applications.
+\item methodology and
+\item applications
 \end{subitemize}
 \end{itemize}
+
+\mypart{}{Calibration}
+
+\sld{Probability}
+\begin{quote}
+\footnotesize
+We must remember that the probability of an event is not a quality of the event itself, but a mere name for the degree of ground which we, or some one else, have for expecting it.
+\\ \mbox{ } \hfill {\scriptsize ---John Stuart Mill, 1882, {\it A System of Logic.} 8th Ed.}
+\end{quote}
+%
+\begin{quote}
+\footnotesize
+An intellect which at a certain moment would know all forces that set nature in motion, and all positions of all items of which nature is composed $\ldots$; for such an intellect nothing would be uncertain and the future just like the past would be present before its eyes.
+\\ \mbox{ } \hfill {\scriptsize ---Pierre-Simon Laplace, 1814, {\it A Philosophical Essay on Prob.}}
+\end{quote}
+%
+\begin{quote}
+\footnotesize
+The theory [quantum mechanics] says a lot, but does not really bring us any closer to the secret of the ``old one.'' I, at any rate, am convinced that He does not throw dice.
+\\ \mbox{ } \hfill {\scriptsize ---Albert Einstein, 1926, Letter to Max Born}
+\end{quote}
+
+\sld{Calibration}
+\begin{itemize}
+\item Empirical (frequentist) evaluation of \myemph{probabilistic forecasts}
+\item 75\% of days with forecasted 75\% chance of rain should be rainy.
+\begin{subitemize}
+\item for $N$ \myemph{calibrated predictions} of probability $\theta$,
+\\
+$Y \sim \textrm{binomial}(N, \theta)$ will obtain
+\end{subitemize}
+\item Depends on \myemph{conditional} information
+\item Examples of calibrated predictions of same event
+\begin{subitemize}
+\item Will it rain in Edinburgh?  (52\%)
+\item Will it rain in Edinburgh in December?  (65\%)
+\item Will it rain in Edinburgh tomorrow?  (80\%)
+\end{subitemize}
+\end{itemize}
+
+\sld{Sharpness}
+\begin{itemize}
+\item Sharp probabilistic predictions are
+\begin{subitemize}
+\item \myemph{low entropy, high information}
+\end{subitemize}
+\item Narrowly concentrated predictions are sharper.
+\begin{subitemize}
+\item $\mbox{Pr}[\alpha \in (.58, .59)] = .9$ sharper than
+$\mbox{Pr}[\alpha \in (.5, .6)] = .9$
+\end{subitemize}
+\item Probabilistic predictions nearer 0 and 1 are sharper
+\begin{subitemize}
+\item $\mbox{Pr}[z_i = 1] = 0.95$ sharper than $\mbox{Pr}[z_i = 1] = 0.6$
+\end{subitemize}
+\end{itemize}
+
+\sld{Model evaluation criterion}
+\begin{itemize}
+\item For probabilistic forecasts,
+\\
+\myemph{maximize sharpness subject to calibration!}
+\\[-6pt]
+\item Goal: consistent, useful inference from finite data.
+\begin{subitemize}
+\item cf. minimize variance subject to zero bias for estimators
+\end{subitemize}
+\end{itemize}
+
+\mypart{}{Demand}
+
+\sld{Pent-up demand for inference}
+\vspace*{-3pt}
+\begin{itemize}
+\item \myemph{Big data} needs \myemph{big model}
+\begin{subitemize}
+\item temporal structure, spatial structure, missing data, varying effects by group, non-linearity, correlated effects, meta-analysis, heterogeneous data, biased samples, $\ldots$
+\end{subitemize}
+\item Data size \& computation limit practical model complexity
+\item \myemph{Goal}: push the efficient frontier (already pushed $10^2{-}\infty$)
+\begin{center}
+\includegraphics[width=0.5\textwidth]{img/model-size.pdf}
+\end{center}
+\end{itemize}
+
+
 
 \mypart{}{Bayesian Inference}
 
@@ -88,17 +176,17 @@
 \begin{itemize}
 \item Variables
 \begin{subitemize}
-\item $y$ : data (observed)
-\item $\theta$ : parameters (unknown)
+\item $y$ : \myemph{data} (observed)
+\item $\theta$ : \myemph{parameters} (unknown)
 \end{subitemize}
 \item Probability functions
 \begin{subitemize}
-\item $p(y, \theta)$ : joint density
-\item $p(y \mid \theta)$ : sampling density
+\item $p(y, \theta)$ : \myemph{joint} density
+\item $p(y \mid \theta)$ : \myemph{sampling} density
 {\footnotesize \hfill (likelihood as fun of $\theta$)}
-\item $p(\theta)$ : prior (parameter marginal)
-\item $p(\theta \mid y)$ : posterior
-\item $p(y)$ : evidence (data marginal)
+\item $p(\theta)$ : \myemph{prior} (parameter marginal)
+\item $p(\theta \mid y)$ : \myemph{posterior}
+\item $p(y)$ : \myemph{evidence} (data marginal)
 \end{subitemize}
 \end{itemize}
 
@@ -117,20 +205,20 @@ p(\theta \mid y) & = & \frac{p(y, \theta)}{p(y)}
 p(y \mid \theta) \cdot p(\theta).
 \end{eqnarray*}
 \begin{subitemize}
-\item posterior proportional to likelihood times prior
+\item \myemph{Posterior} proportional to \myemph{likelihood times prior}
 \end{subitemize}
 }
 
 \sld{Estimates, events, and predictions}
 \begin{itemize}
-\item Parameter estimate
+\item \myemph{Parameter estimate}
 $$
 \hat{\theta}
 \ = \ \mathbb{E}\!\left[\theta \mid y\right]
 \ = \
 \int_{\Theta} \theta \cdot p(\theta \mid y) \, \textrm{d}\theta
 $$
-\item Event probability ($A \subseteq \Theta$, \ \ {\footnotesize e.g., $A = \{ \theta : \theta > 0\}$})
+\item \myemph{Event probability} ($A \subseteq \Theta$, \ \ {\footnotesize e.g., $A = \{ \theta : \theta > 0\}$})
 $$
 \textrm{Pr}[A \mid y]
 \ = \ \mathbb{E}\!\left[\textrm{I}_A(\theta) \mid y\right]
@@ -138,7 +226,7 @@ $$
 \int_{\Theta} \textrm{I}_A(\theta) \cdot p(\theta \mid y)
 \, \textrm{d}\theta
 $$
-\item Predictive inference
+\item \myemph{Predictive inference}
 $$
 p(\tilde{y} \mid y)
 \ = \ \mathbb{E}\!\left[p(\tilde{y} \mid \theta) \ \middle| \ y\right]
@@ -150,8 +238,8 @@ $$
 
 \sld{(Markov chain) Monte Carlo}
 \begin{subitemize}
-\item Given sample $\theta^{(1)}, \ldots, \theta^{(M)} \sim p(\theta \mid y).$
-\item General plug-in expectation calculations,
+\item Given \myemph{sample} $\theta^{(1)}, \ldots, \theta^{(M)} \sim p(\theta \mid y).$
+\item General \myemph{plug-in expectation} calculations,
 \begin{eqnarray*}
 \mathbb{E}[f(\theta) \mid y]
 & = &
@@ -164,30 +252,31 @@ $$
 & \approx &
 \frac{1}{M} \, \sum_{m=1}^M \, f\!\left(\theta^{(m)}\right).
 \end{eqnarray*}
-\item (MCMC) central limit theorem: finite approx error $\propto \frac{\displaystyle 1}{\displaystyle \sqrt{M}}$
+\item (MCMC) central limit theorem \myemph{approx. error} $\mbox{ } \propto \frac{\displaystyle 1}{\displaystyle \sqrt{M}}$
 \end{subitemize}
 
 \mypart{Example 1}{Birth Ratio}
 
 \sld{Birth ratio \hfill {\Large (Laplace, 1781)}}
 \begin{itemize}
-\item Live births in Paris, 1745--1770
+\item \myemph{Live births} in Paris, 1745--1770
 \begin{subitemize}
 \item $y = 251,527$ male, $N = 493,472$ total
 \end{subitemize}
-\item Sampling:
+\item \myemph{Sampling}:
 $p(y \mid N, \theta)
  = \textrm{binomial}(y \mid N, \theta).$
-\item Prior:
+\item \myemph{Prior}:
 $p(\theta)
  = \textrm{uniform}(\theta \mid 0, 1)$
-\item Posterior:
+\item \myemph{Posterior}:
 $p(\theta \mid y)
  = \textrm{beta}(\theta \mid 1 + y, \ 1 + N - y).$
-\item {\small $\textrm{Pr}[\theta \in (0.508, 0.512)] = 0.99$}
-\hfill {\footnotesize (estimated male birth rate)}
-\item {\small $\textrm{Pr}[\theta > 0.5] \approx 1 - 10^{-42}$}
-\hfill {\footnotesize (``morally certain'' more boys)}
+\vfill
+\item {$\textrm{Pr}[\theta \in (0.508, 0.512)] = 0.99$}
+\hfill {\small (estimated \myemph{male birth rate})}
+\item {$\textrm{Pr}[\theta > 0.5] \approx 1 - 10^{-42}$}
+\hfill {\small (``morally certain'' \myemph{more boys})}
 \end{itemize}
 
 \sld{Coding in Stan}
@@ -221,10 +310,10 @@ y_sim              50.902   0.081 38.000  64.000
 \end{codeout}
 %
 \begin{subitemize}
-\item estimate $\hat{\theta}$ is posterior sample mean for $\theta$;
-\item 99\% interval for $\theta$ estimated by sample quantiles
-\item $\textrm{Pr}[\theta > 0.5]$ estimated by sample mean of indicator
-\item {\texttt y\_sim} estimated forecast for next 100 births
+\item \myemph{estimate} $\hat{\theta}$ is posterior sample \myemph{mean} for $\theta$;
+\item 99\% \myemph{interval} for $\theta$ estimated by sample \myemph{quantiles}
+\item $\textrm{Pr}[\theta > 0.5]$ estimated by sample \myemph{mean of indicator}
+\item {\texttt y\_sim} estimated \myemph{forecast} for next 100 births
 \end{subitemize}
 
 \mypart{Example 2}{Linear Models}
@@ -351,7 +440,6 @@ $$
 \end{itemize}
 
 \sld{Analytic solution \hfill {\large (Volterra 1926)}}
-
 \begin{center}
 \includegraphics[width=0.6\textwidth]{img/volterra-solutions.jpg}
 \end{center}
