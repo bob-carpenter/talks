@@ -76,11 +76,11 @@
 \item solve the \myemph{replication} crisis.
 \end{subitemize}
 \item With \myemph{Stan}, an open probabilistic programming framework
-\item Plus a preview of my \myemph{forthcoming work} on
+\item Plus a preview of my \myemph{current projects} in
 \begin{subitemize}
 \item algorithms,
 \item methodology and
-\item applications
+\item applications.
 \end{subitemize}
 \end{itemize}
 
@@ -144,11 +144,16 @@ $\mbox{Pr}[\alpha \in (.5, .6)] = .9$
 \begin{itemize}
 \item For probabilistic forecasts,
 \\
-\myemph{maximize sharpness subject to calibration!}
+\myemph{maximize sharpness subject to calibration.}
 \\[-6pt]
-\item Goal: consistent, useful inference from finite data.
+\item \myemph{Goal}: consistent, useful inference from finite data.
 \begin{subitemize}
 \item cf. minimize variance subject to zero bias for estimators
+\end{subitemize}
+\item Bayesian models are calibrated if they are \myemph{well-specified}
+\begin{subitemize}
+\item But, models are always approximate,
+\item so need to test with real data.
 \end{subitemize}
 \end{itemize}
 
@@ -514,14 +519,14 @@ y[1:T, 2] ~ lognormal(z[1:T, 2], sigma_v);
 \item Chaolin Zhang (Columbia Uni., genomics)
 \end{subitemize}
 \item \myemph{Hierarchical model} with \myemph{full Bayes} follows biology
-\item Dramatically \myemph{outperforms} the state of the art:
+\item Dramatically \myemph{outperforms} the \myemph{state of the art}:
 \begin{quote}
-\small Shihao Shen et al. 2014. rMATS: Robust and flexible detection of
+\footnotesize Shihao Shen et al. 2014. rMATS: Robust and flexible detection of
 differential alternative splicing from replicate RNA-Seq data.
 {\slshape PNAS}.
 \end{quote}
-{\small (likelihood ratio NHST based on Laplace approximation)}
-\item No magic---we just \myemph{turn the Bayesian crank} using Stan
+\item Simulation tests generated as in Shen et al.
+\item No magic---we just \myemph{turned the Bayesian crank} using Stan.
 \end{itemize}
 
 \sld{Cassette exons}
@@ -550,44 +555,44 @@ differential alternative splicing from replicate RNA-Seq data.
 
 \sld{Differential expression}
 \begin{itemize}
-\item Consider multiple genes (5000+ differentially splice in humans)
-\item Consider \myemph{different groups} of cells
+\item \myemph{Multiple genes} (5000+ differentially splice in humans)
+\item \myemph{Multiple groups} of cells
 \begin{subitemize}
 \item e.g., normal liver vs. tumor; or liver vs. kidney
 \end{subitemize}
-\item Consider \myemph{multiple subjects} in each group
+\item \myemph{Multiple subjects} in each group
 \begin{subitemize}
 \item i.e., biological \myemph{replicates} (cells or individuals)
 \end{subitemize}
 \item \myemph{Goal} is to estimate
 \begin{subitemize}
 \item \myemph{differential expression} between groups, and
-\item \myemph{variation} within and between groups.
+\item \myemph{variation} within and among groups.
 \end{subitemize}
 \end{itemize}
 
 \sld{Hieararchical model}
 \begin{itemize}
 \item \myemph{exon} $i \in 1:5000$, \ \ \myemph{group} $j \in 1:2$, \ \ \myemph{replicate} $k \in 1:K$
-\item Replicate inclusion count (observed)
+\item \myemph{Replicate inclusion count} (observed)
 \begin{subitemize}
-\item $y_{i, j, k} \sim \textrm{binomial}(N_{i,j,k}, \ \textrm{logit}^{-1}(\psi_{i, j, k}))$
+\item $\normalsize y_{i, j, k} \sim \textrm{binomial}(N_{i,j,k}, \ \textrm{logit}^{-1}(\psi_{i, j, k}))$
 \end{subitemize}
-\item Replicate inclusion log odds
+\item \myemph{Replicate inclusion log odds}
 \begin{subitemize}
-\item $\psi_{i,j,k} \sim \textrm{normal}(\phi_{i,j}, \ \sigma_{i,j})$
+\item $\normalsize \psi_{i,j,k} \sim \textrm{normal}(\phi_{i,j}, \ \sigma_{i,j})$
 \end{subitemize}
-\item Group inclusion log odds
+\item \myemph{Group inclusion log odds}
 \begin{subitemize}
-\item $\nu_i \sim \textrm{normal}(0, \tau)
+\item $\normalsize \nu_i \sim \textrm{normal}(0, \tau)
 \qquad
 \phi_{i,1} = \theta_i + \nu_i
 \qquad
 \phi_{i,2} = \theta_i - \nu_i$
 \end{subitemize}
-\item Gene inclusion log odds
+\item \myemph{Gene inclusion log odds}
 \begin{subitemize}
-\item $\theta_i \sim \textrm{normal}(0, \gamma)$
+\item $\normalsize \theta_i \sim \textrm{normal}(0, \gamma)$
 \end{subitemize}
 \end{itemize}
 
@@ -601,17 +606,24 @@ differential alternative splicing from replicate RNA-Seq data.
 \includegraphics[width=0.55\textwidth]{img/shuonan-95pct.pdf}
 \end{center}
 
-\sld{Effort}
+\sld{Minimal effort}
 \begin{itemize}
-\item one graduate over three months part time
-\item model is half a page of Stan code
-\item time mostly spent on evaluation and visualization
-\item eliminates pages of laborious, error-prone approximations
+\item One graduate over three months part time
+\item Stan program for model is half a page long
+\begin{subitemize}
+\item hierarchical modeling automatically pools (i.e., regularizes)
+\end{subitemize}
+\item Time spent on evaluation and visualization
+\item Eliminates pages of laborious, error-prone approximation
 \begin{subitemize}
 \item custom max marginal likelihood (Laplace approximation)
 \item null hypothesis significance testing (likelihood ratios)
 \end{subitemize}
 \item 7m compute time (rMATS) vs. 10m compute time (Stan)
+\begin{subitemize}
+\item with approximate variational inference
+\item MCMC more accurate but slower (not evaluated)
+\end{subitemize}
 \end{itemize}
 
 
