@@ -503,14 +503,117 @@ y[1:T, 2] ~ lognormal(z[1:T, 2], sigma_v);
 \includegraphics[width=0.8\textwidth]{img/lotka-volterra-posterior-time.png}
 \end{center}
 
-\mypart{Example 4}
-       {Baseball Batting Ability}
+\mypart{Example 3}
+       {Gene Splice Variants}
 
-\sld{Predicting success {\large (Efron \& Morris 1975)}}
+\sld{Project}
 \begin{itemize}
-\item Observe number of successes $y_n$ in 50 trials (at bats) per item (player) $n \in 1:N$
-\item estimate success in remaining trials
+\item \myemph{Joint work} with
+\begin{subitemize}
+\item \myemph{Shuonan Chen} (Columbia Uni., biostats)
+\item Chaolin Zhang (Columbia Uni., genomics)
+\end{subitemize}
+\item \myemph{Hierarchical model} with \myemph{full Bayes} follows biology
+\item Dramatically \myemph{outperforms} the state of the art:
+\begin{quote}
+\small Shihao Shen et al. 2014. rMATS: Robust and flexible detection of
+differential alternative splicing from replicate RNA-Seq data.
+{\slshape PNAS}.
+\end{quote}
+{\small (likelihood ratio NHST based on Laplace approximation)}
+\item No magic---we just \myemph{turn the Bayesian crank} using Stan
 \end{itemize}
+
+\sld{Cassette exons}
+\begin{center}
+\includegraphics[width=0.8\textwidth]{img/cassette-exon.pdf}
+\end{center}
+\begin{itemize}
+\item Genes are sequences of exons and introns.
+\item During transcription, introns skipped and \myemph{exons spliced}.
+\item Skipping \myemph{cassette exons} translates \myemph{different proteins}.
+\item Different \myemph{cell types} have different proportions of isoforms.
+\item There is further \myemph{individual variation}.
+\end{itemize}
+
+\sld{RNA sequencing data}
+\begin{itemize}
+\item Isoforms (seqs. of exons) \myemph{translated} from DNA to RNA.
+\item Isoform \myemph{expression} varies by type, condition, and subject.
+\item RNA-seq tech.\ \myemph{samples and sequences} RNA inexpensively.
+\item Alignment software \myemph{maps} RNA seqs.\ to \myemph{genome position}.
+\item Raw data is \myemph{alignment counts}:
+\end{itemize}
+\begin{center}
+\includegraphics[width=0.7\textwidth]{img/cassette-exon.pdf}
+\end{center}
+
+\sld{Differential expression}
+\begin{itemize}
+\item Consider multiple genes (5000+ differentially splice in humans)
+\item Consider \myemph{different groups} of cells
+\begin{subitemize}
+\item e.g., normal liver vs. tumor; or liver vs. kidney
+\end{subitemize}
+\item Consider \myemph{multiple subjects} in each group
+\begin{subitemize}
+\item i.e., biological \myemph{replicates} (cells or individuals)
+\end{subitemize}
+\item \myemph{Goal} is to estimate
+\begin{subitemize}
+\item \myemph{differential expression} between groups, and
+\item \myemph{variation} within and between groups.
+\end{subitemize}
+\end{itemize}
+
+\sld{Hieararchical model}
+\begin{itemize}
+\item \myemph{exon} $i \in 1:5000$, \ \ \myemph{group} $j \in 1:2$, \ \ \myemph{replicate} $k \in 1:K$
+\item Replicate inclusion count (observed)
+\begin{subitemize}
+\item $y_{i, j, k} \sim \textrm{binomial}(N_{i,j,k}, \ \textrm{logit}^{-1}(\psi_{i, j, k}))$
+\end{subitemize}
+\item Replicate inclusion log odds
+\begin{subitemize}
+\item $\psi_{i,j,k} \sim \textrm{normal}(\phi_{i,j}, \ \sigma_{i,j})$
+\end{subitemize}
+\item Group inclusion log odds
+\begin{subitemize}
+\item $\nu_i \sim \textrm{normal}(0, \tau)
+\qquad
+\phi_{i,1} = \theta_i + \nu_i
+\qquad
+\phi_{i,2} = \theta_i - \nu_i$
+\end{subitemize}
+\item Gene inclusion log odds
+\begin{subitemize}
+\item $\theta_i \sim \textrm{normal}(0, \gamma)$
+\end{subitemize}
+\end{itemize}
+
+\sld{Area under the R.O.C.\ curve}
+\begin{center}
+\includegraphics[width=0.55\textwidth]{img/auc-shuonan.pdf}
+\end{center}
+
+\sld{Sensitivity at 95\% Specificity}
+\begin{center}
+\includegraphics[width=0.55\textwidth]{img/shuonan-95pct.pdf}
+\end{center}
+
+\sld{Effort}
+\begin{itemize}
+\item one graduate over three months part time
+\item model is half a page of Stan code
+\item time mostly spent on evaluation and visualization
+\item eliminates pages of laborious, error-prone approximations
+\begin{subitemize}
+\item custom max marginal likelihood (Laplace approximation)
+\item null hypothesis significance testing (likelihood ratios)
+\end{subitemize}
+\item 7m compute time (rMATS) vs. 10m compute time (Stan)
+\end{itemize}
+
 
 \mypart{}{Stan}
 
@@ -602,7 +705,7 @@ government, finance, machine learning, logistics, electrical engineering,  trans
 \begin{itemize}
 \item \myemph{Hamiltonian Monte Carlo} (HMC)
 \begin{subitemize}
-\item \myemph{Potential Energy}: negative log posterior $\log p(\theta \mid y)$
+\item \myemph{Potential Energy}: negative log posterior $-\log p(\theta \mid y)$
 \item \myemph{Kinetic Energy}: random standard normal each iteration
 \end{subitemize}
   %
@@ -616,8 +719,8 @@ government, finance, machine learning, logistics, electrical engineering,  trans
 \item Adapt leapfrog algorithm  \myemph{during sampling}
   \begin{subitemize}
   \item simulate forward and backward in time until U-turn
+  \item multinomial sample trajectory propto energy; bias furthest
   \end{subitemize}
-\item Multinomial sample trajectory propto energy; bias furthest
   %
 \vfill
 \hfill
@@ -706,11 +809,11 @@ $\overline{b} \ {+}{=} \ \overline{c} \cdot a$
 \end{subitemize}
 \end{itemize}
 
-\mypart{}{Projects}
+\mypart{}{Bob's Projects}
 
-\sld{Language}
+\sld{Stan language}
 \begin{itemize}
-\item Language features
+\item Extensions
 \begin{subitemize}
 \item lqmbdas with closure by value
 \item ragged arrays
@@ -718,7 +821,7 @@ $\overline{b} \ {+}{=} \ \overline{c} \cdot a$
 \item tuples \& structures
 \item user-defined gradients
 \end{subitemize}
-\item Blockless language
+\item Blockless language w.\ type inference
 \item Formal specification and denotational semantics
 \end{itemize}
 
