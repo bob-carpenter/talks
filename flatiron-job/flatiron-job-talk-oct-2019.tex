@@ -260,6 +260,67 @@ $$
 \item (MCMC) central limit theorem \myemph{approx. error} $\mbox{ } \propto \frac{\displaystyle 1}{\displaystyle \sqrt{M}}$
 \end{subitemize}
 
+\mypart{Decision Theory}
+
+\sld{Expected utility and risk}
+\begin{itemize}
+\item Agent has choice of \myemph{actions} $a \in A$.
+\begin{subitemize}
+\item discrete: do I go to college?
+\item continuous: how much do I invest for retirement?
+\end{subitemize}
+\item \myemph{Utility}: $\textrm{util}(a, \theta)$ based on state of world $\theta$
+\item \myemph{Expected Utility} conditioned on $y$:
+$$
+\mathbb{E}\!\left[\textrm{util}(a, \theta) \mid y\right]
+\ = \
+\int_{\Theta} \textrm{util}(a, \theta) \cdot p(\theta \mid y) \ \textrm{d}\theta.
+$$
+\item \myemph{Risk}: \
+$
+\displaystyle
+\textrm{sd}\!\left[\textrm{util}(a, \theta) \mid y\right]
+\ = \ \sqrt{\textrm{var}\!\left[\textrm{util}(a, \theta) \mid y\right]}
+$
+\\[4pt]
+$
+\displaystyle
+\textrm{var}\!\left[\textrm{util}(a, \theta) \mid y\right]
+\ = \
+\int_{\Theta} (\textrm{util}(a, \theta) - \mu)^2 \cdot p(\theta \mid y) \ \textrm{d}\theta.
+$
+\end{itemize}
+
+
+\sld{Decision Theory}
+\begin{itemize}
+\item Given observed data $y$ and model $p(y, \theta)$, choose action $a^* \in A$ that \myemph{maximizes expected utility}
+$$
+a^* = \textrm{arg max}_\theta \ \mathbb{E}\!\left[\textrm{util}(a, \theta) \mid y\right],
+$$
+\myemph{subject to risk threshold} $\sigma$,
+$$
+\textrm{sd}\!\left[\textrm{util}(a, \theta) \mid y\right] < \sigma.
+$$
+\item \myemph{Efficient frontier}
+\vspace*{-16pt}
+\begin{center}
+\mbox{ } \hfill \hfill \hfill \hfill
+\includegraphics[width=0.5\textwidth]{img/efficient-frontier.pdf}
+\hfill \mbox{ }
+\end{center}
+\end{itemize}
+
+\sld{Examples of decision making}
+\begin{itemize}
+\item Example of \myemph{differeing risks} with \myemph{same expected utility}:
+\begin{subitemize}
+\item 50\% chance of nothing, 50\% chance of \$1M
+\item 50\% chance of \$550K, 50% chance of \$450K
+\end{subitemize}
+\item \myemph{Online A/B testing}: choose next action with highest probability of being best.
+\end{itemize}
+
 \mypart{Example 1}{Birth Ratio}
 
 \sld{Birth ratio \hfill {\Large (Laplace, 1781)}}
@@ -696,6 +757,17 @@ epidemiology, population ecology, neurology, psychiatry, $\ldots$
 \item \myemph{Other}: {\footnotesize education, public health,
 government, finance, machine learning, logistics, electrical engineering,  transportation, actuarial science, sports, advertising, marketing, $\ldots$}
 \end{itemize}
+
+\sld{Industries using Stan}
+\begin{itemize}
+\item marketing attribution at Google, Domino's Pizza, Legendary Ent., $\ldots$
+\item demand forecasting at Facebook, Salesforce, $\ldots$
+\item time series models at Two Sigma, Point72, $\ldots$
+\item pharmacology and Phase I CTs at Novartis, Pfizer, Astra Zeneca, $\ldots$
+\item (e-)sports analytics at Tampa Bay Rays, NBA, Sony Playstation, $\ldots$
+\item $\ldots$
+\end{itemize}
+
 
 \sld{Why is Stan so Popular?}
 \begin{subitemize}
