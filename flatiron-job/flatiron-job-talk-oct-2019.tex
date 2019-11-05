@@ -73,7 +73,7 @@
 \begin{subitemize}
 \item make \myemph{calibrated predictions},
 \item \myemph{optimal decisions} under uncertainty, and
-\item solve the \myemph{replication} crisis.
+\item solve the \myemph{replication crisis}.
 \end{subitemize}
 \item With \myemph{Stan}, an open probabilistic programming framework
 \item Plus a preview of my \myemph{current projects} in
@@ -86,29 +86,10 @@
 
 \mypart{}{Calibration}
 
-\sld{Probability}
-\begin{quote}
-\footnotesize
-We must remember that the probability of an event is not a quality of the event itself, but a mere name for the degree of ground which we, or some one else, have for expecting it.
-\\ \mbox{ } \hfill {\scriptsize ---John Stuart Mill, 1882, {\it A System of Logic.} 8th Ed.}
-\end{quote}
-%
-\begin{quote}
-\footnotesize
-An intellect which at a certain moment would know all forces that set nature in motion, and all positions of all items of which nature is composed $\ldots$; for such an intellect nothing would be uncertain and the future just like the past would be present before its eyes.
-\\ \mbox{ } \hfill {\scriptsize ---Pierre-Simon Laplace, 1814, {\it A Philosophical Essay on Prob.}}
-\end{quote}
-%
-\begin{quote}
-\footnotesize
-The theory [quantum mechanics] says a lot, but does not really bring us any closer to the secret of the ``old one.'' I, at any rate, am convinced that He does not throw dice.
-\\ \mbox{ } \hfill {\scriptsize ---Albert Einstein, 1926, Letter to Max Born}
-\end{quote}
-
 \sld{Calibration}
 \begin{itemize}
 \item Empirical (frequentist) evaluation of \myemph{probabilistic forecasts}
-\item 75\% of days with forecasted 75\% chance of rain should be rainy.
+\item 75\% of days on which the chance of rain is forecasted at 75\% should be rainy.
 \begin{subitemize}
 \item for $N$ \myemph{calibrated predictions} of probability $\theta$,
 \\
@@ -129,12 +110,12 @@ $Y \sim \textrm{binomial}(N, \theta)$ will obtain
 \begin{subitemize}
 \item \myemph{low entropy, high information}
 \end{subitemize}
-\item Narrowly concentrated predictions are sharper.
+\item \myemph{Narrowly concentrated} predictions are sharper.
 \begin{subitemize}
 \item $\mbox{Pr}[\alpha \in (.58, .59)] = .9$ sharper than
 $\mbox{Pr}[\alpha \in (.5, .6)] = .9$
 \end{subitemize}
-\item Probabilistic predictions nearer 0 and 1 are sharper
+\item Probabilistic predictions \myemph{nearer 0 or 1} are sharper
 \begin{subitemize}
 \item $\mbox{Pr}[z_i = 1] = 0.95$ sharper than $\mbox{Pr}[z_i = 1] = 0.6$
 \end{subitemize}
@@ -146,7 +127,7 @@ $\mbox{Pr}[\alpha \in (.5, .6)] = .9$
 \\
 \myemph{maximize sharpness subject to calibration.}
 \\[-6pt]
-\item \myemph{Goal}: consistent, useful inference from finite data.
+\item \myemph{Goal}: consistent, useful inference from \myemph{finite data}.
 \begin{subitemize}
 \item cf. minimize variance subject to zero bias for estimators
 \end{subitemize}
@@ -165,6 +146,9 @@ $\mbox{Pr}[\alpha \in (.5, .6)] = .9$
 \item \myemph{Big data} needs \myemph{big model}
 \begin{subitemize}
 \item temporal structure, spatial structure, missing data, varying effects by group, non-linearity, correlated effects, meta-analysis, heterogeneous data, biased samples, $\ldots$
+\item adjust from sample to population, from control to treatment groups, and
+from measurements to latent variables
+\item this all requires modeling
 \end{subitemize}
 \item Data size \& computation limit practical model complexity
 \item \myemph{Goal}: push the efficient frontier (already pushed $10^2{-}\infty$)
@@ -188,7 +172,7 @@ $\mbox{Pr}[\alpha \in (.5, .6)] = .9$
 \begin{subitemize}
 \item $p(y, \theta)$ : \myemph{joint} density
 \item $p(y \mid \theta)$ : \myemph{sampling} density
-{\footnotesize \hfill (likelihood as fun of $\theta$)}
+{\footnotesize \hfill (\myemph{likelihood} as fun of $\theta$)}
 \item $p(\theta)$ : \myemph{prior} (parameter marginal)
 \item $p(\theta \mid y)$ : \myemph{posterior}
 \item $p(y)$ : \myemph{evidence} (data marginal)
@@ -270,56 +254,63 @@ $$
 \item continuous: how much do I invest for retirement?
 \end{subitemize}
 \item \myemph{Utility}: $\textrm{util}(a, \theta)$ based on state of world $\theta$
+\begin{subitemize}
+\item risk aversion, etc. rolled into utility
+\end{subitemize}
 \item \myemph{Expected Utility} conditioned on $y$:
 $$
 \mathbb{E}\!\left[\textrm{util}(a, \theta) \mid y\right]
 \ = \
 \int_{\Theta} \textrm{util}(a, \theta) \cdot p(\theta \mid y) \ \textrm{d}\theta.
 $$
-\item \myemph{Risk}: \
-$
-\displaystyle
-\textrm{sd}\!\left[\textrm{util}(a, \theta) \mid y\right]
-\ = \ \sqrt{\textrm{var}\!\left[\textrm{util}(a, \theta) \mid y\right]}
-$
-\\[4pt]
-$
-\displaystyle
-\textrm{var}\!\left[\textrm{util}(a, \theta) \mid y\right]
-\ = \
-\int_{\Theta} (\textrm{util}(a, \theta) - \mu)^2 \cdot p(\theta \mid y) \ \textrm{d}\theta.
-$
 \end{itemize}
 
-
-\sld{Decision Theory}
+\sld{Optimal Decisions}
 \begin{itemize}
 \item Given observed data $y$ and model $p(y, \theta)$, choose action $a^* \in A$ that \myemph{maximizes expected utility}
 $$
-a^* = \textrm{arg max}_\theta \ \mathbb{E}\!\left[\textrm{util}(a, \theta) \mid y\right],
+a^* = \textrm{arg max}_\theta \ \mathbb{E}\!\left[\textrm{util}(a, \theta) \mid y\right].
 $$
-\myemph{subject to risk threshold} $\sigma$,
+\item \myemph{Compute} expectation via MCMC sample
 $$
-\textrm{sd}\!\left[\textrm{util}(a, \theta) \mid y\right] < \sigma.
+\theta^{(1)}, \ldots, \theta^{(m)} \sim p(\theta \mid y),
 $$
-\item \myemph{Efficient frontier}
-\vspace*{-16pt}
-\begin{center}
-\mbox{ } \hfill \hfill \hfill \hfill
-\includegraphics[width=0.5\textwidth]{img/efficient-frontier.pdf}
-\hfill \mbox{ }
-\end{center}
+as
+$$
+\mathbb{E}\!\left[\textrm{util}(a, \theta) \mid y\right]
+\ \approx \
+\frac{1}{M} \sum_{m=1}^M \textrm{util}(a, \theta^{(m)})
+$$
+\item This objective can be \myemph{automatically differentiated}.
 \end{itemize}
 
-\sld{Examples of decision making}
+\sld{Online A/B/... testing}
 \begin{itemize}
-\item Example of \myemph{differeing risks} with \myemph{same expected utility}:
+\item Discrete sequence of actions $a_1, \ldots, a_T \in 1:K$
+\item Model of actions $p(y \mid \theta_k)$
+\item and utility $\textrm{util}(\theta, a)$
+\item choose next action with probability proportional to expected utility.
 \begin{subitemize}
-\item 50\% chance of nothing, 50\% chance of \$1M
-\item 50\% chance of \$550K, 50% chance of \$450K
+\item known as Thompson sampling in the bandit literature
 \end{subitemize}
-\item \myemph{Online A/B testing}: choose next action with highest probability of being best.
+\vfill {\footnotesize Student project with Dinko Franceschi, Andrew Gelman, and Lauren Kennedy}
 \end{itemize}
+
+\mypart{Bayesian Workflow}
+
+\sld{Bayesian Workflow}
+\begin{enumerate}
+\item design experiment \& collect data (big workflow here)
+\item for gradually \myemph{increasing model complexity}
+\begin{subitemize}
+\item \myemph{test model} and sofware on simulated data,
+\item \myemph{fit model} to real data,
+\item perform posterior predictive checks (\myemph{does it fit data?}),
+\item perform held-out checks or cross-validation (\myemph{does it predict?}).
+\end{subitemize}
+\vfill
+{\footnotesize Simpson, Rajagopal, Morris, Kennedy, Gelman, Carpenter.  (forthcoming) {\it Bayesian Workflow in Stan}. CRC Press. \url{https://github.com/jgabry/bayes-workflow-book}}
+\end{enumerate}
 
 \mypart{Example 1}{Birth Ratio}
 
@@ -693,7 +684,7 @@ differential alternative splicing from replicate RNA-Seq data.
 \sld{What is Stan?}
 %
 \begin{itemize}
-\item Stan's a domain-specific \myemph{probabilistic programming language}
+\item a domain-specific \myemph{probabilistic programming language}
 \item Stan \myemph{program} defines a \myemph{differentiable} probability model
   \begin{subitemize}
   \item declares data and (constrained) parameter variables
@@ -703,9 +694,11 @@ differential alternative splicing from replicate RNA-Seq data.
 \item Stan \myemph{inference} fits model \& makes predictions
   \begin{subitemize}
   \item MCMC for full Bayesian inference
-  \item variational and Laplace approximate Bayes
+  \item variational and Laplace for approximate Bayes
   \end{subitemize}
+\item \footnotesize Carpenter, B., Gelman, A., Hoffman, M. D., Lee, D., Goodrich, B., Betancourt, M., Marcus Brubaker, Jiqiang Guo, Peter Li, Riddell, A. (2017). Stan: A probabilistic programming language. {\slshape J.\ Stat.\ Soft.} 76(1).
 \end{itemize}
+
 
 
 \sld{Availability \& Usage}
@@ -737,11 +730,11 @@ differential alternative splicing from replicate RNA-Seq data.
 
 \sld{Some published applications}
 %
-\begin{itemize}
+\begin{subitemize}
 \item \myemph{Physical sciences}: {\footnotesize
-astrophysics, particle physics, chemistry, geology, oceanography,
-climatology, biogeochemistry, materials science, $\ldots$
+astrophysics, statistical mechanics, particle physics, (organic) chemistry, geology, oceanography, climatology, biogeochemistry, materials science, $\ldots$
 }
+\vspace*{-3pt}
 \item \myemph{Biological sciences}: {\footnotesize
 molecular biology, clinical drug trials, entomology, pharmacology,
 toxicology, opthalmology, neurology, genomics, agriculture, botany, fisheries,
@@ -754,19 +747,22 @@ epidemiology, population ecology, neurology, psychiatry, $\ldots$
  survey sampling, anthropology, sociology, social work, $\ldots$
 }
 \vspace*{-3pt}
-\item \myemph{Other}: {\footnotesize education, public health,
+\item \myemph{Other}: {\footnotesize education, public health, A/B testing,
 government, finance, machine learning, logistics, electrical engineering,  transportation, actuarial science, sports, advertising, marketing, $\ldots$}
-\end{itemize}
+\end{subitemize}
 
 \sld{Industries using Stan}
-\begin{itemize}
-\item marketing attribution at Google, Domino's Pizza, Legendary Ent., $\ldots$
-\item demand forecasting at Facebook, Salesforce, $\ldots$
-\item time series models at Two Sigma, Point72, $\ldots$
-\item pharmacology and Phase I CTs at Novartis, Pfizer, Astra Zeneca, $\ldots$
-\item (e-)sports analytics at Tampa Bay Rays, NBA, Sony Playstation, $\ldots$
-\item $\ldots$
-\end{itemize}
+\begin{subitemize}
+\item \myemph{marketing attribution}: Google, Domino's Pizza, Legendary Ent.
+\item \myemph{demand forecasting}: Facebook, Salesforce
+\item \myemph{financial modeling}: Two Sigma, Point72
+\item \myemph{pharmacology \& CTs}: Novartis, Pfizer, Astra Zeneca
+\item \myemph{(e-)sports analytics}: Tampa Bay Rays, NBA, Sony Playstation
+\item \myemph{survey sampling} at YouGov, Catalist
+\item \myemph{agronomy} at Climate Corp., CiBO Analytics
+\item \myemph{real estate pricing models}: Reaktor
+\item \myemph{industrial process control}: Fero Labs
+\end{subitemize}
 
 
 \sld{Why is Stan so Popular?}
@@ -853,10 +849,14 @@ $\overline{b} \ {+}{=} \ \overline{c} \cdot a$
 \end{itemize}
 \vspace*{-8pt}
 \mbox{ } \hfill \hfill
-\includegraphics[width=0.48\textwidth]{img/autodiff-eval-matrix-product-eigen.pdf}
+\includegraphics[width=0.40\textwidth]{img/autodiff-eval-matrix-product-eigen.pdf}
 \hfill
-\includegraphics[width=0.48\textwidth]{img/autodiff-eval-normal-density.pdf}
+\includegraphics[width=0.40\textwidth]{img/autodiff-eval-normal-density.pdf}
 \hfill \hfill
+\vfill
+\begin{subitemize}
+\item \footnotesize Carpenter, B. et al. (2015). The Stan math library: Reverse-mode automatic differentiation in C++. {\slshape arXiv:}1509.07164
+\end{subitemize}
 
 \sld{Forward-mode autodiff (tangent)}
 \begin{itemize}
@@ -880,33 +880,35 @@ $\overline{b} \ {+}{=} \ \overline{c} \cdot a$
 \sld{Higher-order autodiff}
 \begin{itemize}
 \item Open up new algorithms exploiting curvature
+\begin{subitemize}
+\footnotesize
+\item Riemannian HMC, nested Laplace approximations (ala INLA),
+nested Jacobians for ODE solver, Newton solvers for optimizers and nested algebraic equations
+\end{subitemize}
 \item Considering log densities $f :\mathbb{R}^N \rightarrow \mathbb{R}$
-\item Second order derivatives
+\item Second-order derivatives
 \begin{subitemize}
 \item nest reverse in forward adds $\mathcal{O}(N)$
 \item nest forward in forward $\mathcal{O}(N^2)$
 \end{subitemize}
-\item Third order derivatives
+\item Third-order derivatives
 \begin{subitemize}
 \item nest reverse in forward in forward $\mathcal{O}(N^2)$
 \item nest forward in forward in forward $\mathcal{O}(N^3)$
 \end{subitemize}
 \end{itemize}
 
-\mypart{}{Bob's Projects}
+\mypart{}{Ongoing Projects}
 
 \sld{Stan language}
 \begin{itemize}
 \item Extensions
 \begin{subitemize}
-\item lqmbdas with closure by value
-\item ragged arrays
-\item sparse matrices
-\item tuples \& structures
-\item user-defined gradients
+\item lambdas with closure by value, ragged arrays, sparse matrices, tuples \& structures, user-defined gradients
+\item designs: \url{https://github.com/stan-dev/design-docs}
 \end{subitemize}
-\item Blockless language w.\ type inference
-\item Formal specification and denotational semantics
+\item Blockless language w.\ type inference (w.\ Maria Gorinova, Sean Talts, Matthijs V\'ak\'ar)
+\item Formal specification and denotational semantics (w.\ Matthijs V\'ak\'ar)
 \end{itemize}
 
 \sld{Algorithms}
