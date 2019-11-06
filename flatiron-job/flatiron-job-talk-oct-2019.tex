@@ -87,7 +87,7 @@ supporting {Bayesian workflow}
 \sld{Calibration}
 \begin{itemize}
 \item Empirical (frequentist) evaluation of \myemph{probabilistic forecasts}
-\item Of the days on which a 75\% of rain is forecast, 75\% of them
+\item Of the days on which a 75\% of rain is forecast, roughly 75\% of them
 should be rainy. 
 \begin{subitemize}
 \item for $N$ \myemph{calibrated predictions} of probability $\theta$,
@@ -97,7 +97,7 @@ $Y \sim \textrm{binomial}(N, \theta)$ will obtain
 \item Depends on \myemph{conditional} information
 \item Calibrated predictions of the {\slshape same event}
 \begin{subitemize}
-\item Will it \myemph{rain in Edinburgh} on any given day of the year?  (52\%)
+\item Will it \myemph{rain in Edinburgh} on any given day?  (52\%)
 \item $\ldots$ on any given day in December?  (65\%)
 \item $\ldots$ tomorrow?  (80\%)
 \end{subitemize}
@@ -132,7 +132,7 @@ $\mbox{Pr}[\alpha \in (.5, .6)] = .9$
 \end{subitemize}
 \item Bayesian models are calibrated if they are \myemph{well-specified}
 \begin{subitemize}
-\item Meaning they capture the true data-generating process.
+\item i.e., they capture the true data-generating process.
 \item But, models are always approximate.
 \item So, need to test fit real data.
 \end{subitemize}
@@ -151,7 +151,7 @@ from measurements to latent variables
 \item this all requires modeling
 \end{subitemize}
 \item Data size \& computation limit practical model complexity
-\item \myemph{Goal}: keep extending the efficient frontier
+\item \myemph{Computational goal}: keep extending efficient frontier
 \begin{subitemize}
 \item already pushed $10^2{-}\infty$ efficiency and scalability
 \end{subitemize}
@@ -310,11 +310,13 @@ next action $a_{t+1}$ chosen w.\ probability proportional to $k$ being best
 \item design experiment \& collect data (its own workflow)
 \item for gradually \myemph{increasing model complexity}
 \begin{subitemize}
-\item \myemph{test model} and sofware on simulated data,
-\item \myemph{fit model} to real data,
+\item \myemph{test model} and sofware on simulated data (\myemph{does
+    it work?}),
 \item perform prior predictive checks (\myemph{is prior sensible?})
-\item perform posterior predictive checks (\myemph{does it fit data?}),
-\item perform held-out checks or cross-validation (\myemph{does it predict?}).
+\item \myemph{fit model} to real data,
+\item perform posterior predictive checks (\myemph{does it fit
+    data?}), and
+\item perform held-out checks/cross-validation (\myemph{does it predict?}).
 \end{subitemize}
 \vfill
 {\footnotesize Simpson, Rajagopal, Morris, Kennedy, Gelman, Carpenter.  (forthcoming) {\it Bayesian Workflow in Stan}. CRC Press. \url{https://github.com/jgabry/bayes-workflow-book}}
@@ -473,7 +475,7 @@ y[1:T, 2] ~ lognormal(z[1:T, 2], sigma_v);
 \item $\hat{y} = f(\theta)$
 \end{subitemize}
 \item error model $y_{t,k} \sim \textrm{lognormal}(\hat{y}_{t,k}, \sigma_k)$
-\item added weakly informative priors (roughly fixing scale) $p(\theta)$
+\item added weakly informative priors $p(\theta)$ (fixing scale) 
 \item turn the Bayesian crank to sample from posterior
 \begin{subitemize}
 \item $\theta^{(1)}, \ldots, \theta^{(M)} \sim p(\theta \mid y).$
@@ -535,6 +537,17 @@ generated quantities {
     y[2:n] ~ normal(alpha + beta * y[1:(n-1)], sigma);
   }
 \end{stancode}
+
+\sld{Models for counts}
+\begin{itemize}
+\item Stan and emcee for Poisson regression in LIGO:
+\vspace*{-6pt}
+\begin{center}
+\includegraphics[width=0.75\textwidth]{img/ligo-stan.png}
+\end{center}
+\end{itemize}
+
+
 
 \sld{Priors with covariance}
 %
@@ -675,9 +688,11 @@ differential alternative splicing from replicate RNA-Seq data.
 \end{itemize}
 
 \sld{Sensitivity at 95\% Specificity}
+\vspace*{-4pt}
 \begin{subitemize}
 \item
-\includegraphics[width=0.50\textwidth]{img/shuonan-95pct.pdf}
+\includegraphics[width=0.55\textwidth]{img/shuonan-95pct.pdf}
+\vspace*{-6pt}
 \item \footnotesize {\slshape sensitivity} = true positive rate; 
 \ \ {\slshape specificity} = 1 - false positive rate
 \end{subitemize}
@@ -920,24 +935,6 @@ nested Jacobians for ODE solver, Newton solvers for optimizers and nested algebr
 \end{subitemize}
 \end{itemize}
 
-\sld{Discrete parameters?}
-\begin{itemize}
-\item \myemph{Stan's focus}: tractably \myemph{marginalized}
-\begin{subitemize}
-\item e.g., mixtures, HMMs, state-space models
-\item \myemph{efficient} in theory due to Rao-Blackwell; in practice by eliminating combinatorics; much better tail behavior
-\item marginalizations available wherever you find EM \& MML
-\end{subitemize}
-\item \myemph{Out of scope}: combinatorially \myemph{intractable}
-\begin{subitemize}
-\item e.g., selection, clustering, random trees, neural nets
-\item optimization is NP-hard or worse
-\item thus \myemph{nobody knows how to get right} answer in general
-\item some special cases can be fit
-\end{subitemize}
-\item \myemph{In between}: missing count data
-\end{itemize}
-
 \sld{Stan's shortcomings}
 \begin{itemize}
 \item Failures
@@ -954,6 +951,24 @@ nested Jacobians for ODE solver, Newton solvers for optimizers and nested algebr
 \item stochastic algebraic \& differential eqs, PDEs
 \item structured data types, sparse data types \& closures
 \end{subitemize}
+\end{itemize}
+
+\sld{Discrete parameters?}
+\begin{itemize}
+\item \myemph{Stan's focus}: tractably \myemph{marginalized}
+\begin{subitemize}
+\item e.g., mixtures, HMMs, state-space models
+\item \myemph{efficient} in theory due to Rao-Blackwell; in practice by eliminating combinatorics; much better tail behavior
+\item marginalizations available wherever you find EM \& MML
+\end{subitemize}
+\item \myemph{Out of scope}: combinatorially \myemph{intractable}
+\begin{subitemize}
+\item e.g., selection, clustering, random trees, neural nets
+\item optimization is NP-hard or worse
+\item thus \myemph{nobody knows how to get right} answer in general
+\item some special cases can be fit
+\end{subitemize}
+\item \myemph{In between}: missing count data
 \end{itemize}
 
 \mypart{}{Ongoing Projects}
@@ -1005,21 +1020,21 @@ Improving Probabilistic Programming using Information Flow Analysis.
 \item prototype in R/Python; deploy in C++
 \end{itemize}
 
-\sld{Goldilocks Adaptation}
-\vspace*{-3pt}
+\sld{Goldilocks Adaptation {\large (prototyped)}}
+\vspace*{-6pt}
 \begin{center}
 \includegraphics[width=0.28\textwidth]{img/napkin-adapt.jpg}
 \end{center}
-\vspace*{-3pt}
+\vspace*{-12pt}
 \begin{itemize}
+\item find \myemph{typical set} ($\theta s.t.\ \textrm{H}[\theta] \pm \epsilon$) \myemph{in parallel}
 \item random initialize in tail; follow optimization to(ward) mode
 \item At steps, spawn off depth-limited, small $\epsilon$, NUTS process
 \begin{subitemize}
-\item (too cold) points in tail increase log density
-\item (too hot) points toward mode decrease in log density
-\item (just right) those in typical set follow flow inside
+\item (too cold) points in tail trend upward in log density
+\item (too hot) points near mode trend downard
+\item (just right) those in typical set bounce around
 \end{subitemize}
-\item initial prototype working
 \end{itemize}
 
 \sld{Methodology}
