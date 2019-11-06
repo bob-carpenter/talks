@@ -62,47 +62,44 @@
 \item Probability theory uses math to \myemph{quantify uncertainty}.
 \item \myemph{Bayesian statistics} applies probability theory to
 \begin{subitemize}
-\item data \myemph{analysis},
-\item \myemph{prediction} \& forecasting,
-\item model \myemph{evaluation}, and
-\item \myemph{decision} theory.
+\item data {analysis},
+\item {prediction} \& forecasting,
+\item model {evaluation}, and
+\item {decision} theory.
 \end{subitemize}
 \end{itemize}
 
 \sld{This talk}
-\begin{itemize}
+\begin{enumerate}
 \item How to combine data, theory, and probability to
 \begin{subitemize}
 \item make \myemph{calibrated predictions},
 \item \myemph{optimal decisions} under uncertainty, and
-\item solve the \myemph{replication crisis}.
+\item along the way, solve the \myemph{replication crisis}.
 \end{subitemize}
-\item With \myemph{Stan}, an open probabilistic programming framework
-\item Plus a preview of my \myemph{current projects} in
-\begin{subitemize}
-\item algorithms,
-\item methodology and
-\item applications.
-\end{subitemize}
-\end{itemize}
+\item \myemph{Stan}, an open probabilistic programming framework
+supporting {Bayesian workflow}
+\item Highlights of my \myemph{current projects}
+\end{enumerate}
 
 \mypart{}{Calibration}
 
 \sld{Calibration}
 \begin{itemize}
 \item Empirical (frequentist) evaluation of \myemph{probabilistic forecasts}
-\item 75\% of days on which the chance of rain is forecasted at 75\% should be rainy.
+\item Of the days on which a 75\% of rain is forecast, 75\% of them
+should be rainy. 
 \begin{subitemize}
 \item for $N$ \myemph{calibrated predictions} of probability $\theta$,
 \\
 $Y \sim \textrm{binomial}(N, \theta)$ will obtain
 \end{subitemize}
 \item Depends on \myemph{conditional} information
-\item Examples of calibrated predictions of same event
+\item Calibrated predictions of the {\slshape same event}
 \begin{subitemize}
-\item Will it rain in Edinburgh?  (52\%)
-\item Will it rain in Edinburgh in December?  (65\%)
-\item Will it rain in Edinburgh tomorrow?  (80\%)
+\item Will it \myemph{rain in Edinburgh} on any given day of the year?  (52\%)
+\item $\ldots$ on any given day in December?  (65\%)
+\item $\ldots$ tomorrow?  (80\%)
 \end{subitemize}
 \end{itemize}
 
@@ -135,8 +132,9 @@ $\mbox{Pr}[\alpha \in (.5, .6)] = .9$
 \end{subitemize}
 \item Bayesian models are calibrated if they are \myemph{well-specified}
 \begin{subitemize}
-\item But, models are always approximate,
-\item so need to test with real data.
+\item Meaning they capture the true data-generating process.
+\item But, models are always approximate.
+\item So, need to test fit real data.
 \end{subitemize}
 \end{itemize}
 
@@ -153,10 +151,13 @@ from measurements to latent variables
 \item this all requires modeling
 \end{subitemize}
 \item Data size \& computation limit practical model complexity
-\item \myemph{Goal}: push the efficient frontier (already pushed $10^2{-}\infty$)
-\begin{center}
-\includegraphics[width=0.5\textwidth]{img/model-size.pdf}
-\end{center}
+\item \myemph{Goal}: keep extending the efficient frontier
+\begin{subitemize}
+\item already pushed $10^2{-}\infty$ efficiency and scalability
+\end{subitemize}
+% \begin{center}
+% \includegraphics[width=0.5\textwidth]{img/model-size.pdf}
+% \end{center}
 \end{itemize}
 
 
@@ -282,19 +283,22 @@ as
 $$
 \mathbb{E}\!\left[\textrm{util}(a, \theta) \mid y\right]
 \ \approx \
-\frac{1}{M} \sum_{m=1}^M \textrm{util}(a, \theta^{(m)})
+\frac{1}{M} \sum_{m=1}^M \textrm{util}\!\left(a, \theta^{(m)}\right)
 $$
-\item This objective can be \myemph{automatically differentiated}.
+\item can be \myemph{automatically differentiated}.
 \end{itemize}
 
 \sld{Online A/B/... testing}
 \begin{itemize}
-\item Discrete sequence of actions $a_1, \ldots, a_T \in 1:K$
-\item Model of actions $p(y \mid \theta_k)$
-\item and utility $\textrm{util}(\theta, a)$
-\item choose next action with probability proportional to expected utility.
+\item discrete choice of action $k \in 1:K$ 
+\item probabilistic outcome of action $k$ as $p(y \mid \theta_k)$
+\item assume utility $\textrm{util}(\theta, a)$
+\item observe history of actions $a_1, \ldots, a_t \in 1:K$ and paired
+  outcomes $y_1, \ldots, y_t \in \mathbb{R}.$
+\item explore/exploit: 
+next action $a_{t+1}$ chosen w.\ probability proportional to $k$ being best
 \begin{subitemize}
-\item known as Thompson sampling in the bandit literature
+\item aka Thompson sampling
 \end{subitemize}
 \vfill {\footnotesize Student project with Dinko Franceschi, Andrew Gelman, and Lauren Kennedy}
 \end{itemize}
@@ -303,11 +307,12 @@ $$
 
 \sld{Bayesian Workflow}
 \begin{enumerate}
-\item design experiment \& collect data (big workflow here)
+\item design experiment \& collect data (its own workflow)
 \item for gradually \myemph{increasing model complexity}
 \begin{subitemize}
 \item \myemph{test model} and sofware on simulated data,
 \item \myemph{fit model} to real data,
+\item perform prior predictive checks (\myemph{is prior sensible?})
 \item perform posterior predictive checks (\myemph{does it fit data?}),
 \item perform held-out checks or cross-validation (\myemph{does it predict?}).
 \end{subitemize}
@@ -400,7 +405,7 @@ $$
 \includegraphics[width=0.6\textwidth]{img/volterra-solutions.jpg}
 \end{center}
 
-\sld{Measurement error}
+\sld{Measurement/model error}
 \begin{itemize}
 \item $u, v$ are observed
 \item $\hat{u}, \hat{v}$ predicted by mechanistic model
@@ -409,7 +414,7 @@ $$
 \item $u_t \sim \textrm{lognormal}(\hat{u}_t, \sigma_1)$
 \item $v_t \sim \textrm{lognormal}(\hat{v}_t, \sigma_2)$
 \end{subitemize}
-\item Weakly informative priors inform scale
+\item Weakly informative priors determine scale
 \begin{subitemize}
 \item $\alpha, \gamma \sim \textrm{normal}(1, 0.5)$; \ \ \
 $\beta, \delta \sim \textrm{normal}(0.05, 0.05)$
@@ -431,6 +436,8 @@ $\beta, \delta \sim \textrm{normal}(0.05, 0.05)$
 {\it right)} hare vs. lynx pelts
 \\
 (line per species) \hfill (over time)
+\item pelt data proxy proportional to population (could model)
+\item as is, model predicts pelts, not population
 \end{itemize}
 
 \sld{Stan dynamics \& error}
@@ -461,8 +468,11 @@ y[1:T, 2] ~ lognormal(z[1:T, 2], sigma_v);
 
 \sld{Summary}
 \begin{itemize}
-\item mechanistic forward model of dyamics (Lotka 1926) $\hat{y} = f(\theta)$
-\item noisy measurement model $y_{t,k} \sim \textrm{lognormal}(\hat{y}_{t,k}, \sigma_k)$
+\item mechanistic forward model of dyamics (Lotka 1926)
+\begin{subitemize}
+\item $\hat{y} = f(\theta)$
+\end{subitemize}
+\item error model $y_{t,k} \sim \textrm{lognormal}(\hat{y}_{t,k}, \sigma_k)$
 \item added weakly informative priors (roughly fixing scale) $p(\theta)$
 \item turn the Bayesian crank to sample from posterior
 \begin{subitemize}
@@ -668,17 +678,18 @@ differential alternative splicing from replicate RNA-Seq data.
 \begin{subitemize}
 \item
 \includegraphics[width=0.50\textwidth]{img/shuonan-95pct.pdf}
-\item Sensitivity = true pos.\ rate; Specificity = 1 - false pos.\ rate
+\item \footnotesize {\slshape sensitivity} = true positive rate; 
+\ \ {\slshape specificity} = 1 - false positive rate
 \end{subitemize}
 
 \sld{All with minimal effort}
 \begin{itemize}
-\item one graduate over three months part time; mostly eval
-\item uses variational inference
+\item one grad student over three months part time; mostly eval
+\item uses default variational inference
 \item Stan program for model is half a page long
 \begin{subitemize}
-\item hierarchical modeling automatically pools (i.e., regularizes)
-\item (like jointly fitting shrinkage/regularization in ML)
+\item hierarchical modeling automatically pools
+\item i.e., shares strength, regularizes, shrinks effects
 \end{subitemize}
 \item Eliminates pages of laborious, error-prone approximation
 \begin{subitemize}
@@ -762,20 +773,22 @@ government, finance, machine learning, logistics, electrical engineering,  trans
 \end{subitemize}
 
 \sld{Industries using Stan}
+\vspace*{3pt}
 \begin{subitemize}
 \item \myemph{marketing attribution}: Google, Domino's Pizza, Legendary Ent.
 \item \myemph{demand forecasting}: Facebook, Salesforce
 \item \myemph{financial modeling}: Two Sigma, Point72
 \item \myemph{pharmacology \& CTs}: Novartis, Pfizer, Astra Zeneca
 \item \myemph{(e-)sports analytics}: Tampa Bay Rays, NBA, Sony Playstation
-\item \myemph{survey sampling} at YouGov, Catalist
-\item \myemph{agronomy} at Climate Corp., CiBO Analytics
+\item \myemph{survey sampling}: YouGov, Catalist
+\item \myemph{agronomy}: Climate Corp., CiBO Analytics
 \item \myemph{real estate pricing models}: Reaktor
 \item \myemph{industrial process control}: Fero Labs
 \end{subitemize}
 
 
 \sld{Why is Stan so Popular?}
+\vspace*{3pt}
 \begin{subitemize}
 \item \myemph{Community}: large, friendly, helpful, and sharing
 \item \myemph{Documentation}:  novice to expert; breadth of fields
@@ -793,11 +806,13 @@ government, finance, machine learning, logistics, electrical engineering,  trans
 
 \sld{No-U-turn sampler}
 %
+\vspace*{-3pt}
 \begin{itemize}
 \item \myemph{Hamiltonian Monte Carlo} (HMC)
 \begin{subitemize}
 \item \myemph{Potential Energy}: negative log posterior $-\log p(\theta \mid y)$
 \item \myemph{Kinetic Energy}: random standard normal each iteration
+\item \myemph{geometric ergodicity} for wider range of models \& data
 \end{subitemize}
   %
 \item Adapt leapfrog algorithm \myemph{during warmup}
@@ -813,9 +828,7 @@ government, finance, machine learning, logistics, electrical engineering,  trans
   \item multinomial sample trajectory propto energy; bias furthest
   \end{subitemize}
   %
-\vfill
-\hfill
-{\footnotesize (Hoffman and Gelman 2011, 2014; Betancourt 2019)}
+\item developed concurrently w. Stan (Hoffman \& Gelman 2011)
 \end{itemize}
 
 \sld{NUTS vs.\ Gibbs and Metropolis}
@@ -863,8 +876,6 @@ $\overline{b} \ {+}{=} \ \overline{c} \cdot a$
 \includegraphics[width=0.40\textwidth]{img/autodiff-eval-matrix-product-eigen.pdf}
 \hfill
 \includegraphics[width=0.40\textwidth]{img/autodiff-eval-normal-density.pdf}
-\hfill \hfill
-\vfill
 \begin{subitemize}
 \item \footnotesize Carpenter, B. et al. (2015). The Stan math library: Reverse-mode automatic differentiation in C++. {\slshape arXiv:}1509.07164
 \end{subitemize}
@@ -927,12 +938,11 @@ nested Jacobians for ODE solver, Newton solvers for optimizers and nested algebr
 \item \myemph{In between}: missing count data
 \end{itemize}
 
-\sld{Problems with Stan?}
+\sld{Stan's shortcomings}
 \begin{itemize}
 \item Failures
 \begin{subitemize}
-\item extreme varying posterior curvature (can't adapt)
-\item stiff Hamiltonians (can't adapt)
+\item extreme varying posterior curvature (stiff---can't adapt)
 \item floating point (e.g., log cdfs and ccdfs, gradients)
 \item scalability of data and parameters
 \end{subitemize}
@@ -941,7 +951,7 @@ nested Jacobians for ODE solver, Newton solvers for optimizers and nested algebr
 \item black-box log densities (cf. emcee in Python)
 \item checkpointd autodiff for large Gaussian processes
 \item filtering (online model updating)
-\item stochastic algebraic \& diff eqs, PDEs
+\item stochastic algebraic \& differential eqs, PDEs
 \item structured data types, sparse data types \& closures
 \end{subitemize}
 \end{itemize}
@@ -963,8 +973,8 @@ nested Jacobians for ODE solver, Newton solvers for optimizers and nested algebr
 
 \sld{Blockless Stan}
 \begin{itemize}
-\item infers block: data, transformed data, parameter, transformed data, generated quantity
-\item follows generative story
+\item data flow for: data, parameter, generated quantity
+\item program order follows generative story
 \item locates variable declarations near use
 \end{itemize}
 \begin{stancode}
@@ -975,6 +985,12 @@ int N;
 matrix[N, K] x;
 vector[N] y ~ normal(x * beta, sigma);
 \end{stancode}
+\begin{subitemize}
+\footnotesize \item 
+Gorinova, M. I., Gordon, A. D., \& Sutton, C. (2018). SlicStan:
+Improving Probabilistic Programming using Information Flow Analysis.
+{\slshape Probabilistic Programming Languages, Semantics, and Systems}.
+\end{subitemize}
 
 \sld{Algorithms}
 \begin{itemize}
@@ -990,26 +1006,26 @@ vector[N] y ~ normal(x * beta, sigma);
 \end{itemize}
 
 \sld{Goldilocks Adaptation}
+\vspace*{-3pt}
 \begin{center}
-\includegraphics[width=0.3\textwidth]{img/napkin-adapt.jpg}
+\includegraphics[width=0.28\textwidth]{img/napkin-adapt.jpg}
 \end{center}
+\vspace*{-3pt}
 \begin{itemize}
-\item Random initialize in tail; follow optimization to(ward) mode
+\item random initialize in tail; follow optimization to(ward) mode
 \item At steps, spawn off depth-limited, small $\epsilon$, NUTS process
 \begin{subitemize}
 \item (too cold) points in tail increase log density
 \item (too hot) points toward mode decrease in log density
 \item (just right) those in typical set follow flow inside
 \end{subitemize}
+\item initial prototype working
 \end{itemize}
 
 \sld{Methodology}
 \begin{itemize}
 \item Bayes vs.\ point estimation \& proper scoring
-\item Model/data evaluation via calibration and sharpenss (entropy)
 \item Model/data evaluation with uncertain (crowdsourced) data
-\item Partially pool performance estimates for multiple comparison
-\item Push uncertainty through decision making
 \vfill
 \noindent
 {\footnotesize Work in progress: \url{https://github.com/bob-carpenter/case-studies}}
@@ -1117,7 +1133,7 @@ Carpenter, Bob. (forthcoming) \myemph{\slshape Probability and Statistics: A Sim
 \sld{Summary: List of Projects}
 \begin{subitemize}
 \item \myemph{Stan language} (structs; closures; sparse; ragged; blockless)
-\item \myemph{applied math algorithms} (autodiff; numerics)
+\item \myemph{Automatic differentiation} (higher-order; matrix; testing)
 \item \myemph{MCMC algorithms} (adaptation; sampling; sequential)
 \item \myemph{Applications}
 \begin{subitemize}
