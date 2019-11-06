@@ -21,8 +21,10 @@
 \includegraphics[width=0.3in]{img/new-logo.png}
 
 \mypart{}{Motivation}
+\pagestyle{plain}
 
 \sld{Scientists}
+\pagestyle{plain}
 \begin{itemize}
 \item want to \myemph{understand} the world,
 \item bring mechanistic \myemph{theories},
@@ -51,7 +53,7 @@
 \item The \myemph{alternative to good statistics} is
 \begin{subitemize}
 \item not no statistics,
-\item but \myemph{bad statistics}.
+\item but \myemph{bad statistics}. \hfill (Bill James)
 \end{subitemize}
 \end{itemize}
 
@@ -179,7 +181,7 @@ from measurements to latent variables
 \end{subitemize}
 \end{itemize}
 
-\sld{Bayesian inversion}
+\sld{Bayes's rule}
 {\footnotesize
 \begin{eqnarray*}
 p(\theta \mid y) & = & \frac{p(y, \theta)}{p(y)}
@@ -263,6 +265,7 @@ $$
 \ = \
 \int_{\Theta} \textrm{util}(a, \theta) \cdot p(\theta \mid y) \ \textrm{d}\theta.
 $$
+\item point estimates aren't plug \& play due to \myemph{non-linearity}
 \end{itemize}
 
 \sld{Optimal Decisions}
@@ -373,7 +376,102 @@ y_sim              50.902   0.081 38.000  64.000
 \item {\texttt y\_sim} estimated \myemph{forecast} for next 100 births
 \end{subitemize}
 
-\mypart{Example 2}{Linear Models}
+
+\mypart{Example 2}{Population Dynamics}
+
+\sld{Population Dynamics \hfill {\large (Volterra 1926)}}
+\begin{itemize}
+\item populations at $t$ of prey $u(t)$ \& predator $v(t)$
+\item Volterra's mechanistic model
+$$
+\frac{\textrm{d}}{\textrm{d}t}u = (\alpha - \beta \cdot v) \cdot u
+\qquad
+\frac{\textrm{d}}{\textrm{d}t}v = (-\gamma + \delta \cdot u) \cdot v
+$$
+\vspace*{-12pt}
+\begin{subitemize}
+\item $\alpha$: prey growth rate;  \ $\beta$: predation shrinkage
+\item $\gamma$: predator shrinkage; \ $\delta$: predation growth
+\end{subitemize}
+\end{itemize}
+
+\sld{Analytic solution \hfill {\large (Volterra 1926)}}
+\begin{center}
+\includegraphics[width=0.6\textwidth]{img/volterra-solutions.jpg}
+\end{center}
+
+\sld{Measurement error}
+\begin{itemize}
+\item $u, v$ are observed
+\item $\hat{u}, \hat{v}$ predicted by mechanistic model
+\item Independent error proportional to population size
+\begin{subitemize}
+\item $u_t \sim \textrm{lognormal}(\hat{u}_t, \sigma_1)$
+\item $v_t \sim \textrm{lognormal}(\hat{v}_t, \sigma_2)$
+\end{subitemize}
+\item Weakly informative priors inform scale
+\begin{subitemize}
+\item $\alpha, \gamma \sim \textrm{normal}(1, 0.5)$; \ \ \
+$\beta, \delta \sim \textrm{normal}(0.05, 0.05)$
+\item $\sigma_1, \sigma_2 \sim \textrm{lognormal}(-1, 1)$
+\end{subitemize}
+\end{itemize}
+
+\sld{Hudson's Bay Co.\ pelts \hfill {\large (Hewitt 1921)}}
+\begin{center}
+\includegraphics[width=0.9\textwidth]{img/hudons-bay-data.png}
+\end{center}
+
+\sld{Plotted pelt data}
+\begin{center}
+\includegraphics[width=0.45\textwidth]{img/lynx-hares-1.png}~\includegraphics[width=0.45\textwidth]{img/lynx-hares-2.png}
+\end{center}
+\begin{itemize}
+\item {\it left)} pelts vs. time \hfill
+{\it right)} hare vs. lynx pelts
+\\
+(line per species) \hfill (over time)
+\end{itemize}
+
+\sld{Stan dynamics \& error}
+\begin{stancode}
+real[] dz_dt(real t, real[] uv, real[] theta,
+             real[] theta, real[] x_r, int[] x_i) {
+  return { (theta[1] - theta[2] * uv[2]) * uv[1],
+           (-theta[3] + theta[4] * uv[1]) * uv[2] };
+}
+...
+real z[T, 2]
+  = integrate_ode(dz_dt, z0, t0, sol_ts[1:T], theta,
+                  rep_array(0.0, 0), rep_array(0, 0));
+...
+y[1:T, 1] ~ lognormal(z[1:T, 1], sigma_u);
+y[1:T, 2] ~ lognormal(z[1:T, 2], sigma_v);
+\end{stancode}
+
+\sld{Measurements \& predictions}
+\begin{center}
+\includegraphics[width=0.8\textwidth]{img/lotka-volterra-posterior.pdf}
+\end{center}
+
+\sld{100 predictive draws}
+\begin{center}
+\includegraphics[width=0.8\textwidth]{img/lotka-volterra-posterior-time.png}
+\end{center}
+
+\sld{Summary}
+\begin{itemize}
+\item mechanistic forward model of dyamics (Lotka 1926) $\hat{y} = f(\theta)$
+\item noisy measurement model $y_{t,k} \sim \textrm{lognormal}(\hat{y}_{t,k}, \sigma_k)$
+\item added weakly informative priors (roughly fixing scale) $p(\theta)$
+\item turn the Bayesian crank to sample from posterior
+\begin{subitemize}
+\item $\theta^{(1)}, \ldots, \theta^{(M)} \sim p(\theta \mid y).$
+\end{subitemize}
+\item This methodology \myemph{works for many scientific models}.
+\end{itemize}
+
+\mypart{Example 3}{Linear Models}
 
 \sld{Logistic regression}
 %
@@ -478,89 +576,7 @@ data {
 }
 \end{stancode}
 
-\mypart{Example 3}{Population Dynamics}
-
-\sld{Population Dynamics \hfill {\large (Volterra 1926)}}
-\begin{itemize}
-\item populations at $t$ of prey $u(t)$ \& predator $v(t)$
-\item Volterra's mechanistic model
-$$
-\frac{\textrm{d}}{\textrm{d}t}u = (\alpha - \beta \cdot v) \cdot u
-\qquad
-\frac{\textrm{d}}{\textrm{d}t}v = (-\gamma + \delta \cdot u) \cdot v
-$$
-\vspace*{-12pt}
-\begin{subitemize}
-\item $\alpha$: prey growth rate;  \ $\beta$: predation shrinkage
-\item $\gamma$: predator shrinkage; \ $\delta$: predation growth
-\end{subitemize}
-\end{itemize}
-
-\sld{Analytic solution \hfill {\large (Volterra 1926)}}
-\begin{center}
-\includegraphics[width=0.6\textwidth]{img/volterra-solutions.jpg}
-\end{center}
-
-\sld{Measurement error}
-\begin{itemize}
-\item $u, v$ are observed
-\item $\hat{u}, \hat{v}$ predicted by mechanistic model
-\item Independent error proportional to population size
-\begin{subitemize}
-\item $u_t \sim \textrm{lognormal}(\hat{u}_t, \sigma_1)$
-\item $v_t \sim \textrm{lognormal}(\hat{v}_t, \sigma_2)$
-\end{subitemize}
-\item Weakly informative priors inform scale
-\begin{subitemize}
-\item $\alpha, \gamma \sim \textrm{normal}(1, 0.5)$; \ \ \
-$\beta, \delta \sim \textrm{normal}(0.05, 0.05)$
-\item $\sigma_1, \sigma_2 \sim \textrm{lognormal}(-1, 1)$
-\end{subitemize}
-\end{itemize}
-
-\sld{Hudson's Bay Co.\ pelts \hfill {\large (Hewitt 1921)}}
-\begin{center}
-\includegraphics[width=0.9\textwidth]{img/hudons-bay-data.png}
-\end{center}
-
-\sld{Plotted pelt data}
-\begin{center}
-\includegraphics[width=0.45\textwidth]{img/lynx-hares-1.png}~\includegraphics[width=0.45\textwidth]{img/lynx-hares-2.png}
-\end{center}
-\begin{itemize}
-\item {\it left)} pelts vs. time \hfill
-{\it right)} hare vs. lynx pelts
-\\
-(line per species) \hfill (over time)
-\end{itemize}
-
-\sld{Stan dynamics \& error}
-\begin{stancode}
-real[] dz_dt(real t, real[] uv, real[] theta,
-             real[] theta, real[] x_r, int[] x_i) {
-  return { (theta[1] - theta[2] * uv[2]) * uv[1],
-           (-theta[3] + theta[4] * uv[1]) * uv[2] };
-}
-...
-real z[T, 2]
-  = integrate_ode(dz_dt, z0, t0, sol_ts[1:T], theta,
-                  rep_array(0.0, 0), rep_array(0, 0));
-...
-y[1:T, 1] ~ lognormal(z[1:T, 1], sigma_u);
-y[1:T, 2] ~ lognormal(z[1:T, 2], sigma_v);
-\end{stancode}
-
-\sld{Measurements \& predictions}
-\begin{center}
-\includegraphics[width=0.8\textwidth]{img/lotka-volterra-posterior.pdf}
-\end{center}
-
-\sld{100 predictive draws}
-\begin{center}
-\includegraphics[width=0.8\textwidth]{img/lotka-volterra-posterior-time.png}
-\end{center}
-
-\mypart{Example 3}
+\mypart{Example 4}
        {Gene Splice Variants}
 
 \sld{Project}
@@ -623,7 +639,7 @@ differential alternative splicing from replicate RNA-Seq data.
 \end{subitemize}
 \end{itemize}
 
-\sld{Hieararchical model}
+\sld{Hierarchical model}
 \begin{itemize}
 \item \myemph{exon} $i \in 1:5000$, \ \ \myemph{group} $j \in 1:2$, \ \ \myemph{replicate} $k \in 1:K$
 \item \myemph{Replicate inclusion count} (observed)
@@ -648,34 +664,28 @@ differential alternative splicing from replicate RNA-Seq data.
 \end{subitemize}
 \end{itemize}
 
-\sld{Area under the R.O.C.\ curve}
-\begin{center}
-\includegraphics[width=0.55\textwidth]{img/auc-shuonan.pdf}
-\end{center}
-
 \sld{Sensitivity at 95\% Specificity}
-\begin{center}
-\includegraphics[width=0.55\textwidth]{img/shuonan-95pct.pdf}
-\end{center}
+\begin{subitemize}
+\item
+\includegraphics[width=0.50\textwidth]{img/shuonan-95pct.pdf}
+\item Sensitivity = true pos.\ rate; Specificity = 1 - false pos.\ rate
+\end{subitemize}
 
-\sld{Minimal effort}
+\sld{All with minimal effort}
 \begin{itemize}
-\item One graduate over three months part time
+\item one graduate over three months part time; mostly eval
+\item uses variational inference
 \item Stan program for model is half a page long
 \begin{subitemize}
 \item hierarchical modeling automatically pools (i.e., regularizes)
+\item (like jointly fitting shrinkage/regularization in ML)
 \end{subitemize}
-\item Time spent on evaluation and visualization
 \item Eliminates pages of laborious, error-prone approximation
 \begin{subitemize}
 \item custom max marginal likelihood (Laplace approximation)
 \item null hypothesis significance testing (likelihood ratios)
 \end{subitemize}
 \item 7m compute time (rMATS) vs. 10m compute time (Stan)
-\begin{subitemize}
-\item with approximate variational inference
-\item MCMC more accurate but slower (not evaluated)
-\end{subitemize}
 \end{itemize}
 
 
@@ -777,6 +787,7 @@ government, finance, machine learning, logistics, electrical engineering,  trans
 \item \myemph{Scalability}:  2+ orders of magnitude more scalable
 \item \myemph{Openness}: permissive code and doc licensing
 \end{subitemize}
+
 
 \mypart{}{What Stan Does}
 
@@ -898,6 +909,43 @@ nested Jacobians for ODE solver, Newton solvers for optimizers and nested algebr
 \end{subitemize}
 \end{itemize}
 
+\sld{Discrete parameters?}
+\begin{itemize}
+\item \myemph{Stan's focus}: tractably \myemph{marginalized}
+\begin{subitemize}
+\item e.g., mixtures, HMMs, state-space models
+\item \myemph{efficient} in theory due to Rao-Blackwell; in practice by eliminating combinatorics; much better tail behavior
+\item marginalizations available wherever you find EM \& MML
+\end{subitemize}
+\item \myemph{Out of scope}: combinatorially \myemph{intractable}
+\begin{subitemize}
+\item e.g., selection, clustering, random trees, neural nets
+\item optimization is NP-hard or worse
+\item thus \myemph{nobody knows how to get right} answer in general
+\item some special cases can be fit
+\end{subitemize}
+\item \myemph{In between}: missing count data
+\end{itemize}
+
+\sld{Problems with Stan?}
+\begin{itemize}
+\item Failures
+\begin{subitemize}
+\item extreme varying posterior curvature (can't adapt)
+\item stiff Hamiltonians (can't adapt)
+\item floating point (e.g., log cdfs and ccdfs, gradients)
+\item scalability of data and parameters
+\end{subitemize}
+\item Missing features
+\begin{subitemize}
+\item black-box log densities (cf. emcee in Python)
+\item checkpointd autodiff for large Gaussian processes
+\item filtering (online model updating)
+\item stochastic algebraic \& diff eqs, PDEs
+\item structured data types, sparse data types \& closures
+\end{subitemize}
+\end{itemize}
+
 \mypart{}{Ongoing Projects}
 
 \sld{Stan language}
@@ -909,7 +957,24 @@ nested Jacobians for ODE solver, Newton solvers for optimizers and nested algebr
 \end{subitemize}
 \item Blockless language w.\ type inference (w.\ Maria Gorinova, Sean Talts, Matthijs V\'ak\'ar)
 \item Formal specification and denotational semantics (w.\ Matthijs V\'ak\'ar)
+\item stanc3 parser in OCaml
+\item {\footnotesize \url{https://github.com/stan-dev/stanc3}}
 \end{itemize}
+
+\sld{Blockless Stan}
+\begin{itemize}
+\item infers block: data, transformed data, parameter, transformed data, generated quantity
+\item follows generative story
+\item locates variable declarations near use
+\end{itemize}
+\begin{stancode}
+real<lower = 0> sigma ~ lognormal(0, 1);
+int K;
+vector[K] beta ~ normal(0, 2);
+int N;
+matrix[N, K] x;
+vector[N] y ~ normal(x * beta, sigma);
+\end{stancode}
 
 \sld{Algorithms}
 \begin{itemize}
@@ -921,6 +986,21 @@ nested Jacobians for ODE solver, Newton solvers for optimizers and nested algebr
 \item GPU, multi-core, and multi-machine
 \end{subitemize}
 \item Higher-order automatic differentiation
+\item prototype in R/Python; deploy in C++
+\end{itemize}
+
+\sld{Goldilocks Adaptation}
+\begin{center}
+\includegraphics[width=0.3\textwidth]{img/napkin-adapt.jpg}
+\end{center}
+\begin{itemize}
+\item Random initialize in tail; follow optimization to(ward) mode
+\item At steps, spawn off depth-limited, small $\epsilon$, NUTS process
+\begin{subitemize}
+\item (too cold) points in tail increase log density
+\item (too hot) points toward mode decrease in log density
+\item (just right) those in typical set follow flow inside
+\end{subitemize}
 \end{itemize}
 
 \sld{Methodology}
@@ -930,56 +1010,127 @@ nested Jacobians for ODE solver, Newton solvers for optimizers and nested algebr
 \item Model/data evaluation with uncertain (crowdsourced) data
 \item Partially pool performance estimates for multiple comparison
 \item Push uncertainty through decision making
+\vfill
+\noindent
+{\footnotesize Work in progress: \url{https://github.com/bob-carpenter/case-studies}}
 \end{itemize}
 
-\sld{Applications (1/3)}
+\sld{Arctic soil-carbon response}
 \begin{itemize}
-\item Arctic soil-carbon response to environmental change
-\begin{subitemize}
+\item collect low arctic aquatic to high arctic terrestrial soil carbon data over time
+\item soil carbon dynamics models with biochemical components and environment covariates
 \item Kathe Todd-Brown (U.\ Florida, environmental engineering)
 \item Sean Schaeffer (U.\ Tennessee, agriculture)
-\end{subitemize}
-\item Differential expression of gene splice variants
-\begin{subitemize}
+\vfill
+\item {\footnotesize NSF proposal under review (PI)}
+\end{itemize}
+
+\sld{Differential expression of isoforms}
+\begin{itemize}
+\item hierarhcical modeling for group and individual and cellular variation
+\item inferring splice variants in cassette exons and more generally
 \item Shuonan Chen (Columbia, biostatistics)
 \item Chaolin Zhang (Columbia, genomics)
-\end{subitemize}
+\vfill
+\item \footnotesize{Shuonan writing up for submission and open-source release}
 \end{itemize}
 
-\sld{Applications (2/3)}
+\sld{Virtual database for elections}
 \begin{itemize}
-\item Virtual database completion for National Election Survey
-\begin{subitemize}
-\item Andrew Gelman (Columbia, statistics \& political science)
+\item for Cooperative Congressional Election Study
+\item scaling/applying multilevel regression and poststratification
+\item visualization and deployment of virtual database
+\item survey statistics
 \item Steve Ansolabehere (Harvard, political science))
-\end{subitemize}
-\item Educational testing and teacher evaluation
-\begin{subitemize}
-\item Andrew Gelman (Columbia, statistics \& political science)
-\item Sophia Rabe-Hesketh (UC Berkeley, education \& biostatistics)
-\end{subitemize}
+\item Andrew Gelman (Columbia, stats)
+\item Ben Bales (Columbia, Earth Institute)
+\vfill
+\item {\footnotesize \$900K NSF grant recently awarded (co-PI)}
 \end{itemize}
 
-\sld{Applications (3/3)}
+\sld{Ed.\ testing and hier.\ modeling}
 \begin{itemize}
-\item Equilibrium \& rational decision making in auction pricing
-\begin{subitemize}
+\item improved multilevel model fitting
+\item applications in education with nested students/teachers
+\item Sophia Rabe-Hesketh (UC Berkeley, education \& biostatistics)
+\item Andrew Gelman (Columbia, stats)
+\item Ben Goodrich (Columbia, ISERP)
+\vfill
+\item {\footnotesize \$400K IES grant recently awarded (co-PI)}
+\item {\footnotesize previous IES grant: \url{https://education-stan.github.io}}
+\end{itemize}
+
+\sld{Auction pricing and equilibrium}
+\begin{itemize}
+\item equilibrium \& rational decision making in auction pricing
+\item improved differential and algebraic equation solving
 \item Tom Sargent (NYU, economics)
 \item Shoshanna Vasserman (Stanford, business)
-\item Rachel Meager (LSE, economics)
-\end{subitemize}
-\item Crowdsourced training \& evaluation in machine learning
-\begin{subitemize}
-\item Massimo Poesio (U. Essex, computer science)
-\item Becky Passonneau (Penn State, computer science)
-\end{subitemize}
+\item Andrew Gelman (Columbia, stats)
+\vfill
+\item {\footnotesize \$350K Alfred P. Sloan Foundation grant awarded (co-PI)}
 \end{itemize}
 
-\mypart{}{The End}
+\sld{Pharmacokinetics and disease}
+\begin{itemize}
+\item pharmacokinetics and dynamics for disease modeling
+\item adding partial differential equations
+\item adding differential algebraic equations
+\item evaluating variational inference
+\item Yi Zhang (Metrum, LLC, applied math)
+\item Bill Gillespie (Metrum, LLC, pharmacology)
+\item Andrew Gelman (Columbia, stats)
+\vfill
+\item {\footnotesize \$900K ONR Phase II STTR grant awarded (co-PI)}
+\end{itemize}
 
-\mypart{}{Questions?}
+\sld{Crowdsourced machine learning}
+\begin{itemize}
+\item apply crowdsourced data to learning
+\item apply crowdsource data to evaluation
+\item Bayesian models of data annotation/coding
+\item Massimo Poesio (U. Essex, computer science)
+\item Silviu Paun (U. Essex, computer science)
+\item Becky Passonneau (Penn State, computer science)
+\vfill
+\item \footnotesize \url{https://transacl.org/ojs/index.php/tacl/article/view/1430}
+\item \footnotesize \url{https://transacl.org/ojs/index.php/tacl/article/view/389}
+\end{itemize}
 
-\mypart{}{Answers}
+\sld{Book}
+\begin{itemize}
+\item I'm halfway done with a second book:
+\begin{quote}
+Carpenter, Bob. (forthcoming) \myemph{\slshape Probability and Statistics: A Simulation-Based Introduction.}
+\end{quote}
+\begin{subitemize}
+\item for \myemph{upper-level undergrad/grad} students in sciences, etc.
+\item goal is to bring up to speed with \myemph{statistical computation}
+\item fully \myemph{reproducible}, open-source
+\item assumes limited facitlity with \myemph{calculus \& linear algebra}
+\end{subitemize}
+\vfill
+\noindent
+{\footnotesize Draft: \url{https://github.com/bob-carpenter/prob-stats}}
+\end{itemize}
+
+\sld{Summary: List of Projects}
+\begin{subitemize}
+\item \myemph{Stan language} (structs; closures; sparse; ragged; blockless)
+\item \myemph{applied math algorithms} (autodiff; numerics)
+\item \myemph{MCMC algorithms} (adaptation; sampling; sequential)
+\item \myemph{Applications}
+\begin{subitemize}
+\item arctic soil carb; differential isoform expression; virtual election DB;
+educational testing; auction pricing and equilibrium; pharmacokinetics and
+disease modeling; crowdsourced machine learning
+\end{subitemize}
+\item \myemph{book} on probability \& stats via simulation
+\end{subitemize}
+
+
+
+\mypart{}{Canned Answers}
 
 \sld{TensorFlow or PyTorch?}
 \begin{itemize}
@@ -1024,24 +1175,6 @@ nested Jacobians for ODE solver, Newton solvers for optimizers and nested algebr
 \item based on dynamic PyTorch, so most like Stan
 \item main focus approximate inference \& deep neural nets
 \item borrowed Stan's HMC algorithms and diagnostics
-\end{itemize}
-
-\sld{Discrete parameters?}
-\begin{itemize}
-\item \myemph{Stan's focus}: tractably \myemph{marginalized}
-\begin{subitemize}
-\item e.g., state-space models (forward algorithm)
-\item \myemph{efficient} in theory due to Rao-Blackwell; in practice by eliminating combinatorics; much better tail behavior
-\item marginalizations available wherever you find EM \& MML
-\end{subitemize}
-\item \myemph{Out of scope}: combinatorially \myemph{intractable}
-\begin{subitemize}
-\item e.g., selection, clustering, random trees, neural nets
-\item optimization is NP-hard or worse
-\item thus \myemph{nobody knows how to get right} answer in general
-\item some special cases can be fit
-\end{subitemize}
-\item \myemph{In between}: missing count data
 \end{itemize}
 
 \sld{Roll my own sampler?}
