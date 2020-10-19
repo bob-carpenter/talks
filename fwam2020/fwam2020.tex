@@ -27,7 +27,8 @@
 
 \sld{Uncertainty}
 \begin{itemize}
-\item \myemph{permeates science} and decision making
+\item permeates \myemph{science} and \myemph{
+    decision making}
 \item in the form of
 \begin{subitemize}
 \item \myemph{sampling} uncertainty,
@@ -60,7 +61,7 @@
 \end{itemize}
 
 
-\sld{Probability isn't $\ldots$}
+\sld{Probability is \textit{\bfseries not} $\ldots$}
 {\linespread{1.3}
 \small\linespread{1.35}
 \begin{quote}\linespread{1.5}An intellect which at a certain
@@ -105,9 +106,34 @@ evidence}.
 \item if I also have today's weather report: 80\%
 \item if it's now and I see rain: 100\%
 \end{subitemize}
-\item The world didn't change.
-\item But, our knowledge changed.
+\item The world didn't change, our knowledge of it did.
+  \vfill
+\item Coin flips are the same!
 \end{itemize}
+
+
+\sld{Simulate some Baseball (or clinical trials)}
+%
+\begin{itemize}
+\item True .300 batting average (BA); simulate 10 at bats (AB)
+\begin{subitemize}
+\item {\bfseries 10 at bats} \hfill (.000 to .600 BA)
+\\[4pt] 1 1 2 6 2 0 4 4 4 2
+\vspace*{3pt}
+%
+\item {\bfseries 100 at bats} \hfill (0.220 to 0.330 BA)
+\\[4pt] 22 34 30 26 25 31 31 28 27 33
+\vspace*{3pt}
+%
+\item {\bfseries 1000 at bats} \hfill (.294 to .320 BA)
+\\[4pt] 296 307 302 298 290 297 303 294 280 320
+\vspace*{3pt}
+%
+\item {\bfseries 10,000 at bats} \hfill (.295 to .305 BA)
+\\[4pt] 3022 2953 2987 2946 2994 2989 3052 3024 3038 2938
+\end{subitemize}
+\end{itemize}
+
 
 
 
@@ -197,28 +223,6 @@ $$
 \end{subitemize}
 
 
-\sld{Simulated Binary Data}
-%
-\begin{itemize}
-\item True .300 batting average (BA); simulate 10 at bats (AB)
-\begin{subitemize}
-\item {\bfseries 10 at bats} \hfill (.000 to .600 BA)
-\\[4pt] 1 1 2 6 2 0 4 4 4 2
-\vspace*{3pt}
-%
-\item {\bfseries 100 at bats} \hfill (0.220 to 0.330 BA)
-\\[4pt] 22 34 30 26 25 31 31 28 27 33
-\vspace*{3pt}
-%
-\item {\bfseries 1000 at bats} \hfill (.294 to .320 BA)
-\\[4pt] 296 307 302 298 290 297 303 294 280 320
-\vspace*{3pt}
-%
-\item {\bfseries 10,000 at bats} \hfill (.295 to .305 BA)
-\\[4pt] 3022 2953 2987 2946 2994 2989 3052 3024 3038 2938
-\end{subitemize}
-\end{itemize}
-
 
 \mypart{Decision Theory}
 
@@ -290,59 +294,6 @@ best (Thompson sampling)
 \end{enumerate}
 
 
-\mypart{}{Calibration}
-
-\sld{Calibration}
-\begin{itemize}
-\item Empirical (frequentist) evaluation of \myemph{probabilistic forecasts}
-\item Of the days on which a 75\% of rain is forecast, roughly 75\% of them
-should be rainy. 
-\begin{subitemize}
-\item for $N$ \myemph{calibrated predictions} of probability $\theta$,
-\\
-$Y \sim \textrm{binomial}(N, \theta)$ will obtain
-\end{subitemize}
-\item Calibrated predictions for \myemph{rain in Edinburgh}:
-\begin{subitemize}
-\item 52\% is calibrated if evaluated over random days of the year.
-\item Prediction based on average for day of month is calibrated
-  (i.e., 65\% for December)
-\item Is {\small \url{weather.com}}'s forecast calibrated?  Empirical question.
-\end{subitemize}
-\end{itemize}
-
-\sld{Sharpness}
-\begin{itemize}
-\item Sharp probabilistic predictions have \myemph{low entropy}.
-\item \myemph{Narrowly concentrated} predictions are sharper
-\begin{subitemize}
-\item $\mbox{Pr}[\alpha \in (.58, .59)] = .9$ sharper than
-$\mbox{Pr}[\alpha \in (.5, .6)] = .9$
-\end{subitemize}
-\item Probabilistic predictions \myemph{nearer 0 or 1} are sharper
-\begin{subitemize}
-\item $\mbox{Pr}[z_i = 1] = 0.95$ sharper than $\mbox{Pr}[z_i = 1] = 0.6$
-\end{subitemize}
-\end{itemize}
-
-\sld{Inference evaluation criterion}
-\begin{itemize}
-\item For probabilistic forecasts:
-\begin{center}
-  \myemph{Maximize sharpness subject to calibration.}
-\end{center}
-\item \myemph{Goal}: consistent, useful inference from \myemph{finite data}.
-\begin{subitemize}
-\item cf. minimize variance subject to zero bias for estimators
-\end{subitemize}
-\item Bayesian models are calibrated if they are \myemph{well-specified}
-\begin{subitemize}
-\item i.e., they capture the true data-generating process.
-\item But, models are always approximate.
-\item So, need to test fit to real data and predictions.
-\end{subitemize}
-\end{itemize}
-
 
 \mypart{Example 1}{Birth Ratio}
 
@@ -404,6 +355,61 @@ y_sim              50.902   0.081 38.000  64.000
 \item $\textrm{Pr}[\theta > 0.5]$ estimated by sample \myemph{mean of indicator}
 \item {\texttt y\_sim} estimated \myemph{forecast} for next 100 births
 \end{subitemize}
+
+
+\mypart{}{Calibration}
+
+\sld{Calibration}
+\begin{itemize}
+\item Empirical (frequentist) evaluation of \myemph{probabilistic forecasts}
+\item Of the days on which a 75\% of rain is forecast, roughly 75\% of them
+should be rainy. 
+\begin{subitemize}
+\item for $N$ \myemph{calibrated predictions} of probability $\theta$,
+\\
+$Y \sim \textrm{binomial}(N, \theta)$ will obtain
+\end{subitemize}
+\item Calibrated predictions for \myemph{rain in Edinburgh}:
+\begin{subitemize}
+\item 52\% is calibrated if evaluated over random days of the year.
+\item Prediction based on average for day of month is calibrated
+  (i.e., 65\% for December)
+\item Is {\small \url{weather.com}}'s forecast calibrated?  Empirical question.
+\end{subitemize}
+\end{itemize}
+
+\sld{Sharpness}
+\begin{itemize}
+\item Sharp probabilistic predictions have \myemph{low entropy}.
+\item \myemph{Narrowly concentrated} predictions are sharper
+\begin{subitemize}
+\item $\mbox{Pr}[\alpha \in (.58, .59)] = .9$ sharper than
+$\mbox{Pr}[\alpha \in (.5, .6)] = .9$
+\end{subitemize}
+\item Probabilistic predictions \myemph{nearer 0 or 1} are sharper
+\begin{subitemize}
+\item $\mbox{Pr}[z_i = 1] = 0.95$ sharper than $\mbox{Pr}[z_i = 1] = 0.6$
+\end{subitemize}
+\end{itemize}
+
+\sld{Inference evaluation criterion}
+\begin{itemize}
+\item For probabilistic forecasts:
+\begin{center}
+  \myemph{Maximize sharpness subject to calibration.}
+\end{center}
+\item \myemph{Goal}: consistent, useful inference from \myemph{finite data}.
+\begin{subitemize}
+\item cf. minimize variance subject to zero bias for estimators
+\end{subitemize}
+\item Bayesian models are calibrated if they are \myemph{well-specified}
+\begin{subitemize}
+\item i.e., they capture the true data-generating process.
+\item But, models are always approximate.
+\item So, need to test fit to real data and predictions.
+\end{subitemize}
+\end{itemize}
+
 
 
 \mypart{Example 2}{Population Dynamics}
@@ -877,7 +883,7 @@ nested Jacobians for ODE solver, Newton solvers for optimizers and nested algebr
 \item \myemph{In between}: missing count data
 \end{itemize}
 
-\mypart{}{Canned Answers}
+\mypart{}{Answers}
 
 \sld{What is AI?}
 \begin{itemize}
