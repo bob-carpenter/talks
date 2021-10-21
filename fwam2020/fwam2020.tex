@@ -7,9 +7,9 @@
 \sf%
 \mbox{ }
 \\[12pt]
-\spc{{\LARGE\bfseries \color{MidnightBlue}{Probabilistic Programming}}}
+\spc{{\LARGE\bfseries \color{MidnightBlue}{Solving Inverse Problems}}}
 \\[4pt]
-\spc{\large {and Bayesian Inference with Stan}}
+\spc{\LARGE\bfseries \color{MidnightBlue}{with Bayesian Inference}}
 \\[36pt]
 \noindent
 \spc{\large\bfseries \color{MidnightBlue}{Bob Carpenter}}
@@ -19,7 +19,7 @@
 \spc{\small Flatiron Institute}
 \vfill
 \noindent
-\spc{\footnotesize October 2020}
+\spc{\footnotesize October 2021}
 \hfill
 {\footnotesize \url{https://mc-stan.org}}
 \hfill
@@ -61,23 +61,23 @@
 \end{itemize}
 
 
-\sld{Probability is \textit{\bfseries not} $\ldots$}
-{\linespread{1.3}
-\small\linespread{1.35}
-\begin{quote}\linespread{1.5}An intellect which at a certain
-  moment would know all forces that set nature in motion, and all
-  positions of all items of which nature is composed, if this
-  intellect were also vast enough to submit these data to analysis, it
-  would embrace in a single formula the movements of the greatest
-  bodies of the universe and those of the tiniest atom; \myemph{for such an
-  intellect nothing would be uncertain} and the future just like the
-  past would be present before its eyes.
-  \vfill\linespread{1.25}
-  -- \footnotesize \myemph{Pierre-Simon Laplace}. 1814.  \textit{A
-    Philosophical Essay on Probabilities}.  Translated by
-  F.~W.~Truscott and F.~L.~Emory, 1951.  
-\end{quote}
-}
+% \sld{Probability is \textit{\bfseries not} $\ldots$}
+% {\linespread{1.3}
+% \small\linespread{1.35}
+% \begin{quote}\linespread{1.5}An intellect which at a certain
+%   moment would know all forces that set nature in motion, and all
+%   positions of all items of which nature is composed, if this
+%   intellect were also vast enough to submit these data to analysis, it
+%   would embrace in a single formula the movements of the greatest
+%   bodies of the universe and those of the tiniest atom; \myemph{for such an
+%   intellect nothing would be uncertain} and the future just like the
+%   past would be present before its eyes.
+%   \vfill\linespread{1.25}
+%   -- \footnotesize \myemph{Pierre-Simon Laplace}. 1814.  \textit{A
+%     Philosophical Essay on Probabilities}.  Translated by
+%   F.~W.~Truscott and F.~L.~Emory, 1951.  
+% \end{quote}
+% }
 
 
 \sld{Probability is $\ldots$}
@@ -92,7 +92,7 @@ occurrence, which we are warranted in entertaining by our present
 evidence}.
 \vfill\linespread{1.25}
 -- \footnotesize \myemph{John Stuart Mill}.  1882.  \textit{A System
-  of Logic: Raciocinative and Inductive}. Eighth edition.  III:18.
+  of Logic: Ratiocinative and Inductive}. Eighth edition.  III:18.
 \end{quote}
 }
 
@@ -115,21 +115,21 @@ evidence}.
 \sld{Simulate some Baseball (or clinical trials)}
 %
 \begin{itemize}
-\item True .300 batting average (BA); simulate 10 at bats (AB)
+\item True .300 on base percentage (OBP) then simulate
 \begin{subitemize}
-\item {\bfseries 10 at bats} \hfill (.000 to .600 BA)
+\item {\bfseries 10 at bats} \hfill (.000 to .600 OBP)
 \\[4pt] 1 1 2 6 2 0 4 4 4 2
 \vspace*{3pt}
 %
-\item {\bfseries 100 at bats} \hfill (0.220 to 0.330 BA)
+\item {\bfseries 100 at bats} \hfill (0.220 to 0.330 OBP)
 \\[4pt] 22 34 30 26 25 31 31 28 27 33
 \vspace*{3pt}
 %
-\item {\bfseries 1000 at bats} \hfill (.294 to .320 BA)
+\item {\bfseries 1000 at bats} \hfill (.294 to .320 OBP)
 \\[4pt] 296 307 302 298 290 297 303 294 280 320
 \vspace*{3pt}
 %
-\item {\bfseries 10,000 at bats} \hfill (.295 to .305 BA)
+\item {\bfseries 10,000 at bats} \hfill (.295 to .305 OBP)
 \\[4pt] 3022 2953 2987 2946 2994 2989 3052 3024 3038 2938
 \end{subitemize}
 \end{itemize}
@@ -224,74 +224,59 @@ $$
 
 
 
-\mypart{Decision Theory}
+% \mypart{Decision Theory}
 
-\sld{Expected utility and risk}
-\begin{itemize}
-\item Agent has choice of \myemph{actions} $a \in A$.
-\begin{subitemize}
-\item discrete: do I go to college?
-\item continuous: how much do I invest for retirement?
-\end{subitemize}
-\item \myemph{Utility}: $\textrm{util}(a, \theta)$ based on state of world $\theta$
-\begin{subitemize}
-\item risk aversion, etc. rolled into utility
-\end{subitemize}
-\item \myemph{Expected Utility} conditioned on $y$:
-$$
-\mathbb{E}\!\left[\textrm{util}(a, \theta) \mid y\right]
-\ = \
-\int_{\Theta} \textrm{util}(a, \theta) \cdot p(\theta \mid y) \ \textrm{d}\theta.
-$$
-\item point estimates aren't plug \& play due to \myemph{non-linearity}
-\end{itemize}
+% \sld{Expected utility and risk}
+% \begin{itemize}
+% \item Agent has choice of \myemph{actions} $a \in A$.
+% \begin{subitemize}
+% \item discrete: do I go to college?
+% \item continuous: how much do I invest for retirement?
+% \end{subitemize}
+% \item \myemph{Utility}: $\textrm{util}(a, \theta)$ based on state of world $\theta$
+% \begin{subitemize}
+% \item risk aversion, etc. rolled into utility
+% \end{subitemize}
+% \item \myemph{Expected Utility} conditioned on $y$:
+% $$
+% \mathbb{E}\!\left[\textrm{util}(a, \theta) \mid y\right]
+% \ = \
+% \int_{\Theta} \textrm{util}(a, \theta) \cdot p(\theta \mid y) \ \textrm{d}\theta.
+% $$
+% \item point estimates aren't plug \& play due to \myemph{non-linearity}
+% \end{itemize}
 
-\sld{Optimal Decisions}
-\begin{itemize}
-\item Given observed data $y$ and model $p(y, \theta)$, choose action $a^* \in A$ that \myemph{maximizes expected utility}
-$$
-a^* = \textrm{arg max}_\theta \ \mathbb{E}\!\left[\textrm{util}(a, \theta) \mid y\right].
-$$
-\item \myemph{Compute} expectation via MCMC sample
-$$
-\theta^{(1)}, \ldots, \theta^{(m)} \sim p(\theta \mid y),
-$$
-as
-$$
-\mathbb{E}\!\left[\textrm{util}(a, \theta) \mid y\right]
-\ \approx \
-\frac{1}{M} \sum_{m=1}^M \textrm{util}\!\left(a, \theta^{(m)}\right)
-$$
-\item can be \myemph{automatically differentiated}.
-\end{itemize}
+% \sld{Optimal Decisions}
+% \begin{itemize}
+% \item Given observed data $y$ and model $p(y, \theta)$, choose action $a^* \in A$ that \myemph{maximizes expected utility}
+% $$
+% a^* = \textrm{arg max}_\theta \ \mathbb{E}\!\left[\textrm{util}(a, \theta) \mid y\right].
+% $$
+% \item \myemph{Compute} expectation via MCMC sample
+% $$
+% \theta^{(1)}, \ldots, \theta^{(m)} \sim p(\theta \mid y),
+% $$
+% as
+% $$
+% \mathbb{E}\!\left[\textrm{util}(a, \theta) \mid y\right]
+% \ \approx \
+% \frac{1}{M} \sum_{m=1}^M \textrm{util}\!\left(a, \theta^{(m)}\right)
+% $$
+% \item can be \myemph{automatically differentiated}.
+% \end{itemize}
 
-\sld{Online A/B/... testing}
-\begin{itemize}
-\item discrete choice of action $k \in 1:K$ 
-\item probabilistic outcome of action $k$ as $p(y \mid \theta_k)$
-\item assume utility $\textrm{util}(\theta, a)$
-\item observe history of actions $a_1, \ldots, a_t \in 1:K$ and paired
-  outcomes $y_1, \ldots, y_t \in \mathbb{R}.$
-\item explore/exploit: 
-next action $a_{t+1}$ chosen w.\ probability proportional to $k$ being
-best (Thompson sampling)
-\vfill {\footnotesize e.g., COVID-19 and antibody testing risk reduction.}
-\end{itemize}
-
-\sld{Bayesian Workflow}
-\begin{enumerate}
-\item design experiment \& collect data (its own workflow)
-\item for gradually \myemph{increasing model complexity}
-\begin{subitemize}
-\item \myemph{test model} and sofware on simulated data (\myemph{does
-    it work?}),
-\item perform prior predictive checks (\myemph{is prior sensible?})
-\item \myemph{fit model} to real data,
-\item perform posterior predictive checks (\myemph{does it fit
-    data?}), and
-\item perform held-out checks/cross-validation (\myemph{does it predict?}).
-\end{subitemize}
-\end{enumerate}
+% \sld{Online A/B/... testing}
+% \begin{itemize}
+% \item discrete choice of action $k \in 1:K$ 
+% \item probabilistic outcome of action $k$ as $p(y \mid \theta_k)$
+% \item assume utility $\textrm{util}(\theta, a)$
+% \item observe history of actions $a_1, \ldots, a_t \in 1:K$ and paired
+%   outcomes $y_1, \ldots, y_t \in \mathbb{R}.$
+% \item explore/exploit: 
+% next action $a_{t+1}$ chosen w.\ probability proportional to $k$ being
+% best (Thompson sampling)
+% \vfill {\footnotesize e.g., COVID-19 and antibody testing risk reduction.}
+% \end{itemize}
 
 
 
@@ -321,14 +306,16 @@ $p(\theta \mid y)
 
 \sld{Coding in Stan}
 \begin{stancode}
-transformed data {
-  int y = 251527;  int N = 493472;
+data {
+  int y;  // boys = 251527
+  int N;  // total = 493472
 }
 parameters {
   real<lower=0, upper=1> theta;
 }
 model {
   y ~ binomial(N, theta);
+  theta ~ uniform(0, 1);
 }
 generated quantities {
   int<lower=0, upper=1> theta_gt_half = (theta > 0.5);
@@ -356,6 +343,26 @@ y_sim              50.902   0.081 38.000  64.000
 \item {\texttt y\_sim} estimated \myemph{forecast} for next 100 births
 \end{subitemize}
 
+
+\mypart{}{Workflow}
+
+\sld{Bayesian Workflow}
+\begin{enumerate}
+\item Design experiment \& \myemph{collect data} (its own workflow)
+\item Model evaluation
+\begin{subitemize}
+\item \myemph{prior predictive checks}: is the prior sensible?
+\item \myemph{simulation-based calibration}: does the algorithm work
+  on data simulated from the model?
+\item \myemph{posterior predictive checks}: does model capture
+  relevant aspects of real data?
+\item \myemph{hold out/cross-validation}: does model predict well?
+\end{subitemize}
+\item If model is lacking, \myemph{improve model and repeat (2)}
+  \begin{subitemize}
+  \item and if data is lacking, collect more and repeat (1)
+  \end{subitemize}
+\end{enumerate}
 
 \mypart{}{Calibration}
 
@@ -416,7 +423,7 @@ $\mbox{Pr}[\alpha \in (.5, .6)] = .9$
 
 \sld{Population Dynamics \hfill {\large (Volterra 1926)}}
 \begin{itemize}
-\item populations at $t$ of prey $u(t)$ \& predator $v(t)$
+\item populations at time $t$ of prey $u(t)$ \& predator $v(t)$
 \item Volterra's mechanistic model
 $$
 \frac{\textrm{d}}{\textrm{d}t}u = (\alpha - \beta \cdot v) \cdot u
@@ -435,16 +442,31 @@ $$
 \includegraphics[width=0.6\textwidth]{img/volterra-solutions.jpg}
 \end{center}
 
+\sld{Knowns and Unknowns}
+
+\begin{itemize}
+\item \myemph{Knowns}
+  \begin{subitemize}
+  \item number of pelts collected at each time
+  \end{subitemize}
+\item \myemph{Unknowns}
+  \begin{subitemize}
+  \item initial populations
+  \item subsequent populations
+  \item growth and shrinkiage parameters $\alpha, \beta, \gamma, \delta$
+  \end{subitemize}
+\end{itemize}
+
 \sld{Measurement/model error}
 \begin{itemize}
 \item $u, v$ are observed
 \item $\hat{u}, \hat{v}$ predicted by mechanistic model
-\item Independent error proportional to population size
+\item Independent \myemph{error proportional to population} size
 \begin{subitemize}
 \item $u_t \sim \textrm{lognormal}(\hat{u}_t, \sigma_1)$
 \item $v_t \sim \textrm{lognormal}(\hat{v}_t, \sigma_2)$
 \end{subitemize}
-\item Weakly informative priors determine scale
+\item Weakly informative \myemph{priors determine scale}
 \begin{subitemize}
 \item $\alpha, \gamma \sim \textrm{normal}(1, 0.5)$; \ \ \
 $\beta, \delta \sim \textrm{normal}(0.05, 0.05)$
@@ -452,9 +474,61 @@ $\beta, \delta \sim \textrm{normal}(0.05, 0.05)$
 \end{subitemize}
 \end{itemize}
 
-\sld{Hudson's Bay Co.\ pelts \hfill {\large (Hewitt 1921)}}
+\sld{Assumptions}
+\begin{itemize}
+\item pelts are a reasonable proxy for the populations 
+  \begin{subitemize}
+  \item could try to validate with mark/recapture 
+  \end{subitemize} 
+\item population only depends on population of predator and prey 
+  \begin{subitemize}
+  \item no outside shocks like weather, epidemics, other predators, etc. 
+  \end{subitemize}
+\item rough scale of solutions known ahead of time 
+\item measurement error is proportional to population size 
+\end{itemize}
+
+
+\sld{Normal and log normal}
+\begin{itemize}
+\item Normal density is the usual bell curve, with
+  \[
+    \textrm{normal}(y \mid \mu, \sigma) \propto \frac{1}{\sigma} \exp\left(-\frac{1}{2}
+      \left( \frac{y - \mu}{\sigma} \right)^2\right)
+  \]
+\item If $y$ has a $\textrm{normal}(\mu, \sigma)$ distribution, then
+  $\exp(y)$ has a $\textrm{lognormal}(\mu, \sigma)$ distribution.
+\item 95\% intervals for normal are roughly $\mu \pm 2\sigma$
+\item 95\% intervals for lognormal are roughly
+  \[
+    \exp(\mu \pm 2\sigma) = \exp(\mu) 
+  {\footnotesize \begin{array}{c} \times \\[-4pt]
+    \div \end{array}} \exp(2\sigma)
+  \]
+\end{itemize}
+
+\sld{The Lynx and the Hare}
+
+\begin{itemize}
+  \item \myemph{Lynx} (left) are predators who prey almost exclusively on
+    \myemph{snowshoe hares} (right) 
+\end{itemize}
 \begin{center}
-\includegraphics[width=0.9\textwidth]{img/hudons-bay-data.png}
+  \includegraphics[height=0.35\textwidth]{img/lynx.jpeg}
+  \quad
+  \includegraphics[height=0.35\textwidth]{img/hare.jpeg}
+\end{center}
+\begin{itemize}
+  \item But it's very labor intensive to count animals with standard
+    mark/recapture techniques
+\end{itemize}
+
+\sld{Hudson's Bay Co.\ pelts \hfill {\large (Hewitt 1921)}}
+\begin{itemize}
+  \item A proxy is the number of animals captured for pelts.
+\end{itemize}
+\begin{center}
+  \includegraphics[width=0.8\textwidth]{img/hudons-bay-data.png}
 \end{center}
 
 \sld{Plotted pelt data}
@@ -466,29 +540,32 @@ $\beta, \delta \sim \textrm{normal}(0.05, 0.05)$
 {\it right)} hare vs. lynx pelts
 \\
 (line per species) \hfill (over time)
-\item pelt data proxy proportional to population (could model)
-\item as is, model predicts pelts, not population
+\item pelt data assumed proportional to population
+\item w/o modeling relation, \myemph{model predicts pelts}
 \end{itemize}
 
 \sld{Stan dynamics \& error}
 \begin{stancode}
-real[] dz_dt(real t, real[] uv, real[] theta,
-             real[] theta, real[] x_r, int[] x_i) {
+real[] duv_dt(real t, real[] uv, real[] theta,
+              real[] theta, real[] x_r, int[] x_i) {
   return { (theta[1] - theta[2] * uv[2]) * uv[1],
            (-theta[3] + theta[4] * uv[1]) * uv[2] };
 }
 ...
-real z[T, 2]
-  = integrate_ode(dz_dt, z0, t0, sol_ts[1:T], theta,
+real uv_hat[T, 2]
+  = integrate_ode(duv_dt, z0, t0, sol_ts[1:T], theta,
                   rep_array(0.0, 0), rep_array(0, 0));
 ...
-y[1:T, 1] ~ lognormal(z[1:T, 1], sigma_u);
-y[1:T, 2] ~ lognormal(z[1:T, 2], sigma_v);
+y[1:T, 1] ~ lognormal(uv_hat[1:T, 1], sigma_u);  // prey
+y[1:T, 2] ~ lognormal(uv_hat[1:T, 2], sigma_v);  // predator
 \end{stancode}
 
 \sld{Measurements \& predictions}
+\begin{subitemize}
+\item measured pelts (red) vs.\ fitted model and predictions (blue)
+\end{subitemize}
 \begin{center}
-\includegraphics[width=0.8\textwidth]{img/lotka-volterra-posterior.pdf}
+\includegraphics[width=0.7\textwidth]{img/lotka-volterra-posterior.pdf}
 \end{center}
 
 \sld{100 predictive draws}
@@ -496,136 +573,113 @@ y[1:T, 2] ~ lognormal(z[1:T, 2], sigma_v);
 \includegraphics[width=0.8\textwidth]{img/lotka-volterra-posterior-time.png}
 \end{center}
 
+\sld{Identification of parameters?}
+
+\begin{itemize}
+\item Posterior mean estimates minimize expected square error,
+  \[
+    \hat{\alpha} = \mathbb{E}[\alpha \mid y]
+    = \textrm{arg min}_{\alpha'} \ \mathbb{E}[(\alpha' - \alpha)^2 \mid
+    y].
+  \]
+\item Given the Hudson's Bay data, the estimates are
+  \[
+    \hat{\alpha} = 0.55
+    \quad
+    \hat{\beta} = 0.028
+    \quad
+    \hat{\gamma} = 0.80
+    \quad
+    \hat{\delta} = 0.024
+  \]
+%  \item The error scales are identical (multiplicative, related)
+  \[
+    \hat{\sigma}_1 = 0.25 \qquad \hat{\sigma}_2 = 0.25
+  \]
+  \item Posterior intervals are quite wide
+    \begin{subitemize}
+    \item $\textrm{Pr}[0.45 \leq \alpha \leq 0.63] = 0.8 \quad \textrm{Pr}[0.023 \leq \beta \leq 0.033] = 0.8$
+    \item $\textrm{Pr}[0.69 \leq \gamma \leq 0.91] = 0.8 \quad 
+      \textrm{Pr}[0.020 \leq \delta \leq 0.029] = 0.8$
+    \item $\textrm{Pr}[0.20 \leq \sigma_1 \leq 0.31] = 0.8 \quad 
+      \textrm{Pr}[0.20 \leq \sigma_2 \leq 0.31] = 0.8$
+    \end{subitemize}
+  \end{itemize}
+
 \sld{Summary}
 \begin{itemize}
-\item mechanistic forward model of dyamics (Lotka 1926)
+\item mechanistic forward model of dynamics (Lotka 1926)
 \begin{subitemize}
 \item $\hat{y} = f(\theta)$
 \end{subitemize}
 \item error model $y_{t,k} \sim \textrm{lognormal}(\hat{y}_{t,k}, \sigma_k)$
 \item added weakly informative priors $p(\theta)$ (fixing scale) 
-\item turn the Bayesian crank to sample from posterior
+\item Stan turns the Bayesian crank to sample from posterior
 \begin{subitemize}
 \item $\theta^{(1)}, \ldots, \theta^{(M)} \sim p(\theta \mid y).$
 \end{subitemize}
+\item Estimates are sample means; intervals are sample quantiles;
+  predictions are plug-in estimates
 \item This methodology \myemph{works for many scientific models}.
 \end{itemize}
 
-\mypart{Example 3}{Linear Models}
 
-\sld{Logistic regression}
-%
-\begin{stancode}
- data {
-   int<lower = 1> K;
-   int<lower = 0> N;
-   matrix[N, K] x;                  // predictors
-   int<lower=0, upper=1> y[N];      // observations
- }
- parameters {
-   vector[K] beta;                  // regression coeffs
- }
- model {
-   beta ~ normal(0, 2);            // prior
-   y ~ bernoulli_logit(x * beta);  // likelihood
- }
-\end{stancode}
+\mypart{}{AI, ML, and Statistics}
 
-\sld{Linear regression with prediction}
-%
-\begin{stancode}
-data {
-  int<lower=0> K;
-  int<lower=0> N;           int<lower=0> N_tilde;
-  matrix[N, K] x;           matrix[N_tilde, K] x_tilde;
-  vector[N] y;
-}
-parameters {
-  vector[K] beta;           real<lower=0> sigma;
-}
-model {
-  y ~ normal(x * beta, sigma);
-}
-generated quantities {
-  vector[N_tilde] y_tilde
-    = normal_rng(x_tilde * beta, sigma);
-}
-\end{stancode}
+\sld{What is Artificial Intelligence (AI)?}
+\begin{itemize}
+\item AI is about pushing frontier of ``thinking'' computers
+  \begin{subitemize}
+  \item playing Go, driving a car, translating natural language,
+    recognizing images, $\ldots$
+  \end{subitemize}
+\item AI is not about a technique
+  \begin{subitemize}
+  \item according to Google and the European Union, regression is AI!
+  \end{subitemize}
+\item machine learning (ML) is more difficult to characterize
+\end{itemize}
 
-\sld{Time series autoregressive: AR(1)}
-%
-\begin{stancode}
-  data {
-    int<lower=0> N;   vector[N] y;
-  }
-  parameters {
-    real alpha;  real beta;  real sigma;
-  }
-  model {
-    y[2:n] ~ normal(alpha + beta * y[1:(n-1)], sigma);
-  }
-\end{stancode}
+\sld{Machine Learning (ML) and Stats (1)}
+\begin{itemize}
+\item Traditional stats focuses on data analysis
+\item Traditional ML focuses on prediction
+  \begin{subitemize}
+  \item this is why ML is eating stats' lunch
+  \end{subitemize}
+\item Bayesian stats is about data analysis \textsl{and} prediction
+\end{itemize}
+ 
+\sld{ML and Stats (2)}
+\begin{itemize}
+\item Models
+  \begin{subitemize}
+  \item Stats focuses on interpretable, tractable parametric models
+  \item ML focuses on black-box, intractable, non-parametric models
+  \end{subitemize}
+\item Inference
+  \begin{subitemize}
+  \item ML focuses on prediction based on plug-in point estimates
+  \item traditional stats focuses on estimates, confidence intervals,
+    and hypothesis tests
+  \item Bayesian stats focuses on calibrated posterior uncertainty
+    and uses probability for everything
+  \end{subitemize}
+\end{itemize}
 
-% \sld{Models for counts}
-% \begin{itemize}
-% \item Stan and emcee for Poisson regression in LIGO:
-% \vspace*{-6pt}
-% \begin{center}
-% \includegraphics[width=0.75\textwidth]{img/ligo-stan.png}
-% \end{center}
-% \end{itemize}
+\sld{ML and Stats (3)}
+\begin{itemize}
+\item Scale
+  \begin{subitemize}
+  \item ML focuses largely on ``big'' data
+  \item Stats tries to squeeze info out of small data
+  \item Stats can build more model with more data (spatio-temporal,
+    sub-population, etc.)
+  \item ML models tend to be more flexible and also scale with data
+  \end{subitemize}
+\end{itemize}
 
-
-
-\sld{Priors with covariance}
-%
-\vspace*{-3pt}
-\begin{subitemize}
-\item $G$ groups w.\ varying slope and intercept; \code{gg[n]} indicates group
-\vspace*{-4pt}
-\item LKJ prior concentrates around unit correlation
- (${ } \propto \textrm{det}(\Omega)^{\eta - 1}$)
-\vspace*{-4pt}
-\item Cholesky-factor parameterization for efficiency ($\Omega = \textrm{L}_{\Omega} \cdot \textrm{L}_{\Omega}^{\top}$)
-\end{subitemize}
-\vspace*{-8pt}
-\begin{stancode}
-parameters {
-  vector[2] beta[G];
-  cholesky_factor_corr[2] L_Omega;
-  vector<lower = 0>[2] sigma;
-
-model {
-  matrix[2, 2] L_Sigma = diag_pre_multiply(sigma, L_Omega);
-  sigma ~ normal(0, 2);
-  L_Omega ~ lkj_cholesky(4);
-  beta ~ multi_normal_cholesky(zeros(2), L_Sigma);
-
-  y ~ bernoulli_logit(... + x .* beta[gg]);
-\end{stancode}
-
-\sld{Gaussian process}
-%
-\vspace*{-5pt}
-\begin{stancode}
-data {
-  int<lower=1> N;  vector[N] x; vector[N] y;
-} parameters {
-  real<lower=0> eta_sq, inv_rho_sq, sigma_sq;
-} transformed parameters {
-  real<lower=0> rho_sq; rho_sq = inv(inv_rho_sq);
-} model {
-  matrix[N,N] Sigma;
-  for (i in 1:(N-1)) {
-    for (j in (i+1):N) {
-      Sigma[i,j] = eta_sq * exp(-rho_sq * square(x[i] - x[j]));
-      Sigma[j,i] = Sigma[i,j];
-  }}
-  for (k in 1:N) Sigma[k,k] = eta_sq + sigma_sq;
-  eta_sq, inv_rho_sq, sigma_sq ~ cauchy(0,5);
-  y ~ multi_normal(rep_vector(0,N), Sigma);
-}
-\end{stancode}
+\mypart{}{Questions / Comments?}
 
 \mypart{}{Stan}
 
@@ -858,7 +912,7 @@ nested Jacobians for ODE solver, Newton solvers for optimizers and nested algebr
 \item Missing features
 \begin{subitemize}
 \item black-box log densities (cf. emcee in Python)
-\item checkpointd autodiff for large Gaussian processes
+\item checkpointed autodiff for large Gaussian processes
 \item filtering (online model updating)
 \item stochastic algebraic \& differential eqs, PDEs
 \item structured data types, sparse data types \& closures
@@ -882,101 +936,7 @@ nested Jacobians for ODE solver, Newton solvers for optimizers and nested algebr
 \end{subitemize}
 \item \myemph{In between}: missing count data
 \end{itemize}
-
-\mypart{}{Answers}
-
-\sld{What is AI?}
-\begin{itemize}
-\item AI is about pushing frontier of ``thinking'' computers
-  \begin{subitemize}
-  \item playing Go, driving a car, translating natural language,
-    recognizing images, $\ldots$
-  \end{subitemize}
-\item AI is not about a technique
-  \begin{subitemize}
-  \item according to Google, regression is AI!
-  \end{subitemize}
-\item ML is more difficult to characterize
-\end{itemize}
-
-\sld{ML and Stats (1)}
-\begin{itemize}
-\item Traditional stats is about data analysis
-\item ML is about prediction
-  \begin{subitemize}
-  \item this is why ML is eating stats' lunch
-  \end{subitemize}
-\item Stats is about calibrated uncertainty quantification
-  \begin{subitemize}
-  \item for estimators, traditional hypothesis testing
-  \item for predictions, Bayesian posteriors
-  \end{subitemize}
-\item Bayesian stats is about prediction \textsl{and} data analysis
-\end{itemize}
  
-\sld{ML and Stats (2)}
-\begin{itemize}
-\item Models
-  \begin{subitemize}
-  \item Stats focuses on interpretable, tractable parametric models
-  \item ML focuses on black-box, intractable, non-parametric models
-  \end{subitemize}
-\item Inference
-  \begin{subitemize}
-  \item ML focuses on prediction based on point estimates
-  \item traditional stats focuses on estimation and testing
-  \item Bayesian stats on posterior uncertainty quantification 
-  \end{subitemize}
-\end{itemize}
-
-\sld{ML ande Stats (3)}
-\begin{itemize}
-\item Scale
-  \begin{subitemize}
-  \item ML only works well with big data
-  \item Stats tries to squeeze info out of small data
-  \item Stats builds more model with more data (spatio-temporal,
-    sub-population, etc.)
-  \end{subitemize}
-\end{itemize}
-  
-\sld{TensorFlow or PyTorch or JAX?}
-\begin{itemize}
-\item less expressive than Stan's math library
-\item faster than Stan on GPU/TPU, slower on CPU
-\item Focus of all of these libraries is
-  \begin{subitemize}
-  \item approximate algorithms and
-  \item neural networks.
-  \end{subitemize}
-\item Biggest difference is static vs.\ dynamic autodiff
-\begin{subitemize}
-  \item Pytorch/JAX are dynamic like Stan
-  \item TensorFlow optimizes static autodiff
-  \item Theano (PyMC3) symbolic
-\end{subitemize}
-\end{itemize}
-
-\sld{TensorFlow Probability?}
-\begin{itemize}
-\item embedded in Python
-\item adds stats functions to TensorFlow
-\item catching up to Stan math lib functionality for general models
-\item more expressive for neural networks
-\item adds Bayesian inference algorithms to TensorFlow
-\item not focused on user language (Edward2 \& PyMC4 moribund)
-\end{itemize}
-
-\sld{PyMC3}
-\begin{itemize}
-\item embedded in Python
-  \begin{subitemize}
-    \item variables are composable Python objects
-    \item NumPy punned inside PyMC3 namespace
-  \end{subitemize}
-\item Theano analytic diff limits control flow
-\item more flexible sampling algorithm combination (e.g., discrete)
-\end{itemize}
 
 \end{document}
 
