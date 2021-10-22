@@ -29,26 +29,46 @@
 
 % \mypart{}{Motivation}
 
-\pagestyle{plain}
-
 \sld{What is Bayesian workflow?}
 \begin{itemize}
 \item Bayesian workflow involves
   \begin{subitemize}
-  \item developing models,
-  \item fitting models to data,
-  \item validating computation,
-  \item evaluating and using models,
-  \item modifying models,
-  \item addressing computational issues, and
-  \item comparing models.
+  \item \myemph{designing/porting} models,
+  \item \myemph{fitting} models to data,
+  \item \myemph{validating} computation,
+  \item \myemph{evaluating} models,
+  \item \myemph{modifying} models,
+  \item addressing \myemph{computational issues},
+  \item \myemph{comparing} models, and 
+  \item \myemph{using} models.
     \vfill
   \end{subitemize}
-  \item \footnotesize Gelman, Vehtari, Simpson, Margossian, Carpenter, 
-    Yao, Kennedy, Gabry, Bürkner, and Modrák. 2020. \myemph{Bayesian workflow}. 
-    \textit{arXiv} 2011.01808.
-  \item Book draft: \url{https://github.com/jgabry/bayes-workflow-book}
 \end{itemize}
+
+\sld{Textbook form of workflow}
+\begin{enumerate}
+    \item Set up a \myemph{full probability model}: a joint
+      distribution for observables and unobservables consistent with
+      knowledge about the scientific problem and data collection.
+    \item \myemph{Condition on observed data}: calculate and interpret the
+      posterior distribution.
+    \item \myemph{Evaluate}: does it fit
+      data, are conclusions reasonable, is it sensitive to
+      assumptions?
+    \item \myemph{Iterate}: If model fails evaluation, go back to (1).
+      \vfill
+      {\footnotesize $\bullet$\ Gelman et al. 2013.  \textit{Bayesian Data
+          Analysis, 3rd Edition}. Chapman \& Hall.}
+    \end{enumerate}
+    
+
+\sld{Our actual workflow}
+\begin{center}
+\vspace*{-6pt}
+\includegraphics[height=0.9\textheight]{img/workflow-fig.pdf}
+\vfill
+\end{center}
+
 
 \sld{Bayesian model}
 \begin{itemize}
@@ -99,7 +119,7 @@ have \myemph{effective sample size} $M_{\textrm{eff}}$, then
 \]
 \end{itemize}
 
-\sld{Probabilistic programs typically $\ldots$}
+\sld{Probabilistic programs typically$\ldots$}
 \begin{itemize}
 \item code Bayesian joint densities
 \item support sampling from the posterior to compute expectations
@@ -112,12 +132,6 @@ have \myemph{effective sample size} $M_{\textrm{eff}}$, then
   \\
   \myemph{need more than posterior sampling for workflow}
 \end{itemize}
-
-\sld{Workflow flowchart}
-\begin{center}
-\vspace*{-6pt}
-\includegraphics[height=0.9\textheight]{img/workflow-fig.pdf}
-\end{center}
 
 \sld{Prior predictive checks}
 \begin{itemize}
@@ -133,7 +147,7 @@ have \myemph{effective sample size} $M_{\textrm{eff}}$, then
   \]
 \item then we compare simulated data $\simvar{y}$ to observed $y$
   \vfill
-  {\tiny Gabry, Simpson, Vehtari, Betancourt,
+  {\footnotesize $\bullet$\ Gabry, Simpson, Vehtari, Betancourt,
     Gelman. 2019. Visualization in Bayesian workflow. \textit{JRSS A}.}
 \end{itemize}
 
@@ -176,7 +190,8 @@ have \myemph{effective sample size} $M_{\textrm{eff}}$, then
   parameters { real<lower=0, upper=1> theta; }
   model { theta ~ beta(2, 10); }
   generated quantities { 
-    int y[N] = bernoulli_rng(N, theta); }
+    int y_sim[N] = bernoulli_rng(N, theta);
+  }
 \end{verbatim}
 }
 \end{itemize}
@@ -323,8 +338,8 @@ have \myemph{effective sample size} $M_{\textrm{eff}}$, then
 
 \sld{PPL support for X-val}
 \begin{itemize}
-\item this is trickier as now we have to fit with one data set $y$
-  and evaluate with another
+\item fit with one data set $y$
+  and evaluate with another $\tilde{y}$
 \item \myemph{BUGS} almost succeeds
 \vspace*{-8pt}
 {\footnotesize 
@@ -369,11 +384,11 @@ generated quantities {
 
 \sld{Sensitivity analysis}
 \begin{itemize}
-\item we'd like to understand how changes in our model affect
-  posterior inference
+\item we'd like to understand how \myemph{changes in our model affect
+  posterior inference}
 \item e.g., vary priors and see how posterior expectations changes
 \item all PPLs let you evaluate alternative constants easily
-\item derivative-based sensitivity w.r.t.\ const. $c$ is trickier
+\item \myemph{derivative-based sensitivity} w.r.t.\ const. $c$ is trickier
   \[
     \frac{\partial}{\partial c} \mathbb{E}[f(\theta) \mid y, c]
   \]
@@ -388,41 +403,32 @@ generated quantities {
 \vspace*{-10pt}
 \end{center}
 \begin{itemize}
-\item Estimated Covid seroprevalence as a function of
+\item Estimated Covid seroprevalence ($y$ axis) as a function of
   \begin{subitemize}
   \item the hyperprior for specificity ($x$-axis)
   \item the hyperprior for sensitivity (facets with values from left-to-right
     0.01, 0.25, 0.5, 0.75, 1.0)
   \end{subitemize}
 \vfill
-{\tiny
+{\footnotesize $\bullet$\
 Gelman, Carpenter. 2020. Bayesian analysis of tests with unknown
 specificity and sensitivity. \textit{JRSS C}.}
 \end{itemize}
 
-\sld{Workflow's more than inference!}
-\begin{center}
-\vspace*{-6pt}
-\includegraphics[height=0.7\textheight]{img/workflow-fig.pdf}
-\end{center}
+\sld{Workflow goes beyond inference}
 \begin{itemize}
-\item where else might PPLs help?
-\end{itemize}
-
-\sld{Some more workflow issues}
-\begin{itemize}
-\item clamp/pin parameters to fixed values?
+\item \myemph{clamp/pin parameters} to fixed values?
   \begin{subitemize}
     \item Stan requires moving the variable from the parameter to the
       data block
   \end{subitemize}
-\item working with multiple (related) models?
+\item working with \myemph{multiple (related) models}?
   \begin{subitemize}
   \item model comparison
   \item model reparameterization
   \item model averaging/mixing/stacking
   \end{subitemize}
-\item autogenerating parallel code?
+\item \myemph{autogenerating} concurrent or GPU code?
   \begin{subitemize}
     \item Stan requires using parallel map functions in the program
   \end{subitemize}`
@@ -434,7 +440,8 @@ specificity and sensitivity. \textit{JRSS C}.}
   \begin{subitemize}
     \item \texttt{uk-covid-icar}, \texttt{uk-covid-rw1}, \\
       \texttt{uk-covid-rw2}, \texttt{uk-covid-rw2-icar}, \\
-      \texttt{uk-covid-rw2-bym2pc},  \texttt{uk-covid-rw2-bym2pc-no-socio},
+      \texttt{uk-covid-rw2-bym2}, \texttt{uk-covid-rw2-bym2pc}, \\
+      \texttt{uk-covid-rw2-bym2pc-no-socio},
       \textit{ad infinitum} $\ldots$
     \item plus multiple versions of the same model (over time)
   \end{subitemize}
@@ -445,22 +452,65 @@ specificity and sensitivity. \textit{JRSS C}.}
     large?
   \item or that they run on clusters in pieces
   \end{subitemize}
-
 \end{itemize}
+
+\sld{Other workflow issues}
+\begin{itemize}
+\item data may be tied up with \myemph{privacy} and/or \myemph{intellectual property}
+  concerns
+  \begin{subitemize}
+  \item e.g., medical records, search logs, street views, etc.
+  \end{subitemize}
+\item end application may require \myemph{deployment in production}
+  \begin{subitemize}
+  \item bundle with Docker, or otherwise deploy
+  \item robustness is a key issue
+  \item update as new data comes in
+  \end{subitemize}
+  \vfill
+  \item \myemph{What are we missing?}
+\end{itemize}
+
+\sld{Democratization of modeling}
+\begin{itemize}
+\item \myemph{expression-based iterfaces} use PPLs under the hood, but
+  give users simpler specification sublanguages
+  \begin{subitemize}
+  \item \myemph{brms}: expression interface in R
+  \item a Poisson GLM with log link is a one-liner
+\begin{verbatim}
+  y ~ age + base * treatment + (1 | patient)
+\end{verbatim}
+    \end{subitemize}
+\item \myemph{fully encapsulated interfaces} use PPLs under the hood
+  but give users a menu of model choices
+  \begin{subitemize}
+    \item \myemph{Prophet} (time-series with trends and cycles)
+    \item \myemph{Torsten} (PK/PD compartment models)
+    \end{subitemize}
+  \item these systems involve \myemph{lots of defaults}
+    \begin{subitemize}
+      \item \myemph{evaluation crosses application boundaries}
+      \end{subitemize}
+    \end{itemize}
 
 \sld{Elephant in the room: Modularity}
 \begin{itemize}
 \item how to \myemph{modularize model components} like hierarchical
-  priors or GP likelihoods
+  priors or GP priors?
 \item Stan lets users define \myemph{functions}
   \begin{subitemize}
   \item e.g., a random-walk or ICAR prior's density function
   \end{subitemize}
 \item but they \myemph{can't cross block boundaries}, e.g., 
   data, parameter, model, generated quantities
-\item how do other PPLs fare?
+\item what about other PPLs?
   \vfill
-\item huge problem: \myemph{density is modular, behavior isn't}
+\item a residual problem: \myemph{density is modular, behavior isn't}
+  \begin{subitemize}
+    \item e.g., a prior can only be understood in the context of a
+      likelihood and a data set
+  \end{subitemize}
 \end{itemize}
 
 \sld{References}
@@ -485,3 +535,19 @@ specificity and sensitivity. \textit{JRSS C}.}
 \begin{verbatim}
 \end{verbatim}
 \vspace*{-8pt}}
+
+\item \footnotesize Gelman, Vehtari, Simpson, Margossian, Carpenter, 
+    Yao, Kennedy, Gabry, Bürkner, and Modrák. 2020. \myemph{Bayesian workflow}. 
+    \textit{arXiv} 2011.01808.
+  \item Book draft:
+    \url{https://github.com/jgabry/bayes-workflow-book}
+
+    \sld{Workflow's more than inference!}
+\begin{center}
+\vspace*{-6pt}
+\includegraphics[height=0.7\textheight]{img/workflow-fig.pdf}
+\end{center}
+\begin{itemize}
+\item where else might PPLs help? 
+\end{itemize}
+
