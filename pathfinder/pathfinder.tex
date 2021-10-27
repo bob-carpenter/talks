@@ -26,15 +26,48 @@
 
 \sld{Pathfinder}
 \begin{itemize}
-\item Lu Zhang, Bob Carpenter, Andrew Gelman, and Aki Vehtari. 2021. Pathfinder: Parallel quasi-Newton variational inference. \textit{arXiv} 2108.03782.
-\item under review at \textit{Journal of Machine Learning Research}
-\item I had the basic idea
-\item Lu, a postdoc at Columbia, made it work with feedback from me and Aki
+\item Lu Zhang, Bob Carpenter, Andrew Gelman, Aki
+  Vehtari. 2021. Pathfinder: Parallel quasi-Newton variational
+  inference. \textit{arXiv} 2108.03782.
   \begin{subitemize}
-    \item she's on the job market
+  \item under review at \textit{Journal of Machine Learning Research}
+    \end{subitemize}
+  \item it took about a year and a whole lot of meetings and revisions
+    \begin{subitemize}
+    \item Lu did all the heavy lifting and is on the job market in biostats
   \end{subitemize}
-\item under development for Stan (me, Lu, Steve Bronder, Brian Ward)
-\item already ported to Julia and Pyro by the probabilisic programming community
+\item under development for Stan \hfill (me, Lu, Steve Bronder, Brian Ward)
+\item ported (from R, pseudocode) to Julia and PyMC3 and Lu's talking to Pyro devs
+\end{itemize}
+
+\sld{Design for Stan integration}
+\begin{center}
+\includegraphics[width=0.9\textwidth]{img/stan-chalkboard.jpg}
+\end{center}
+
+\sld{Why am I so excited about Pathfinder?}
+\begin{itemize}
+\item vs.\ current state of the art in variational inference or Stan's ``burn-in''
+  \begin{subitemize}
+  \item 1--3 \myemph{orders of magnitude faster} without parallelization; 2--5 with
+  \item less KL-divergence and closer Wasserstein-1 distance to target
+    densities
+  \item more robust to varying curvature and minor multimodality
+  \end{subitemize}
+\item rather than sampling the posterior via MCMC to calculate expectations
+  \[
+    \mathbb{E}[f(\theta) \mid y] \approx \frac{1}{M} \sum_{m=1}^M
+    f(\theta^{(m)})
+    \ \textrm{for} \ \theta^{(m)} \sim p(\theta \mid y),
+  \]
+  Pathfinder optimizes a normal variational approximation by
+  \[
+    \mu^*\!, \, \Sigma^*
+    = \textrm{argmin}_{\mu, \Sigma} \
+    \textrm{KL}\!\left[ \textrm{normal}(\theta \mid \mu, \Sigma)
+      \ \big|\big| \
+      p(\theta \mid y) \right]
+    \]
 \end{itemize}
 
 \sld{Democratizing Bayesian inference}
@@ -86,7 +119,7 @@
 \item Stan models define \myemph{log posterior densities} $\log p(\theta \mid y)$
   \begin{subitemize}
   \item require support $p(\theta \mid y) > 0$ for continuous parameters $\theta \in \mathbb{R}^N$
-  \item observed data $y$ may be discrete or continous
+  \item observed data $y$ may be discrete or continuous
   \item constrained parameters are transformed (e.g., log transform scales $\sigma > 0$, Cholesky factor and log diagonal covariance matrices)
   \item change-of-variables adjustment implicitly applied under the hood
   \end{subitemize}
@@ -102,27 +135,31 @@
 \begin{itemize}
 \item from region where \myemph{density times volume} is highest
   \begin{subitemize}
-  \item typically far from the max likelihood estimate $\theta^* = \textrm{arg max}_{\theta} \, \log p(\theta \mid y)$
+  \item typically far from the max a posteriori (MAP) estimate
+    \[
+      \theta^* = \textrm{arg max}_{\theta} \, \log p(\theta \mid y)
+    \]
   \end{subitemize}
 \item consider drawing $y \in \mathbb{R}^N$ from a standard normal $y \sim \textrm{normal}(0, \textrm{I})$
   \begin{subitemize}
   \item i.e., dimensions i.i.d.\ std.\ normal, $y_n \sim \textrm{normal}(0, 1)$ for $n = 1, \ldots, N$
-  \item maximum likelihood point is at mode $y = 0$
+  \item maximum likelihood point is at mode $y = \begin{bmatrix} 0 & 0
+      & \cdots & 0 \end{bmatrix}^{\top}$
   \end{subitemize}
-\item squared distance from origin is $\sum_{n = 1}^N y_n^2 \sim \textrm{ChiSq}(N)$
-  \begin{subitemize}
-    \item bounded well away from 0 as dimensionality $N$ grows
-  \end{subitemize}
+\item squared Euclidean distance from origin (mode) is distributed
+  \[
+    \sum_{n = 1}^N y_n^2 \sim \textrm{ChiSq}(N)
+  \]
 \end{itemize}
 
-\sld{Where do we draw samples? (cont.)}
+\sld{Samples fall in $\textrm{ChiSq}(N)$ central interval}
 \begin{center}
-  \includegraphics[width=0.5\textwidth]{img/99pct-mode-std-normal.png}
+  \includegraphics[width=0.6\textwidth]{img/normal-thin-shell.png}
 \end{center}
-\begin{itemize}
-\item yellow band is \myemph{99\% central interval} of log density for random draws
-\item red line is \myemph{log density of mode}, but \myemph{volume} around mode is low
-\end{itemize}
+\begin{subitemize}
+  \item samples fall in a thin shell concentrated
+    away from the origin (mode) as $N \rightarrow \infty$
+  \end{subitemize}
 
 \sld{Tail, body, and head of a distribution}
 \vspace*{-12pt}
@@ -133,15 +170,29 @@
 \begin{itemize}
 \item
   \myemph{histograms of log densities} of draws from $N$-dimensional std.\ normal
-\item sampling is \myemph{near expected log density} (equiv.\ neg. entropy)
+\item sampling is \myemph{near expected log density} (equiv.\ neg.\ cond.\ entropy)
   \[
     \mathbb{E}\!\left[\log p(\Theta \mid y) \mid y\right]
-    =
+    \ = \ 
     \int_{\Theta} p(\theta \mid y) \cdot \log p(\theta \mid y) \, \textrm{d}\theta
-    = -\textrm{H}[\Theta \mid y]
+    \ = \
+    -\textrm{H}[\Theta \mid y]
   \]
-\item sampling is from \myemph{body}, lower density is \myemph{tail}, higher \myemph{head}
+\item sampling is from \myemph{body}, lower density in \myemph{tail},
+  higher in \myemph{head}
 \end{itemize}
+
+\sld{Typical draw has log density near expectation}
+\begin{center}
+  \includegraphics[width=0.5\textwidth]{img/99pct-mode-std-normal.png}
+\end{center}
+\begin{itemize}
+\item yellow band is \myemph{99\% central interval}
+  of log density for standard normal
+\item red line is \myemph{log density of mode} (nearby is high
+  density, low volume)
+\end{itemize}
+
 
 \sld{Motivation for Pathfinder: MCMC initialization}
 \vspace*{-2pt}
@@ -150,19 +201,28 @@
 \end{center}
 \vspace*{-4pt}
 \begin{subitemize}
-\item \myemph{intermediate value} theorem: \myemph{optimization path} from tail throuh body to head
 \item approximate random init.\ in the body makes Markov chain \myemph{approx.\ stationary}
+\item \myemph{intermediate value} theorem: \myemph{optimization path} from tail \myemph{through body} to head
 \item related to notion of \myemph{typical set} in information theory
   \begin{subitemize}
-  \item in body, draws have ``typical'' log density (i.e., near expectation)
+  \item points whose log density is within $\pm \epsilon$ of expected value
   \end{subitemize}
 \end{subitemize}
 
-\sld{First two approaches weren't so hot}
+\sld{Our first approach crashed}
+\begin{center}
+  \includegraphics[width=0.9\textwidth]{img/wright-crash.jpg}
+\end{center}
 
+\sld{So did the second}
+\begin{center}
+  \includegraphics[width=0.7\textwidth]{img/wright-crash-2.jpg}
+\end{center}
+
+\sld{Failed attempts}
 \begin{itemize}
 \item run \myemph{optimization} to generate a trajectory of points
-\item for each point, evaluate if it's log density is near expectation 
+\item for each point, evaluate if its log density is near expectation 
 \end{itemize}
 \begin{enumerate}
 \item run an MCMC chain for each point
@@ -178,6 +238,11 @@
 \end{enumerate}
 
 \sld{Third time's the charm}
+\begin{center}
+  \includegraphics[width=0.8\textwidth]{img/wright-success.jpg}
+\end{center}
+
+\sld{Pathfinder basics}
 \begin{itemize}
 \item for each point on the optimization trajectory
 \end{itemize}
@@ -185,7 +250,11 @@
 \item[3.] evaluate the KL-divergence of an approximate normal
   \begin{subitemize}
   \item center a \myemph{multivariate normal approximation} (quadratic) on the point on the trajectory
-  \item set covariance to \myemph{approximate inverse Hessian} from L-BFGS (low-rank outer product plus diagonal)
+  \item set covariance to \myemph{approximate inverse Hessian} from
+    L-BFGS
+    \begin{subitemize}
+    \item low-rank outer product plus diagonal
+    \end{subitemize}
   \item evaluate \myemph{KL-divergence from approximation to target density}
     \begin{subitemize}
     \item use \myemph{Monte Carlo} draws from approximation plus analytic normal entropy
@@ -209,11 +278,12 @@
 \sld{Neal's funnel posterior example}
 \vspace*{-6pt}
 \begin{center}
-\includegraphics[width=0.55\textwidth]{img/funnel_example.eps}
+\includegraphics[width=0.6\textwidth]{img/funnel_example.eps}
 \end{center}
+\vspace*{-6pt}
 \begin{subitemize}
 \item no mode, just a pole as $y \rightarrow -\infty$ and $x \rightarrow 0$
-\item Pathfinder stops before going too far (lower left)
+\item Pathfinder selects approximation (lower left) within body
 \end{subitemize}
 
 
@@ -222,19 +292,33 @@
 \item given a \myemph{target posterior} $p(\theta \mid y)$
 \item \myemph{variational inference} assumes an \myemph{approximating} density
   \\ $q(\theta \mid \phi)$ with parameters $\phi$
-\item Pathfinder uses a \myemph{multivariate normal} on unconstrained parameters
-  \[
-    q(\theta \mid \phi) = \textrm{multi-normal}(\theta \mid \mu, \Sigma)
-  \]
-  with factored $\Sigma = \textrm{diag}(\alpha) + \beta^{\top} \cdot \gamma \cdot \beta$,
-  \\[2pt] where 
-  $\alpha \in \mathbb{R}^N$, $\beta \in \mathbb{R}^{N \times J}$, $\gamma \in \mathbb{R}^{J \times J}$ for rank $J$ L-BFGS
 \item variational approximation minimizes KL-divergence to target density
   \[
     \phi^*
     = \textrm{argmin}_{\phi} \
     \textrm{KL}\!\left[q(\theta \mid \phi) \,\bigg|\bigg|\, p(\theta \mid y)\right]
   \]
+\end{itemize}
+
+\sld{L-BFGS-derived normal approximation}
+\begin{itemize}
+\item Pathfinder uses a \myemph{multivariate normal} approximation on \myemph{unconstrained parameters}
+  \[
+    q(\theta \mid \phi) = \textrm{multi-normal}(\theta \mid \mu, \Sigma)
+  \]
+  \item \myemph{covariance} from L-BFGS's \myemph{low-rank plus diagonal} inverse
+  Hessian approximation
+  \[
+    \Sigma = \textrm{diag}(\alpha) + \beta^{\top} \cdot \gamma \cdot
+    \beta
+  \]
+  where
+  \[
+    \alpha \in \mathbb{R}^N, \quad
+    \beta \in \mathbb{R}^{N \times J}, \quad
+    \gamma \in \mathbb{R}^{J \times J}
+    \]
+  for rank-$J$ L-BFGS
 \end{itemize}
 
 \sld{Evaluating KL-divergence with Monte Carlo}
@@ -244,19 +328,21 @@
   & = &
   \mathbb{E}_{q(\theta \mid \phi)}
         \!\left[ \log \frac{q(\theta \mid \phi)}{p(\theta \mid y)} \right]
-  \\[4pt]
+  \\[6pt]
   & = &   \mathbb{E}_{q(\theta \mid \phi)}[\log q(\theta \mid \phi)]
         - \mathbb{E}_{q(\theta \mid \phi)}[\log p(\theta \mid y)]
-  \\[4pt]
-  & = &   - \textrm{H}\!\left[q(\theta \mid y)\right] - \mathbb{E}_{q(\theta \mid \phi)}[\log p(\theta, y)] + \textrm{const.}
-  \\[4pt]
-  & = & - \textrm{H}\!\left[q(\theta \mid y)\right] - \int_{\theta} q(\theta \mid \phi) \cdot \log p(\theta, y) \, \textrm{d}\theta + \textrm{const.}
-  \\[4pt]
+ \\[6pt]
+ & = &   - \textrm{H}\!\left[q(\theta \mid y)\right] - \mathbb{E}_{q(\theta \mid \phi)}[\log p(\theta, y)] + \textrm{const.}
+  \\[6pt]
+%  & = & - \textrm{H}\!\left[q(\theta \mid y)\right] - \int_{\theta} q(\theta \mid \phi) \cdot \log p(\theta, y) \, \textrm{d}\theta + \textrm{const.}
+%  \\[4pt]
   & \approx & -\textrm{H}\!\left[q(\theta \mid \phi)\right] - \frac{1}{M} \sum_{m=1}^M \log p(\theta^{(m)}, y) + \textrm{const.}
   \end{eqnarray*}
   \vspace*{-6pt}
 \begin{subitemize}
-\item where $\theta^{(m)} \sim q(\theta \mid \phi)$ are Monte Carlo draws from normal approximation 
+\item where $\theta^{(m)} \sim q(\theta \mid \phi)$ are \myemph{Monte Carlo
+  draws} from (normal) approximation
+  \item \myemph{minimizing KL} balances high entropy and containment within target
 \item \myemph{analytic entropy} $\textrm{H}\!\left[q(\theta \mid y)\right]$ for normal family $q(\theta \mid \phi) = \textrm{normal}(\theta \mid \mu, \Sigma)$
 \end{subitemize}
 
@@ -278,7 +364,7 @@
     \end{subitemize}
 \end{itemize}
 
-\sld{Competition: Autodiff variational inference (ADVI)}
+\sld{Competitor I: Autodiff variational inference (ADVI)}
 \begin{itemize}
 \item state-of-art \myemph{black-box variational inference in Stan} (Kucukelbir++, \textit{JMLR})
 \item $q(\theta \mid \phi) = \textrm{normal}(\theta \mid \mu, \Sigma)$ with $\Sigma$ \myemph{diagonal} (``mean field'') or \myemph{dense}
@@ -287,12 +373,12 @@
     \nabla_{\phi} \left( -\textrm{H}\!\left[q(\theta \mid \phi)\right] - \frac{1}{M} \sum_{m=1}^M \log p(\theta^{(m)}, y) \right)
   \]
   where $\theta^{(m)} \sim \textrm{normal}(\theta \mid \mu, \Sigma)$ drawn from approximating distribution
-\item using \myemph{``reparameterization trick''} for gradients through sampling
+\item using \myemph{``reparameterization trick''} for gradients
 \item poor \myemph{stability, convergence} with stochastic gradients
 \item optimization through KL-divergence is \myemph{intrinsically serial}
 \end{itemize}
 
-\sld{Competition (cont.): Stan phase I warmup}
+\sld{Competitor II: Stan phase I warmup}
 \begin{itemize}
 \item Stan currently uses \myemph{75 HMC iterations} of its sampler for \myemph{phase I warmup} (aka ``burn-in'')
   \begin{subitemize}
@@ -326,15 +412,16 @@
 \end{center}
 \vspace*{-10pt}
 \begin{subitemize}
-\item \myemph{1--3 orders of magnitude} fewer gradient evaluations (log density similar)
-\item \myemph{embarassingly parallel} after L-BFGS (aside from a max operation) 
+\item \myemph{1--3 orders of magnitude} fewer gradient (and log
+  density) evaluations
+\item \myemph{embarrassingly parallel} after L-BFGS (aside from a max operation) 
 \end{subitemize}
 
 \sld{But does it work?}
 \begin{itemize}
 \item sought a \myemph{neutral evaluation} not based on KL-divergence
   \begin{subitemize}
-  \item KL-diverence is \myemph{asymmetric} (not a distance metric)
+  \item KL-divergence is \myemph{asymmetric} (not a distance metric)
   \item KL-divergence as used favors \myemph{under-concentrated} approximations
   \end{subitemize}
 \item we evaluate using \myemph{Wasserstein-1 distance} (aka ``earth mover's distance'')
@@ -356,14 +443,17 @@
 \end{subitemize}
 
 
-\sld{Is KL-divergence lower (ELBO higher), too?}
+\sld{Is KL-divergence lower, too?}
 \vspace*{-10pt}
 \begin{center}
   \includegraphics[width=0.4\textwidth]{img/elbo-eval.eps}
 \end{center}
-\vspace*{-6pt}
+\vspace*{-10pt}
 \begin{subitemize}
-\item \myemph{mostly yes}, because \myemph{ADVI optimization is unstable} \hfill (Vehtari et al.)
+\item despite direct KL minimization,
+  \myemph{ADVI optimization is unstable}
+  \hfill (Vehtari et al.)
+\item ELBO is negative KL-divergence plus constant (as shown earlier)
 \end{subitemize}
 
 
@@ -373,7 +463,7 @@
 \item sometimes the posterior \myemph{isn't approximately normal} (e.g., low data, complex models)
 \item \myemph{multi-path Pathfinder} runs multiple single-chain Pathfinder runs \myemph{in parallel}
 \item \myemph{importance resamples} the draws (with \myemph{Pareto smoothing}) (very fast)
-\item \myemph{variational family} is thus a \myemph{mixture of normals} (with low-rank plus diagonal covariance)
+\item generalizes \myemph{variational family} to a \myemph{mixture of normals} (with low-rank plus diagonal covariance)
 \end{itemize}
 
 \sld{Importance sampling and resampling}
@@ -386,9 +476,11 @@
 \item \myemph{importance sampling} calculates estimates
   \[
     \mathbb{E}[f(\theta) \mid y]
-    \approx \frac{1}{\textrm{sum}(w)} \sum_m w_m \cdot f(\theta^{(m)})
+    \approx \frac{1}{\textrm{sum}(w)} \sum_{m=1}^M w_m \cdot f(\theta^{(m)})
   \]
-\item \myemph{importance resampling} draws a sample of size $M$ \myemph{with replacement} from $\theta^{(1)}, \ldots, \theta^{(M)}$, with probabilities \myemph{proportional weights},
+\item \myemph{importance resampling} draws a sample of size $M$
+  \myemph{with replacement} from $\theta^{(1)}, \ldots, \theta^{(M)}$,
+  with probabilities \myemph{proportional to weights}
 \[
     p(\theta^{(m)}) \propto w_m
 \]
@@ -418,4 +510,5 @@
 
 
 \end{document}
+
 
