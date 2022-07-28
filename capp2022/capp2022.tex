@@ -1,0 +1,223 @@
+\documentclass[10pt]{report}
+
+\usepackage{talk}
+\usepackage[export]{adjustbox}
+
+\newcommand{\draw}[2]{#1^{(#2)}}
+\newcommand{\displayfrac}[2]{{\displaystyle \frac{\displaystyle #1}{\displaystyle #2}}}
+\newcommand{\simvar}[1]{#1^{\textrm{sim}}}
+\newcommand{\simdraw}[2]{#1^{\textrm{sim}(#2)}}
+
+\begin{document}
+\sf%
+\mbox{ }
+\\[12pt]
+\spc{\Large\bfseries \myemph{Comprehension, maps, and eager eval}}
+\\[4pt]
+\spc{\Large\bfseries \myemph{for differentiable probabilistic programs}}
+\\[36pt]
+\noindent
+\spc{\large\bfseries \myemph{Bob Carpenter}}
+\\[4pt]
+\spc{Center for Computational Mathematics}
+\\[2pt]
+\spc{Flatiron Institute}
+\vfill
+\noindent
+\spc{\small \myemph{CAPP 2022}} \hfill
+\includegraphics[height=24pt]{img/flatiron-logo.png}
+\hfill
+\includegraphics[height=36pt]{img/stan-logo.png}
+
+\sld{Differentiable Prob Prog}
+\begin{itemize}
+\item \myemph{differentiable}: \\ code smooth function $f$ and derive
+  efficient $\nabla f$, $\nabla \nabla f, \ldots$
+\begin{subitemize}
+\item cost is restrictions on coding (library / control flow)
+\item e.g., Adol-C, Sacado, CppAD, \myemph{Stan Math}, TensorFlow, PyTorch, JAX, Zygote.jl, $\ldots$
+\end{subitemize}
+\item \myemph{differentiable probabilistic}: \\
+  $f(\theta) = \log p(\theta \mid y) + \textrm{const.}$ is target log density \\
+  plus sampling / optimization / variational approx.
+\begin{subitemize}
+  \item e.g., AMB, \myemph{Stan}, PyMC, Pyro, Turing.jl, $\ldots$ 
+  \end{subitemize}
+\item \myemph{most composable}: Zygote.jl, JAX; Turing.jl
+\end{itemize}
+
+\newcommand{\dpartl}[1]{\displaystyle \partial #1}
+\newcommand{\partl}[2]{\frac{\dpartl{#1}}{\dpartl{#2}}}
+
+\sld{Reverse-mode Autodiff}
+\begin{itemize}
+\item \myemph{Constant cost} multiple for $f: \mathbb{R}^N \rightarrow \mathbb{R}$
+\item \myemph{Forward pass}: eval program to construct expression DAG
+\item \myemph{Reverse pass}: propagate derivatives in topological order
+\vspace*{9pt}
+\item \myemph{Cache misses} propagating subexpression derivatives
+\[
+  \partl{\log p(\theta \mid y)}{e_n}
+  \ {+}{=} \
+  \partl{\log p(\theta \mid y)}{f(e_1, \ldots, e_N)}
+  \times
+  \partl{f(e_1, \ldots, e_N)}{e_n}.
+\]
+\vspace*{-9pt}
+\begin{subitemize}
+\item $e_1, \ldots, e_N$ \myemph{sequential} in memory after forward eval
+\item \myemph{efficiency} requires cache locality (\& branch prediction)
+\item \small on miss, RAM fetch $\approx 150$ clock cycles (!!!)
+\end{subitemize}
+\end{itemize}
+
+\sld{Map-Reduce for Likelihoods}
+\begin{itemize}
+\item if data $y$ \myemph{conditionally independent} given parameters $\theta$, 
+  \[\textstyle
+    p(y \mid \theta) \ = \ \sum_{n=1}^N \log p(y_n \mid \theta).
+  \]
+\item \myemph{map} applies a function $f$ to each element of a vector
+  $v$, 
+  \[\textstyle
+    \textrm{map}(f, v) = \begin{bmatrix} f(v_1) & \cdots
+      f(v_N) \end{bmatrix}^{\top}.
+  \]
+\item Stan reduces map output with sum for likelihoods
+  \[\textstyle
+    \textrm{reduce\_sum}(f, y, \theta_1, \ldots, \theta_K) =
+    \sum_{n=1}^N f(y_n, \theta_1, \ldots, \theta_K).
+  \]
+\end{itemize}
+
+\sld{Eager Subgraph Evaluation}
+
+\begin{itemize}
+\item Runtime form of \myemph{partial evaluation}
+\item Eval $\nabla_{x} \, f(e_1(x), \ldots, e_N(x))$ any time after
+  eval $f(\cdots)$
+  \begin{subitemize}
+    \item \myemph{Stan}: nested reverse-mode; \, Adept: forward-mode
+  \end{subitemize}
+\item \myemph{Reduces memory footprint} for subexpressions to $\mathcal{O}(|x|)$
+\item Which increases \myemph{cache locality} and speeds up throughput
+\item \myemph{Parallel} evaluation of subexpression gradients
+  \begin{subitemize}
+  \item Stan \myemph{scales up} with threads (TBB) and \myemph{scales out} with MPI
+  \item \myemph{communicate gradients} back in $\mathcal{O}(|x|)$
+  \item MPI pushes data to \myemph{node local} on construction
+  \item orthogonal to \myemph{GPU} usage
+  \end{subitemize}
+\end{itemize}
+
+\sld{Autodiff Variable Locality}
+\begin{itemize}
+  \item Stan uses pointer to implementation for RAII
+\begin{stancode}
+template <typename T>   template <typename T>
+struct var {            struct vari {
+  vari* vi_;              T value_;  T adjoint_;
+};                      };
+\end{stancode}
+%
+\item Two ways to code matrices (vectors, tensors, etc.)
+\begin{stancode}
+Eigen::Matrix<var<double, -1, -1>> A;
+\end{stancode}
+\begin{stancode}
+var<Eigen::Matrix<double, -1, -1>> B;
+\end{stancode}
+\begin{subitemize}
+\item \texttt{A} can autodiff `Matrix<T>` algorithms
+\item \texttt{B} is memory local for matrix derivatives
+\item only \texttt{A} supports lvalue indexing (element assignment)
+\end{subitemize}
+\end{itemize}
+
+\sld{Gaussian Process (GP)}
+
+\begin{itemize}
+\item A GP is a non-parametric\footnote{\sf \null \ i.e., lots of parameters} nearest neighbors model
+\item Data size $N$ requires $N \times N$ \myemph{covariance matrix} $\Sigma$
+  \begin{itemize}
+  \item for \myemph{covariance function} $\kappa$, data $x$, params $\theta$,
+    \[
+      \Sigma_{i,j} = \kappa(i, j, x, \theta)
+    \]
+  \end{itemize}
+\item In rich models, $\Sigma$ is a \myemph{sum of covariance} matrices
+\item Adding large $N$ covariance matrices is a \myemph{memory
+    disaster}
+\item Want to \myemph{scale GPs} in Stan from $N < 1000$ to $N > 10,000$
+\end{itemize}
+
+
+\sld{Comprehensions}
+
+\begin{itemize}
+\item From \myemph{set theory} (late 1800s), consistent in \myemph{ZF} (early 1900s)
+  \[
+    B = \{ x \in A : \phi(x) \} \ \textrm{ is a set if } A \textrm{ is a
+      set and } \phi : A \rightarrow \textsf{Bool}
+  \]
+\item Introduced to programming languages (early 1970s) and
+  \begin{subitemize}
+  \item from POP2 to Miranda to Haskell to Python to $\cdots$ Stan
+  \end{subitemize}
+\item Python \myemph{list comprehension} is ordered
+\begin{stancode}
+b = [x for x in A if phi(x)]
+\end{stancode}
+\end{itemize}
+
+\sld{Matrix Comprehension}
+\begin{itemize}
+\item \myemph{Stan} is adopting a \myemph{variadic} covariance function style
+\begin{stancode}
+  cov_matrix[N, N] B = comp_mat(f, a_1, ..., a_N);
+\end{stancode}
+\begin{subitemize}
+\item defines \texttt{B} as if evaluated in the loop
+\begin{stancode}
+for (i in 1:N)
+  for (j in 1:N)
+    B[i, j] = f(i, j, a1, ... aN);
+\end{stancode}
+\end{subitemize}
+\item Just a specialized map
+  \begin{subitemize}
+  \item \myemph{partially evaluate} gradients $\partl{f(i, j, a_1,
+      \ldots, a_N)}{a_n}$
+  \item \myemph{parallelize} eval and gradients over both loops
+  \end{subitemize}
+\item For GPs, \myemph{add covariance functions} not covar matrices
+\end{itemize}
+
+\sld{Compiler/Runtime Automation}
+\begin{itemize}
+\item autodetect when we can parallelize loops with map
+\item auto load balance parallel jobs
+  \begin{subitemize}
+    \item using Intel Thread Building Blocks (TBB) for pooling/allocation
+  \end{subitemize}
+\end{itemize}
+
+\sld{Thanks for Listening}
+\begin{itemize}
+  \item Stan language transpiler (OCaml): \\ \url{github.com/stan-dev/stanc3}
+    \begin{subitemize}
+    \item Carpenter, B., Gelman, A., Hoffman, M.D., Lee, D., Goodrich,
+      B., Betancourt, M., Brubaker, M., Guo, J., Li, P. and Riddell,
+      A., 2017. \myemph{Stan: A probabilistic programming language}. \textit{Journal of
+      Statistical Software}, 76(1).
+    \end{subitemize}
+  \item Stan math library (C++):\\ \url{github.com/stan-dev/math}
+    \begin{subitemize}
+    \item Carpenter, B., Hoffman, M.D., Brubaker, M., Lee, D., Li,
+      P. and Betancourt, M., 2015. \myemph{The Stan math library: Reverse-mode
+      automatic differentiation in C++}. \textit{arXiv} 1509.07164.
+    \end{subitemize}
+\end{itemize}
+
+\end{document}
+
