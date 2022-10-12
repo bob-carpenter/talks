@@ -14,7 +14,7 @@
 \sf%
 \mbox{ }
 \\[12pt]
-\spc{\Large\bfseries \myemph{SARS-CoV-2 diagnostic testing:}}
+\spc{\Large\bfseries \myemph{SARS-CoV-2 PCR diagnostic testing:}}
 \\[4pt]
 \spc{\Large\bfseries \myemph{test site variation and time trends}}
 \\[36pt]
@@ -73,13 +73,14 @@
 \item we use $\pi \in [0, 1]$ for prevalence
 \item \myemph{prevlaence varies} by the following (among other things!)
   \begin{subitemize}
+    \vspace*{-12pt}
   \item time 
-  \item geo-location
+  \item location
   \item age
   \item sex
-  \item socio-economic status
-  \item ethnicity
-  \item intervention
+  \item socio-economic status (income quintile or decile)
+  \item ethnicity (very ad hoc by country)
+  \item intervention (lockdown, masks, distancing, etc.)
   \end{subitemize}
 \end{itemize}
   
@@ -275,7 +276,7 @@
   \item sex
   \item age
   \item ethnicity 
-  \item geolocation plus geolocal predictor (e.g., income)
+  \item region plus regional predictor (e.g., avg.~income)
   \end{subitemize}
 \item Bendavid et al. poststratified, but didn't share covariates
 \item we poststratified UK (\& Indiana), but no time to present
@@ -283,28 +284,181 @@
 
 \sld{Implementation}
 \begin{itemize}
-\item we coded our models in \myemph{Stan}
+\item we coded our models in \myemph{Stan} (paper appendix, GitHub)
 \item Stan has \myemph{continuous parameters}, so we
   \begin{subitemize}
-  \item \myemph{marginalize out} ``missing data'' (disease status
+  \item \myemph{marginalize} discrete ``missing data'' (disease status
     $z_n$)
   \end{subitemize}
 \item \myemph{complete data likelihood}:
   {\small
   \begin{eqnarray*}
     p(y_n, z_n \mid \pi, \theta)
-    & = & \textrm{bern}(z_n \mid \pi)
+    & = & \textrm{bernoulli}(z_n \mid \pi)
           \\
-    & & {} \times \textrm{bern}\big(y_n \mid \textrm{ifelse}(z_n,
+    & \times & \textrm{bernoulli}\big(y_n \mid \textrm{ifelse}(z_n,
         \ \  \theta_{1,
       \, kk[n]},  \ \ 1 - \theta_{0, \, kk[n]})\big)
   \end{eqnarray*}}
-  \item \myemph{likelihood}:
+\item \myemph{likelihood}:
   $$\textrm{Pr}\left[y_n = 1 \mid \pi, \theta\right]
     = \underbrace{\pi \cdot \theta_{1, \, kk[n]}}_{\textrm{true
         positive rate}}
     + \underbrace{(1 - \pi) \cdot (1 - \theta_{0, \,
         kk[n]})}_{\textrm{false negative rate}}$$
 \end{itemize}
+
+
+\sld{Sensitivity growth and decay}
+\begin{itemize}
+\item at time of \myemph{infection}: viral load/test sensitivity is \myemph{zero}
+\item at time of \myemph{symtpom onset}: they are \myemph{maximized}
+\item \myemph{after onset}: clearance for \myemph{exponential decay}
+  \vfill
+\item assuming a fixed sensitivity produces a kind of \myemph{average}
+\end{itemize}
+
+\sld{Raw data: {\slshape hospitalized patients}}
+
+\includegraphics[width=0.8\textwidth]{img/test-pos-neg-counts.pdf}
+
+\sld{Binomial MLE (days with tests)}
+
+\includegraphics[width=0.75\textwidth]{img/mle-time-series.pdf}
+\vspace*{-3pt}
+\begin{subitemize}
+  \item $y_t \sim \textrm{binomial}(N_t, \theta_t)$
+  \end{subitemize}
+  
+\sld{Bayesian weakly informative}
+
+\includegraphics[width=0.75\textwidth]{img/bayes-90pct-shrinkage.pdf}
+\vspace*{-3pt}
+\begin{subitemize}
+\item $\textrm{logit}(\theta_t) \sim \textrm{normal}(0, 3)$
+\end{subitemize}
+
+\sld{Bayesian with monotonicty}
+
+\includegraphics[width=0.7\textwidth]{img/monotonicity-bayes.pdf}
+\vspace*{-3pt}
+\begin{subitemize}
+\item $\textrm{logit}(\theta_t) \sim \textrm{normal}(0, 3) \
+  \textrm{s.t.} \ \theta_t > \theta_{t+1}$
+\item \myemph{reduced uncertainty} due to \myemph{constraint}
+\end{subitemize}
+
+\sld{Bayesian 1st-order random walk}
+  
+\includegraphics[width=0.7\textwidth]{img/monotonic-bayes-rw1.pdf}
+\vspace*{-3pt}
+\begin{subitemize}
+\item $\textrm{logit}(\theta_{t+1}) \sim \textrm{normal}(\theta_{t-1}, 
+  \sigma) 
+  \quad \textrm{logit}(\theta_1) \sim \textrm{normal}(4, 1)$
+  \\
+  $\sigma \sim \textrm{normal}_+(0, 1)$
+\end{subitemize}
+
+\sld{Bayesian 2nd-order random walk}
+  
+\includegraphics[width=0.7\textwidth]{img/mono-bayes-rw2.pdf}
+\vspace*{-3pt}
+\begin{subitemize}
+\item $\textrm{logit}(\theta_{t+1}) \sim
+  \textrm{normal}(\theta_{t-1} + (\theta_{t-1} - \theta_{t-2}),
+  \sigma)$
+  \\
+  $\theta_2 \sim \textrm{normal}(\theta_1, 2\sigma)
+  \qquad
+  \textrm{normal}_+(0, 1)$
+\end{subitemize}
+
+
+\sld{Binomial GLM, logit link}
+  
+\includegraphics[width=0.7\textwidth]{img/bayes-logit-glm.pdf}
+\vspace*{-3pt}
+\begin{subitemize}
+\item $y_t \sim \textrm{binomial}\left(N_t, \, \textrm{logit}^{-1}(\alpha +
+  \beta \cdot t)\right)
+  \quad \alpha, \beta \sim \textrm{normal}(0, 0.5)$
+\item \myemph{very poor fit} in early days \myemph{forced by link}
+\end{subitemize}
+
+
+\sld{Binomial GLM, log link}
+  
+\includegraphics[width=0.7\textwidth]{img/bayes-binomial-log.pdf}
+\vspace*{-3pt}
+\begin{subitemize}
+\item $y_t \sim \textrm{binomial}\left(N_t, \, \textrm{exp}(\alpha +
+  \beta \cdot t)\right)
+\quad \alpha, \beta \sim \textrm{normal}_(0, 0.5)$
+\item $\alpha, \beta < 0$ enforces $\textrm{exp}(\alpha + \beta \cdot
+  t) \in (0, 1)$
+\end{subitemize}
+
+\sld{Posterior for binomial-log}
+
+\includegraphics[width=0.7\textwidth]{img/binomial-log-scatter.pdf}
+\begin{subitemize}
+\item negative correlation because $t \geq 0$
+\item intercept not well identified
+\end{subitemize}
+
+\sld{Leave-one out X-validation}
+
+\vspace*{12pt}
+\includegraphics[width=0.7\textwidth]{img/loo.pdf}
+\begin{subitemize}
+\item calculated using \texttt{\bfseries loo} package in R
+\item binomial w.\ \myemph{log link} models \myemph{exponential clearance}
+\item \myemph{monotonic shrinkage} very \myemph{flexible} within constraint
+\end{subitemize}
+
+\sld{Caveats}
+\begin{itemize}
+\item data is from \myemph{hospitalized} patients
+  \begin{subitemize}
+  \item many stay in hospital due to \myemph{long Covid}
+  \item \myemph{not representative} of general population
+  \end{subitemize}
+\item as many as 10 tests per patient
+  \begin{subitemize}
+  \item but \myemph{within-patient effects} not modeled
+  \end{subitemize}
+\end{itemize}
+
+\sld{\vspace*{-4pt}Professional basketballers}
+
+\includegraphics[width=0.7\textwidth]{img/bball-days-from-peak.png}
+\begin{subitemize}
+\vspace*{-3pt}
+\item all players \myemph{tested positive}
+\vspace*{-3pt}
+\item \myemph{symptomatic} in red; \ \myemph{asymptomatic} in blue
+\vspace*{-3pt}
+\item PCR tests \myemph{only sensitive} at $\textrm{Ct} < 35$ for $t \in (-5, 10)$
+\end{subitemize}
+
+\sld{Back casting}
+
+  \includegraphics[height=0.9\textheight]{img/deaths-predict.png}
+  \quad 
+\begin{minipage}[t]{1.5in}
+  \vspace*{-2.15in}\footnotesize 
+  (a) deaths, 7 day moving average 
+  \\[18pt]
+  (b) estimated random test positivity 
+  \\[18pt]
+  (c) estimated infections 
+  \\[30pt]
+  (d) actual test positivity 
+  \\[12pt]
+  {\slshape (*) x axis 1 Sep 2020--25 Mar 2021, vertical at Xmas}
+\end{minipage}
+
 \end{document}
+
 
