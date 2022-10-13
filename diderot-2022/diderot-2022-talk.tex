@@ -71,7 +71,7 @@
 \item \myemph{prevalence} is proportion of population who are
   positive
 \item we use $\pi \in [0, 1]$ for prevalence
-\item \myemph{prevlaence varies} by the following (among other things!)
+\item \myemph{prevalence varies} by the following (among other things!)
   \begin{subitemize}
     \vspace*{-12pt}
   \item time 
@@ -148,7 +148,7 @@
   \begin{subitemize}
   \item baseline model from \myemph{Bendavid et al.} (2020)
     \end{subitemize}
-\item assume sensitivty and specificity \myemph{do not vary} by
+\item assume sensitivity and specificity \myemph{do not vary} by
   site
 \item two views on lack of variation
   \begin{subitemize}
@@ -162,7 +162,7 @@
 
 \begin{itemize}
 \item let $\theta_1$ be \myemph{sensitivity} and $\theta_0$ \myemph{specificity}
-\item uniform \myemph{priors} on probabilites
+\item uniform \myemph{priors} on probabilities
   \begin{subitemize}
   \item $\pi, \ \theta_1, \ \theta_0 \sim \textrm{uniform}(0, 1)$
   \item equivalently, standard logistic prior on log odds
@@ -312,7 +312,7 @@
 \sld{Sensitivity growth and decay}
 \begin{itemize}
 \item at time of \myemph{infection}: viral load/test sensitivity is \myemph{zero}
-\item at time of \myemph{symtpom onset}: they are \myemph{maximized}
+\item at time of \myemph{symptom onset}: they are \myemph{maximized}
 \item \myemph{after onset}: clearance for \myemph{exponential decay}
   \vfill
 \item assuming a fixed sensitivity produces a kind of \myemph{average}
@@ -338,7 +338,7 @@
 \item $\textrm{logit}(\theta_t) \sim \textrm{normal}(0, 3)$
 \end{subitemize}
 
-\sld{Bayesian with monotonicty}
+\sld{Bayesian with monotonicity}
 
 \includegraphics[width=0.7\textwidth]{img/monotonicity-bayes.pdf}
 \vspace*{-3pt}
@@ -409,13 +409,49 @@
 
 \sld{Leave-one out X-validation}
 
-\vspace*{12pt}
+\vspace*{8pt}
 \includegraphics[width=0.7\textwidth]{img/loo.pdf}
-\begin{subitemize}
-\item calculated using \texttt{\bfseries loo} package in R
-\item binomial w.\ \myemph{log link} models \myemph{exponential clearance}
-\item \myemph{monotonic shrinkage} very \myemph{flexible} within constraint
-\end{subitemize}
+\vspace*{-3pt}
+\begin{itemize}
+\item \myemph{ELPD}: expected log \myemph{pointwise predictive} density
+  \begin{subitemize}
+  \item estimated with \texttt{\bfseries loo} package in R
+  \item based thousands of observations (cf. earlier histograms)
+  \end{subitemize}
+\item \myemph{binary outcome} probabilities \myemph{hard to discriminate}
+\end{itemize}
+  
+\sld{Interpreting the results (1)}
+\begin{itemize}
+\item \myemph{best}: binomial log (left) \& monotonic shrinkage (right)
+  \begin{subitemize}
+  \item \myemph{cannot discriminate} with this data
+  \item actual fits look very different
+  \end{subitemize}
+\end{itemize}
+\begin{center}
+\includegraphics[width=0.45\textwidth]{img/bayes-binomial-log.pdf}
+\quad
+\includegraphics[width=0.45\textwidth]{img/monotonicity-bayes.pdf}
+\end{center}
+
+
+\sld{Interpreting the results (2)}
+\begin{itemize}
+\item \myemph{binomial GLM}
+  \begin{subitemize}
+  \item 2 parameters
+  \item strong assumptions: link models \myemph{exponential clearance}
+  \item parameters not well identified, but sensitivity at time is
+  \end{subitemize}
+\item \myemph{monotonicity constraint} with weakly informative prior
+  \begin{subitemize}
+    \item flexible \myemph{non-parametric} model (parameter per time)
+    \item e.g., can \myemph{fit mixture} of long- and short-covid (cf. kink
+      at 10 days)
+    \item wider posterior intervals on test sensitivity
+    \end{subitemize}
+\end{itemize}
 
 \sld{Caveats}
 \begin{itemize}
@@ -430,24 +466,114 @@
   \end{subitemize}
 \end{itemize}
 
-\sld{\vspace*{-4pt}Professional basketballers}
+\sld{\vspace*{-4pt}Professional basketballer data}
 
 \includegraphics[width=0.7\textwidth]{img/bball-days-from-peak.png}
 \begin{subitemize}
-\vspace*{-3pt}
-\item all players \myemph{tested positive}
-\vspace*{-3pt}
-\item \myemph{symptomatic} in red; \ \myemph{asymptomatic} in blue
-\vspace*{-3pt}
+\vspace*{-4pt}
+\item all \myemph{tested positive}; 
+\myemph{symptomatic} red; \ \myemph{asymptomatic} blue
+\vspace*{-4pt}
 \item PCR tests \myemph{only sensitive} at $\textrm{Ct} < 35$ for $t \in (-5, 10)$
+\vspace*{-4pt}
+\item \footnotesize Kissler et al. 2021. Viral dynamics of acute
+  SARS-CoV-2 infection and applications to diagnostic and public
+  health strategies. \textit{PLOS Bio.}
 \end{subitemize}
 
-\sld{Back casting}
 
-  \includegraphics[height=0.9\textheight]{img/deaths-predict.png}
-  \quad 
+\sld{UK tests vs.\ deaths}
+
+\begin{itemize}
+\item (1) tens of millions of voluntary tests
+\item (2, 3) UK \myemph{national ``surveys''} (ONS/Oxford \& NHS/UCL)
+\item strong \myemph{positive opt-in biases} \& \myemph{no agreement}
+\item even after \myemph{post-stratification} for \myemph{demographic
+    biases}
+  \vfill
+\item \myemph{Covid deaths} are more reliable measure
+  \begin{subitemize}
+  \item still require distinguishing \myemph{dying with}
+    vs. \myemph{dying of} Covid
+  \item \myemph{criteria vary by region} \& \myemph{changed} mid-pandemic
+  \end{subitemize}
+\end{itemize}
+
+\sld{Time to death model}
+\begin{itemize}
+\item UK Health Security Agency fit \myemph{time-to-death} model
+  \begin{subitemize}
+  \item all conditioned on patient dying of Covid
+  \end{subitemize}
+\item \myemph{continuous} $\textrm{lognormal}(\mu^d, \sigma^d)$ best
+  fits distribution
+\item but we need \myemph{discrete} probability of \myemph{death by day}:
+  \\[8pt]
+  $\textrm{Pr}[\textsf{\small die during day } t \mid \mu^d, \sigma^d]$
+  \\[4pt]
+  ${} = \textrm{Pr}[\textsf{\small die before day } t + 1 \mid \mu^d,
+  \sigma^d]$
+  \\[4pt]
+  ${} \quad  - \textrm{Pr}[\textsf{\small die before day } t \mid \mu^d, \sigma^d]$
+\end{itemize}
+
+\sld{Infection fatality rate}
+\begin{itemize}
+\item use estimate of \myemph{infection fatality rate}
+  \begin{subitemize}
+  \item probability of dying given infected with Covid
+  \item obviously varies tremendously by demographics
+  \item shortened as hospitals were overwhelmed
+  \end{subitemize}
+\item we will use a \myemph{point estimate}
+$$\widehat{\delta} \approx \textrm{Pr}[\textsf{\small patient dies} \mid
+\textsf{\small patient Covid positive}]$$
+\vspace*{-18pt}
+\begin{subitemize}
+\item it would be better to \myemph{propagate estimation uncertainty}
+\end{subitemize}
+\end{itemize}
+
+\sld{Generative model of deaths}
+\begin{itemize}
+\item let $\theta_t \in (0, 1)$ be the \myemph{infection rate} on day $t$
+\item $\widehat{\delta} \cdot \theta_t$ of those people expected
+  to die
+  \begin{subitemize}
+  \item should include sampling variation
+  \end{subitemize}
+\item derive \myemph{expected deaths} on day $t+1, t+2, \ldots$
+  \begin{subitemize}
+  \item from infections on day $t$ with \myemph{time of death model}
+  \end{subitemize}
+\item derive \myemph{expected deaths} on day $t$
+  \begin{subitemize}
+  \item from expected deaths on $t-1, t-2, \ldots$ to
+  \end{subitemize}
+\item \myemph{Poisson} model of \myemph{observed deaths} given expected deaths
+\item solve \myemph{inverse problem} with \myemph{Bayesian inference}
+\end{itemize}
+
+\sld{Estimate random testing results}
+\begin{itemize}
+\item death model yields \myemph{estimated infection rate} rate $\theta_t \in (0, 1)$ on
+  day $t$
+  \begin{subitemize}
+  \item with some, but not all relevant uncertainty
+  \end{subitemize}
+\item for each day $t$, we know fraction of population estimated to
+  have been \myemph{infected each previous day}
+\item use test positivity to estimate \myemph{random testing positivity}
+  \vfill
+\item could potentially use to \myemph{adjust opt-in and survey biases}
+\end{itemize}
+
+\sld{Backcasting result}
+
+\includegraphics[height=0.9\textheight]{img/deaths-predict.png}
+\quad 
 \begin{minipage}[t]{1.5in}
-  \vspace*{-2.15in}\footnotesize 
+  \vspace*{-2.2in}\footnotesize 
   (a) deaths, 7 day moving average 
   \\[18pt]
   (b) estimated random test positivity 
@@ -455,9 +581,32 @@
   (c) estimated infections 
   \\[30pt]
   (d) actual test positivity 
-  \\[12pt]
-  {\slshape (*) x axis 1 Sep 2020--25 Mar 2021, vertical at Xmas}
+  \\[8pt]
+  \footnotesize (*) \myemph{x axis}: 1 Sep to 25 Mar, vertical at \myemph{Xmas 2020}
+  \\ \myemph{y axis}: rates
 \end{minipage}
+
+\sld{Acknowledgements \& Code}
+
+\begin{itemize}
+\item \myemph{hierarchical model} joint work with \myemph{Andrew
+    Gelman}
+  \begin{subitemize}
+    \item Gelman \& Carpenter. 2020. Bayesian analysis of tests with unknown specificity and sensitivity. \textit{JRSS C}.
+  \end{subitemize}
+\item \myemph{other models} joint work with \myemph{Tom Ward}
+  \begin{subitemize}
+    \item head of infectious disease modeling for UK Health
+    Security Agency
+    \end{subitemize}
+\vfill
+\item \myemph{Stan code} for hierarchical model in paper (and GitHub)
+\item other code on GitHub: \texttt{\bfseries bob-carpenter/epi-mrp}
+  \begin{itemize}
+  \item lots of fiddly indexing and marginalizations
+  \end{itemize}
+\end{itemize}
+
 
 \end{document}
 
