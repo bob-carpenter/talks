@@ -88,12 +88,12 @@
 \end{center}
 
 \sld{}
-\vfill
+\vfill 
 \begin{center}
 \Huge \myemph{Part I\\[12pt] MCMC for Bayes}
 \end{center}
-\vfill
-\vfill
+\vfill 
+\vfill 
 
 \sld{Bayesian Inference \hfill\normalsize (Bayes $\approx$ 1750,
   Laplace $\approx$ 1800)}
@@ -367,15 +367,12 @@ where $z_m \sim \textrm{normal}(0, \textrm{I}_D).$
   by $c$ (e.g., $c = 2$ or $c = 5$)
   \begin{subitemize}
   \item earlier attempts kept step size and extended path
-  \item our approach better if rejection was because Hamiltonian
-    diverged
-  \item divergence is when step size isn't small enough for
-    first-order gradient-based approximations to deal with curvature
+  \item our approach better if rejection was because \myemph{Hamiltonian
+    diverged}\\[2pt] (gradient-based first-order approximation of curvature fails)
   \end{subitemize}
-\item \myemph{Chirag's DR innovation:} Only retry if acceptance probability for
-  previous try was low.
-\item Deals with *multiple scales* (varying curvature
-  direction/magnitude) \myemph{along an entire path}.
+\item \myemph{Chirag innovation:} Only retry if acceptance probability was low
+\item Deals with \myemph{multiple scales} (varying curvature)
+  along an \myemph{entire path}
 \end{itemize}
 
 \sld{MEADS \hfill \normalsize(Hoffman and Sountsov 2022)}
@@ -394,10 +391,213 @@ where $z_m \sim \textrm{normal}(0, \textrm{I}_D).$
 
 \sld{DR-G-HMC \hfill \normalsize(Modi et al. in progress)}
 \begin{itemize}
-\item Apply delayed rejection to generalized HMC with one step.
-\item Retries only use a single step.
-\item Deals with multiple scales \myemph{within a path}
-\item Use MEADS-like tuning.
+\item Apply \myemph{delayed rejection} to \myemph{generalized HMC}
+\item \myemph{Retries} use \myemph{one step} instead of constant time
+\item \myemph{Multiple scales} within {a trajectory}
+\item solves \myemph{non-centered funnel}
+\item Use MEADS-like \myemph{parallel tuning}
 \end{itemize}
+
+\sld{Convergence: nested $\widehat{R}$ \hfill
+  \normalsize(Margossian et al. 2022)}
+\begin{itemize}
+\item \myemph{GPUs} run \myemph{1000+} parallel chains
+\item \myemph{One draw}/chain \myemph{minizes wall time}
+\item \myemph{Nest blocks} with \myemph{same init}; monitor \myemph{transient bias} + \myemph{variance}
+\end{itemize}
+\begin{center}
+  \includegraphics[width=0.9\textwidth]{img/nRhat.png}
+\end{center}
+
+
+
+
+\vfill 
+\begin{center}
+  {\Huge \myemph{Part II\\[12pt] Stan Language}}
+\end{center}
+\vfill 
+\vfill 
+
+\sld{Tuples \hfill (next release)}
+\begin{itemize}
+\item Required \myemph{design doc} choices
+  \begin{subitemize}
+  \item mainly on syntax and including \myemph{named structs}
+  \end{subitemize}
+\item \myemph{Massive refactoring} required in transpiler and I/O
+  \begin{subitemize}
+    \item \myemph{my bad} in original code assuming \myemph{dense rectangular}
+    \end{subitemize}
+\begin{verbatim}
+tuple(int, real) x = (42, 3.14);  // type & construct
+
+int a = x.1;    real b = x.2;     // rvalue (access)
+
+x.1 += 1;       x.2 = sqrt(x.2);  // lvalue (assign)
+\end{verbatim}
+\end{itemize}
+
+\sld{Closures and lambdas \hfill (design accepted)}
+\begin{itemize}
+\item \myemph{Closures bind} non-local variables in function bodies
+\item \myemph{Lambdas} for anonymous inline function definitions
+  (C++-like syntax)
+\item Full \myemph{type} support in the object language 
+  \begin{subitemize}
+    \item variables with function types and assignment 
+    \item function arguments with function types (i.e., higher-order 
+      functions) 
+    \end{subitemize}
+  \item Support \myemph{comprehensions} with \myemph{partial
+      evaluation}
+    \begin{subitemize}
+    \item e.g., scalable GP kernels
+      \end{subitemize}
+\end{itemize}
+
+\sld{Ragged arrays \hfill (design pending)}
+\begin{itemize}
+\item Not much more to say about this
+\item Challenging to \myemph{statically size}
+\item Need to \myemph{generalize math} library
+\vfill
+\item \myemph{Bigger challenge: sparse matrices}
+  \begin{subitemize}
+  \item Eigen C++ support is poor
+  \item Have to roll our own algorithms (e.g., log determinant)
+  \end{subitemize}
+\end{itemize}
+
+\sld{More types and constraints}
+\begin{itemize}
+\item \myemph{Orthonormal matrices} (generalizes unit vector)
+  \begin{subitemize}
+  \item e.g., hyperspherical statistics and rotations
+  \item tricky $SO(N)$ geometry (rotation vs.\ reflection)
+  \end{subitemize}
+\item \myemph{Composable} transforms
+  \begin{subitemize}
+  \item e.g., affine compositions for hierarchical rates or probabilities
+  \end{subitemize}
+\item \myemph{Pluggable} transforms
+  \begin{subitemize}
+  \item e.g., specialized simplex transforms for scale
+  \end{subitemize}
+\end{itemize}
+
+\sld{}
+\vfill
+\begin{center}
+  {\Huge \myemph{Part III\\[12pt] Approximate Inference}}
+\end{center}
+\vfill 
+\vfill 
+\begin{center}
+{\Large  (cf. \myemph{MCMC}, which is asymptotically \myemph{exact})}
+\end{center}
+
+\sld{Laplace Approximation \hfill (released)}
+\begin{itemize}
+\item Given a \myemph{posterior mode}
+  $$\theta^* = \textrm{arg max}_\theta \ p(\theta \mid y)$$
+\item \myemph{Second-order Taylor expansion} is called \myemph{Laplace
+    approximation}
+  $$\theta \sim \textrm{multi\_normal}(\theta^*, (-H)^{-1}(\theta^*)),$$
+  where $(-H)^{-1}$ is the inverse negative Hessian
+\item pairs with our built-in gradient-based \myemph{quasi-Newton
+    optimization}
+  \begin{subitemize}
+  \item uses \myemph{L-BFGS} for local curvature adjustment (i.e., \myemph{precondition})
+  \end{subitemize}
+  \vfill
+\item \myemph{Impoved} by (1) Welandawe, Andersen, Vehtari, and
+  Huggins (2022); (2) Domke and Agrawal (2022).  (\myemph{see below})
+\end{itemize}
+
+\sld{Autodiff Variational Inference (ADVI) \hfill (released)}
+\begin{itemize}
+\item Given posterior $p(\theta \mid y)$ on the
+  \myemph{unconstrained scale}
+  \begin{subitemize}
+  \item i.e., $p(\theta \mid y) > 0$ for all $\theta \in \mathbb{R}^D$
+  \end{subitemize}
+\item \myemph{Variational approximation} is $\textrm{multi\_normal}\!\left(\theta \mid
+  \widehat{\mu}, \widehat{\Sigma}\right),$ where
+    $$
+  \widehat{\mu}, \widehat{\Sigma}
+  = \textrm{argmin}_{\mu, \Sigma}
+  \ \textrm{KL}\!\left[\textrm{multi\_normal}(\theta \mid \mu, \Sigma) 
+    \,\big|\big|\, p(\theta \mid y) \right]
+  $$
+\item \myemph{Sample} $\draw{\theta}{1}, \ldots \draw{\theta}{M} \sim \textrm{multi\_normal}\!\left(\theta \mid
+    \widehat{\mu}, \widehat{\Sigma}\right),$
+\item \myemph{Inverse transform} draws back to constrained scale
+\end{itemize}
+
+\sld{ADVI objective evaluation}
+\begin{itemize}
+\item KL-divergence is integral, w.\ $q(\theta) =
+  \textrm{multi\_normal}(\mu, \Sigma).$
+\begin{align}
+  \ \textrm{KL}\!\left[q \ || \ p\right]
+   &= \underbrace{\int_{\mathbb{R}^D}
+     q(\theta) \cdot \log q(\theta) 
+     \, \textrm{d}\theta}_{\textrm{entropy of } q}
+     - \underbrace{\int_{\mathbb{R}^D}
+     q(\theta) \cdot \log p(\theta \mid y)}_{\textrm{cross entropy } q
+     \textrm{ to } p}
+     \, \textrm{d}\theta
+  \\[8pt]
+   &\approx -\textrm{H}[\textrm{multi\_normal}(\mu, \Sigma)]
+     + \frac{1}{M} \sum_{m = 1}^M \log p(\draw{\theta}{m} \mid y),
+\end{align}
+where $\draw{\theta}{m} \sim \textrm{multi\_normal}(\mu, \Sigma).$
+\end{itemize}
+
+\sld{ADVI SGD}
+\begin{itemize}
+\item Need \myemph{gradient} $\nabla_{\theta} \, \textrm{KL}\!\left[q \
+    || \ p\right]$ to minimize
+  $$
+  \textrm{arg min}_{\mu, \Sigma} \
+  \textrm{KL}\!\left[ \, \textrm{multi\_normal}(\theta \mid \mu, \Sigma) \
+    \big|\big| \ p(\theta \mid y) \, \right]
+  $$
+\item \myemph{Entropy} term can be handled analytically or by Monte Carlo
+\item \myemph{Cross-entropy} requires \myemph{stochastic gradient},
+  $$
+  \nabla_\theta \sum_{m = 1}^M \log p(\draw{\theta}{m} \mid y)
+  =
+  \sum_{m = 1}^M \nabla_\theta \log p(\draw{\theta}{m} \mid y),
+  $$
+  with nested derivative by \myemph{automatic differentiation}
+\end{itemize}
+
+\sld{ADVI improvements \hfill (in progress)}
+\begin{itemize}
+\item Need to select a \myemph{step size} \hfill
+  \begin{subitemize}
+  \item current algorithm too weak; parallel grid search way better
+  \end{subitemize}
+\item Need to select an \myemph{SGD algorithm}
+  \begin{subitemize}
+  \item ADVI is vanilla SGD; \myemph{ADAM}'s persistent momentum better
+  \end{subitemize}
+\item Need to select \myemph{gradient estimator}
+  \begin{subitemize}
+  \item Stan uses vanilla reparameterization; \myemph{stick the landing} is better
+  \end{subitemize}
+\item Stan uses standard normal \myemph{initialization}
+  \begin{subitemize}
+  \item Multiple inits better (Laplace, prior, standard normal, etc.)
+  \end{subitemize}
+\item Stan just \myemph{returns constrained draws}
+  \begin{subitemize}
+  \item \myemph{importance resampling} is better
+  \end{subitemize}
+\end{itemize}
+
+
 
 \end{document}
