@@ -4,6 +4,8 @@
 \newcommand{\expect}[1]{\mathbb{E}\!\left[ #1 \right]}
 \newcommand{\reals}{\mathbb{R}}
 \newcommand{\draw}[2]{#1^{(#2)}}
+\usepackage{mathpazo}
+\usepackage{sourcecodepro}
 
 \begin{document}
 
@@ -28,7 +30,12 @@
 \includegraphics[width=1.5in]{img/flatiron_logo.png}
 \includegraphics[width=0.5in]{img/stan-logo.png}
 
-\sld{Stan the Man}
+\sld{Pop Quiz}
+\begin{itemize}
+\item Who's the most famous Stan in St.\ Louis?
+\end{itemize}
+
+\sld{Stan the Man \hfill (active 1941--1963 - WWII)}
 \begin{itemize}
 \item Not Ulam. Not a stalker fan.
 \item \myemph{Stan ``The Man'' Musial}.  Outfielder, \myemph{\slshape St. Louis Cardinals.}
@@ -40,10 +47,13 @@
   \end{center}
 
 
-\sld{}
+  \sld{}
+  \vspace*{-24pt}
 \begin{center}
     \spc\includegraphics[width=\textwidth]{img/inside-baseball.png}
-\end{center}
+  \end{center}
+  \vfill
+  \null
 
   
 \sld{Swing for the fences}
@@ -51,7 +61,7 @@
 \item 2011: I move \myemph{from industry to Columbia} to work with 
   Gelman. 
 \item I was \myemph{getting scooped} on crowdsourcing. 
-\item Michael Collins (CS, Google) suggested I \myemph{work on harder problems}.
+\item Michael Collins (CS) suggests I \myemph{work on harder problems}.
 \item I \myemph{listened} and started the \myemph{Stan} project.
 \end{itemize}
 \begin{center}
@@ -77,40 +87,42 @@
   \spc\includegraphics[height=1in]{img/willie-mays.jpeg}
 \end{center}
 
-\sld{Bayesian Inference}
+\sld{}
+\vfill
+\begin{center}
+\Huge \myemph{Part I\\[12pt] MCMC for Bayes}
+\end{center}
+\vfill
+\vfill
+
+\sld{Bayesian Inference \hfill\normalsize (Bayes $\approx$ 1750,
+  Laplace $\approx$ 1800)}
 \begin{itemize}
-\item unknown (parameters) $\theta \in \reals^D;$ \quad
+\item unknown (parameters) $\theta \in \reals^D;$ \quad 
   observed (data) $y \in \reals{N}$
-\item \myemph{Estimation}:
+\item \myemph{Estimation}: 
 $$
 \widehat{\theta}
 = \expect{\theta \mid y}
-= \int_{\reals^D} \theta \cdot p(\theta \mid y) \textrm{d}\theta.
+= \int_{\reals^D} \theta \cdot p(\theta \mid y) \textrm{d}\theta. 
 $$
 \item \myemph{Event probabilities}
 $$
 \Pr[A \mid y]
 = \expect{\textrm{I}_{A}(\theta) \mid y}
-= \int_{\reals^D} \textrm{I}_{A}(\theta) \cdot p(\theta \mid y) \, \textrm{d}\theta.
+= \int_{\reals^D} \textrm{I}_{A}(\theta) \cdot p(\theta \mid y) \, \textrm{d}\theta. 
 $$
 \item \myemph{Posterior prediction}
 $$
-p(\tilde{y} \mid y)
+p(\tilde{y} \mid y) 
 = \expect{p(\tilde y \mid \theta) \mid y}
-= \int_{\mathbb{R}^D} p(\tilde{y} \mid \theta) \cdot p(\theta \mid
-  y) \, \textrm{d}\theta.
+= \int_{\mathbb{R}^D} p(\tilde{y} \mid \theta) \cdot p(\theta \mid 
+  y) \, \textrm{d}\theta. 
 $$
 \end{itemize}
 
-\sld{}
-\vfill
-\begin{center}
-\Huge \myemph{Part I: MCMC}
-\end{center}
-\vfill
-\vfill
-
-\sld{Monte Carlo methods}
+\sld{Monte Carlo \hfill {\normalsize (Fermi, von Neumann, Ulam
+    $\approx$ 1930s--1940s)}}
 \begin{itemize}
 \item Go-to approach to \myemph{high-dimensional integration}
 \item \myemph{Randomized algorithm} for deterministic integrals 
@@ -127,7 +139,7 @@ $$
   + law of \myemph{unconscious statistician}. 
 \end{itemize}
 
-\sld{Markov chain Monte Carlo (MCMC)}
+\sld{Markov chain Monte Carlo \hfill \normalsize(Ulam, late 1940s)}
 \begin{itemize}
 \item When \myemph{too hard to draw i.i.d.}\ from posterior.
 \item Draw $\draw{\theta}{0}, \ldots, \draw{\theta}{M}$ from a
@@ -148,494 +160,244 @@ $$
 \item Proof: MCMC CLT + law of unconscious statistician
 \end{itemize}
 
+\sld{Accept/reject balance \hfill \normalsize(Metropolis et al.\ 1950)}
+\begin{itemize}
+\item \myemph{propose} $\theta^* \sim q(\theta \mid \theta_{m})$,  
+  \begin{subitemize}
+  \item where $q$ is \myemph{symmetric}, i.e.,  $q(\theta' \mid \theta) = q(\theta \mid \theta')$
+  \end{subitemize}
+  \item \myemph{accept} with probability  
+$\displaystyle  
+\min\!\left( 1,  \
+  \frac{p(\theta^* \mid y)}
+       {p(\theta_m \mid y)}
+     \right)$
+\renewcommand{\baselinestretch}{1.2}
+{\small\bfseries
+\begin{verbatim} 
+theta[0] = q0_rng()
+for m in range(M):
+   theta_star = q_rng(theta[m])
+   u = uniform_rng(0, 1)
+   accept = log(u) < log p(theta_star) - log p(theta[m])
+   theta[m + 1] = theta_star if accept else theta[m]
+\end{verbatim}
+}
+\renewcommand{\baselinestretch}{1.0}
+\end{itemize}
 
+\sld{Non-reversible proposals \hfill \normalsize (Hastings 1970)}
+\begin{itemize}
+\item \myemph{propose} $\theta^* \sim q(\theta \mid \theta_{m})$, 
+  \begin{subitemize}
+  \item where $q$ is \myemph{not necessarily symmetric}
+  \end{subitemize}
+  \item \myemph{accept} with probability 
+$\displaystyle 
+\min\!\left( 1, 
+  \frac{p(\theta^* \mid y)}{p(\theta_m \mid y)}
+    \cdot 
+    \frac{p(\theta_m \mid \theta^*)}{p(\theta^* \mid \theta_m)}
+     \right)t$
+\item If $q$ is symmetric, second term drops out, left with Metropolis
+\end{itemize}
+
+\sld{Detailed Balance}
+\begin{itemize}
+\item Let $p(\theta_{m + 1} \mid \theta_m)$ be the Markov chain
+  \myemph{transition kernel}
+  \begin{subitemize}
+  \item reject probability makes it mixed discrete/continuous
+  \end{subitemize}
+\item MH accept ensures MCMC kernel satisfies
+  \myemph{detailed balance},
+  $$
+  p(\theta \mid y) \cdot p(\theta' \mid \theta)
+  = p(\theta' \mid y) \cdot p(\theta \mid \theta').
+  $$
+  \vspace*{-12pt}
+  \begin{subitemize}
+    \item ensures chain has stationary distribution $p(\theta \mid y)$
+    \item given irreducibility and aperiodicity
+      \end{subitemize}
+\end{itemize}
+
+\sld{HMC \hfill \normalsize(Duane et al.\ 1987)}
+\begin{itemize}
+\item \myemph{couples momentum} $\rho \in \mathbb{R}^D$ to sample over
+  \myemph{phase space} $\reals^D \times \reals^D$
+\item \myemph{Hamiltonian} $H(\theta, \rho) = - \log p(\theta, \rho) =
+  - \log p(\theta) - \log p(\rho),$
+  \begin{subitemize}
+  \item \myemph{Kinetic energy}: $-\log p(\rho) = -\log \textrm{normal}(0, \textrm{I}_D) =
+    \frac{1}{2}
+    \cdot \theta^{\top} \cdot \theta.$
+  \item \myemph{Potential energy}: $-\log p(\theta) = - \log p(\theta \mid y)$
+  \end{subitemize}
+\item \myemph{Hamiltonian Monte Carlo} (HMC) couples two stationary-preserving transition kernels:
+  \begin{subitemize}
+  \item \myemph{Exact momentum} refresh: $\rho_{m + 1} \sim \textrm{normal}(0, 1).$
+  \item \myemph{Metropolis proposal}: $(\theta^*,
+    -\rho^*)$, where $(\theta^*, \rho^*)$ solves Hamiltonian dynamics from initial
+    $(\theta_m, \rho_{m + 1})$ to proposal $(\theta^*, \rho^*)$ at
+    time $t$.
+  \item Metropolis \myemph{corrects numerical integration error} solving ODE
+  \item Momentum \myemph{flip for reversibility}
+  \end{subitemize}
+\end{itemize}
+
+\sld{Why is HMC so good?}
+\begin{itemize}
+\item Its Metropolis steps makes large distance proposals with high
+  acceptance rates
+\item \myemph{Effective sample size} (and hence \myemph{mixing}) is proportional to expected squared
+  jump distance
+\item An \myemph{exact solution} preserves initial Hamiltonian, so 100\% accept 
+\item The \myemph{leapfrog integrator} used to solve dynamics is \myemph{symplectic}
+  \begin{subitemize}
+    \item steps preserve volume (hence no Hastings correction for Jacobian)
+    \item symplectic integrators very good at \myemph{preserving Hamiltonian}
+    \item not so great at \myemph{solving dynamics}, but doesn't matter---we
+      only need \myemph{big jumps with high acceptance}
+  \end{subitemize}
+\end{itemize}
+
+\sld{HMC + Euclidean metric}
+\begin{itemize}
+\item add symmetric, positive-definite \myemph{metric} $M$ to
+  define distance
+  $$
+  d(\theta, \theta') = (\theta - \theta')^{\top} \cdot M \cdot (\theta
+  - \theta').
+  $$
+\item Stan estimates $M$ as inverse posterior covariance,
+  $$
+  \widehat{M} = \textrm{cov}[\theta \mid y].
+  $$
+\item \myemph{kinetic energy} now $-\log p(\rho) = \frac{1}{2} \cdot \rho^{\top} \cdot M \cdot \rho,$
+\item so \myemph{momentum refresh} $\rho \sim \textrm{normal}(0, M^{-1}).$
+\end{itemize}
+
+
+\sld{No-U-Turn Sampler \hfill \normalsize (Hoffman and Gelman 2013)}
+\begin{itemize}
+\item \myemph{Tuning HMC} dynamics (step size, number of steps) is
+  \myemph{very hard}
+\item NUTS auto tunes
+  \begin{subitemize}
+  \item \myemph{stepsize} during warmup iterations
+  \item \myemph{number of steps} dynamically
+  \item \myemph{metric} during warmup iterations (revision)
+  \end{subitemize}
+\item Sampling algorithm
+  \begin{subitemize}
+  \item simulate \myemph{forward or backward} time at random, \myemph{double steps} each time
+  \item \myemph{until U-turn} (ends' momentum brings them closer)
+  \item \myemph{select a step} along path, \myemph{biased} toward \myemph{last
+        doubling}
+    \item \myemph{slice sampling}, revised to more efficient \myemph{multinomial}
+    \end{subitemize}
+\end{itemize}
+
+\sld{Generalized HMC \hfill \normalsize (Horowitz 1991)}
+\begin{itemize}
+\item Uses \myemph{partial momentum refresh}
+  \begin{subitemize}
+    \item preserves momentum for directed movement across posterior
+    \end{subitemize}
+\item Fix $\lambda \in (0, 1)$ (lower preserves more momentum)
+\item \myemph{G-HMC refresh}:
+  $$
+  \rho_{m + 1} = \sqrt{\lambda} \cdot z_m + \sqrt{1 - \lambda}
+  \cdot \rho_m,
+  $$
+where $z_m \sim \textrm{normal}(0, \textrm{I}_D).$
+\item This is also an \myemph{exact update}
+  \begin{subitemize}
+    \item i.e., if $\rho_m \sim  \textrm{normal}(0, \textrm{I}_d),$ then $\rho_{m + 1} \sim 
+    \textrm{normal}(0, \textrm{I}_d).$
+    \end{subitemize}
+\end{itemize}
+
+\sld{Uh oh!  What about the Flip?}
+\begin{itemize}
+\item \myemph{Why not} use G-HMC with a single step and tune $\lambda$?
+\item Remember that \myemph{momentum flip}?
+  \begin{subitemize}
+  \item it's required for \myemph{reversibility} of Metropolis
+  \item \myemph{thrown away} in basic HMC by composing momentum update
+  \item but \myemph{preserved} in G-HMC
+  \end{subitemize}
+\item \myemph{Without high acceptance}, momentum flip produces \myemph{random walk}. 
+\item High acceptance means \myemph{small steps} in Hamiltonian dynamics.
+\end{itemize}
+
+\sld{Non-reversible accept \hfill \normalsize(Neal 2020)}
+\begin{itemize}
+\item Instead of uniform $u$, use \myemph{sawtooth}, \myemph{perturbed} for ergodicity
+  \begin{subitemize}
+  \item \myemph{not reversible}, but \myemph{preserves stationary}
+  \end{subitemize}
+\item Iteration vs.\ $u$ (red reject) shows grouped acceptance:
+\begin{center}
+  \spc\includegraphics[height=1.5in]{img/neal-nonrevu.png}
+\end{center}
+\end{itemize}
+
+\sld{Delayed Rejection \hfill \normalsize(Mira 2001)}
+\begin{itemize}
+\item $K$-step delayed rejection involves $K$ distinct proposals
+  \begin{subitemize}
+\item Step 1.  Propose and accept/reject as usual with Metropolis.
+\item Step 2.  \myemph{If rejected, propose again} with a new proposal
+  and accept/reject with \myemph{Metropolis-Hastings}
+\item Step 3.  If rejected again, propose again.
+\\
+\qquad \qquad    $\vdots$
+\item Step $K$.  If rejected, propose one last time.
+\end{subitemize}
+\item Need \myemph{Hastings correction} to ensure detailed balance.
+\item Proposals may depend on previous proposal(s).
+\end{itemize}
+
+\sld{Delayed Rejection HMC \hfill \normalsize(Modi et al.\ 2022)}
+\begin{itemize}
+\item Just what it \myemph{says on the tin}: DR applied to HMC
+\item Each \myemph{retry cuts step size} by constant $c$ and \myemph{multiplies steps}
+  by $c$ (e.g., $c = 2$ or $c = 5$)
+  \begin{subitemize}
+  \item earlier attempts kept step size and extended path
+  \item our approach better if rejection was because Hamiltonian
+    diverged
+  \item divergence is when step size isn't small enough for
+    first-order gradient-based approximations to deal with curvature
+  \end{subitemize}
+\item \myemph{Chirag's DR innovation:} Only retry if acceptance probability for
+  previous try was low.
+\item Deals with *multiple scales* (varying curvature
+  direction/magnitude) \myemph{along an entire path}.
+\end{itemize}
+
+\sld{MEADS \hfill \normalsize(Hoffman and Sountsov 2022)}
+\begin{itemize}
+\item \myemph{Massively parallel} version of Neal's non-reversible
+  accept form of \myemph{G-HMC}
+\item Uses \myemph{complementary chains for adaptation}
+  \begin{subitemize}
+  \item novel, efficient \myemph{principal eigenvalue} estimation of
+    step size
+  \item covariance in complementary chains used to \myemph{estimate metric}
+  \item \myemph{accelerates adaptation}, robust to single chains getting stuck (Bales 2019)
+  \end{subitemize}
+\item conveniently a Markov chain \myemph{w.o.\ warmup phase}
+\end{itemize}
+
+\sld{DR-G-HMC \hfill \normalsize(Modi et al. in progress)}
+\begin{itemize}
+\item Apply delayed rejection to generalized HMC with one step.
+\item Retries only use a single step.
+\item Deals with multiple scales \myemph{within a path}
+\item Use MEADS-like tuning.
+\end{itemize}
 
 \end{document}
-\sld{Pathfinder}
-\begin{itemize}
-\item Lu Zhang, Bob Carpenter, Andrew Gelman, Aki
-  Vehtari. 2021. Pathfinder: Parallel quasi-Newton variational
-  inference. \textit{arXiv} 2108.03782.
-  \begin{subitemize}
-  \item under review at \textit{Journal of Machine Learning Research}
-    \end{subitemize}
-  \item it took about a year and a whole lot of meetings and revisions
-    \begin{subitemize}
-    \item Lu did all the heavy lifting and is on the job market in biostats
-  \end{subitemize}
-\item under development for Stan \hfill (me, Lu, Steve Bronder, Brian Ward)
-\item ported (from R, pseudocode) to Julia and PyMC3 and Lu's talking to Pyro devs
-\end{itemize}
-
-\sld{Design for Stan integration}
-\begin{center}
-\includegraphics[width=0.9\textwidth]{img/stan-chalkboard.jpg}
-\end{center}
-
-\sld{Why am I so excited about Pathfinder?}
-\begin{itemize}
-\item vs.\ current state of the art in variational inference or Stan's ``burn-in''
-  \begin{subitemize}
-  \item 1--3 \myemph{orders of magnitude faster} without parallelization; 2--5 with
-  \item less KL-divergence and closer Wasserstein-1 distance to target
-    densities
-  \item more robust to varying curvature and minor multimodality
-  \end{subitemize}
-\item rather than sampling the posterior via MCMC to calculate expectations
-  \[
-    \mathbb{E}[f(\theta) \mid y] \approx \frac{1}{M} \sum_{m=1}^M
-    f(\theta^{(m)})
-    \ \textrm{for} \ \theta^{(m)} \sim p(\theta \mid y),
-  \]
-  Pathfinder optimizes a normal variational approximation by
-  \[
-    \mu^*\!, \, \Sigma^*
-    = \textrm{argmin}_{\mu, \Sigma} \
-    \textrm{KL}\!\left[ \textrm{normal}(\theta \mid \mu, \Sigma)
-      \ \big|\big| \
-      p(\theta \mid y) \right]
-    \]
-\end{itemize}
-
-\sld{Democratizing Bayesian inference}
-\begin{itemize}
-\item a primary goal is to \myemph{democratize Bayesian inference}
-  \begin{subitemize}
-  \item ``democratize'' is a term of art in software and to funders
-  \item used in sense of being accessible to all (i.e., socializing)
-  \end{subitemize}
-\item another primary goal is to \myemph{push frontier} of fittable models
-\item \myemph{black-box} methods
-  \begin{subitemize}
-  \item user codes a model in Stan language to define target log density
-  \item algorithms agnostic to structure; in reality get under hood for hard cases
-  \end{subitemize}
-\item other goals
-  \begin{subitemize}
-  \item \myemph{expressiveness} of language, \
-    \myemph{robustness} of inference, \
-    \myemph{efficiency} and \myemph{scalability}, \
-    easy \myemph{installation}, \
-    thorough and useful \myemph{documentation}, \
-    engaged \myemph{community}, \
-    \myemph{maintainable} code base
-    \end{subitemize}
-\end{itemize}
-
-\sld{Stan's black-box Bayesian inference}
-\begin{itemize}
-\item \myemph{full Bayesian inference} with Markov chain Monte Carlo (MCMC)
-  \begin{subitemize}
-  \item adaptive Hamiltonian Monte Carlo (gradient based)
-  \item dense or diagonal metric (inverse mass matrix) estimation
-  \end{subitemize}
-\item \myemph{approximate Bayesian inference} with variational inference
-  \begin{subitemize}
-  \item autodiff variational inference (ADVI) 
-  \item multivariate normal with dense or diagonal covar (mean field/full rank)
-  \end{subitemize}
-\item \myemph{Laplace approximation} with optimization
-  \begin{subitemize}
-  \item limited-memory BFGS (L-BFGS)
-  \item does {\slshape not} adjust for Jacobian
-  \end{subitemize}
-\end{itemize}
-
-\sld{Stan's models}
-\begin{itemize}
-\item Stan models define \myemph{log posterior densities} $\log p(\theta \mid y)$
-  \begin{subitemize}
-  \item require support $p(\theta \mid y) > 0$ for continuous parameters $\theta \in \mathbb{R}^N$
-  \item observed data $y$ may be discrete or continuous
-  \item constrained parameters are transformed (e.g., log transform scales $\sigma > 0$, Cholesky factor and log diagonal covariance matrices)
-  \item change-of-variables adjustment implicitly applied under the hood
-  \end{subitemize}
-\item use \myemph{automatic differentiation} to compute $\nabla_{\!\theta} \, \log p(\theta \mid y)$
-  \begin{subitemize}
-  \item \myemph{dynamic} autodiff (like PyTorch, CppAD, Adol-C;  unlike TensorFlow)
-  \item \myemph{much faster} than competition on CPU (TensorFlow, JAX, etc.)
-  \item math and stats library much \myemph{richer} than TensorFlow Probability
-  \end{subitemize}
-\end{itemize}
-
-\sld{Where do we draw samples?}
-\begin{itemize}
-\item from region where \myemph{density times volume} is highest
-  \begin{subitemize}
-  \item typically far from the max a posteriori (MAP) estimate
-    \[
-      \theta^* = \textrm{arg max}_{\theta} \, \log p(\theta \mid y)
-    \]
-  \end{subitemize}
-\item consider drawing $y \in \mathbb{R}^N$ from a standard normal $y \sim \textrm{normal}(0, \textrm{I})$
-  \begin{subitemize}
-  \item i.e., dimensions i.i.d.\ std.\ normal, $y_n \sim \textrm{normal}(0, 1)$ for $n = 1, \ldots, N$
-  \item maximum likelihood point is at mode $y = \begin{bmatrix} 0 & 0
-      & \cdots & 0 \end{bmatrix}^{\top}$
-  \end{subitemize}
-\item squared Euclidean distance from origin (mode) is distributed
-  \[
-    \sum_{n = 1}^N y_n^2 \sim \textrm{ChiSq}(N)
-  \]
-\end{itemize}
-
-\sld{Samples fall in $\textrm{ChiSq}(N)$ central interval}
-\begin{center}
-  \includegraphics[width=0.6\textwidth]{img/normal-thin-shell.png}
-\end{center}
-\begin{subitemize}
-  \item samples fall in a thin shell concentrated
-    away from the origin (mode) as $N \rightarrow \infty$
-  \end{subitemize}
-
-\sld{Tail, body, and head of a distribution}
-\vspace*{-12pt}
-\begin{center}
-\hspace*{2em}\includegraphics[width=\textwidth]{img/normal-posterior-log-density.pdf}
-\end{center}
-\vspace*{-12pt}
-\begin{itemize}
-\item
-  \myemph{histograms of log densities} of draws from $N$-dimensional std.\ normal
-\item sampling is \myemph{near expected log density} (equiv.\ neg.\ cond.\ entropy)
-  \[
-    \mathbb{E}\!\left[\log p(\Theta \mid y) \mid y\right]
-    \ = \ 
-    \int_{\Theta} p(\theta \mid y) \cdot \log p(\theta \mid y) \, \textrm{d}\theta
-    \ = \
-    -\textrm{H}[\Theta \mid y]
-  \]
-\item sampling is from \myemph{body}, lower density in \myemph{tail},
-  higher in \myemph{head}
-\end{itemize}
-
-\sld{Typical draw has log density near expectation}
-\begin{center}
-  \includegraphics[width=0.5\textwidth]{img/99pct-mode-std-normal.png}
-\end{center}
-\begin{itemize}
-\item yellow band is \myemph{99\% central interval}
-  of log density for standard normal
-\item red line is \myemph{log density of mode} (nearby is high
-  density, low volume)
-\end{itemize}
-
-
-\sld{Motivation for Pathfinder: MCMC initialization}
-\vspace*{-2pt}
-\begin{center}
-  \includegraphics[width=0.35\textwidth]{img/napkin-adapt.jpg}
-\end{center}
-\vspace*{-4pt}
-\begin{subitemize}
-\item approximate random init.\ in the body makes Markov chain \myemph{approx.\ stationary}
-\item \myemph{intermediate value} theorem: \myemph{optimization path} from tail \myemph{through body} to head
-\item related to notion of \myemph{typical set} in information theory
-  \begin{subitemize}
-  \item points whose log density is within $\pm \epsilon$ of expected value
-  \end{subitemize}
-\end{subitemize}
-
-\sld{Our first approach crashed}
-\begin{center}
-  \includegraphics[width=0.9\textwidth]{img/wright-crash.jpg}
-\end{center}
-
-\sld{So did the second}
-\begin{center}
-  \includegraphics[width=0.7\textwidth]{img/wright-crash-2.jpg}
-\end{center}
-
-\sld{Failed attempts}
-\begin{itemize}
-\item run \myemph{optimization} to generate a trajectory of points
-\item for each point, evaluate if its log density is near expectation 
-\end{itemize}
-\begin{enumerate}
-\item run an MCMC chain for each point
-  \begin{subitemize}
-  \item from \myemph{tail}, draws trend up; from \myemph{head} trend down; in \myemph{body} bounce 
-  \item but MCMC is slow, hard to adapt, and \myemph{intrinsically sequential}
-  \end{subitemize}
-\item estimate surface area of level set around a point to estimate volume
-  \begin{subitemize}
-  \item choose points whose \myemph{density times approximate volume} is high
-  \item better, but still \myemph{not robust} to our \myemph{50+ test models}
-  \end{subitemize}
-\end{enumerate}
-
-\sld{Third time's the charm}
-\begin{center}
-  \includegraphics[width=0.8\textwidth]{img/wright-success.jpg}
-\end{center}
-
-\sld{Pathfinder basics}
-\begin{itemize}
-\item for each point on the optimization trajectory
-\end{itemize}
-\begin{enumerate}
-\item[3.] evaluate the KL-divergence of an approximate normal
-  \begin{subitemize}
-  \item center a \myemph{multivariate normal approximation} (quadratic) on the point on the trajectory
-  \item set covariance to \myemph{approximate inverse Hessian} from
-    L-BFGS
-    \begin{subitemize}
-    \item low-rank outer product plus diagonal
-    \end{subitemize}
-  \item evaluate \myemph{KL-divergence from approximation to target density}
-    \begin{subitemize}
-    \item use \myemph{Monte Carlo} draws from approximation plus analytic normal entropy
-    \end{subitemize}
-  \item draw from approximation with lowest KL-divergence
-  \end{subitemize}
-\end{enumerate}
-
-\sld{Logistic regression posterior example}
-\vspace*{-6pt}
-\begin{center}
-  \includegraphics[width=0.6\textwidth]{img/logit_example.eps}
-\end{center}
-\vspace*{-6pt}
-\begin{subitemize}
-\item orange is target density, black ellipses the approximation
-  \vspace*{-4pt}
-\item ELBO is equal to negative KL divergence plus constant; optimized at mode giving Laplace approx.
-\end{subitemize}
-
-\sld{Neal's funnel posterior example}
-\vspace*{-6pt}
-\begin{center}
-\includegraphics[width=0.6\textwidth]{img/funnel_example.eps}
-\end{center}
-\vspace*{-6pt}
-\begin{subitemize}
-\item no mode, just a pole as $y \rightarrow -\infty$ and $x \rightarrow 0$
-\item Pathfinder selects approximation (lower left) within body
-\end{subitemize}
-
-
-\sld{Oops, we built a variational method}
-\begin{itemize}
-\item given a \myemph{target posterior} $p(\theta \mid y)$
-\item \myemph{variational inference} assumes an \myemph{approximating} density
-  \\ $q(\theta \mid \phi)$ with parameters $\phi$
-\item variational approximation minimizes KL-divergence to target density
-  \[
-    \phi^*
-    = \textrm{argmin}_{\phi} \
-    \textrm{KL}\!\left[q(\theta \mid \phi) \,\bigg|\bigg|\, p(\theta \mid y)\right]
-  \]
-\end{itemize}
-
-\sld{L-BFGS-derived normal approximation}
-\begin{itemize}
-\item Pathfinder uses a \myemph{multivariate normal} approximation on \myemph{unconstrained parameters}
-  \[
-    q(\theta \mid \phi) = \textrm{multi-normal}(\theta \mid \mu, \Sigma)
-  \]
-  \item \myemph{covariance} from L-BFGS's \myemph{low-rank plus diagonal} inverse
-  Hessian approximation
-  \[
-    \Sigma = \textrm{diag}(\alpha) + \beta^{\top} \cdot \gamma \cdot
-    \beta
-  \]
-  where
-  \[
-    \alpha \in \mathbb{R}^N, \quad
-    \beta \in \mathbb{R}^{N \times J}, \quad
-    \gamma \in \mathbb{R}^{J \times J}
-    \]
-  for rank-$J$ L-BFGS
-\end{itemize}
-
-\sld{Evaluating KL-divergence with Monte Carlo}
-\vspace*{-4pt}
-  \begin{eqnarray*}
-\null \qquad \textrm{KL}\!\left[q(\theta \mid \phi) \,\bigg|\bigg|\, p(\theta \mid y)\right]
-  & = &
-  \mathbb{E}_{q(\theta \mid \phi)}
-        \!\left[ \log \frac{q(\theta \mid \phi)}{p(\theta \mid y)} \right]
-  \\[6pt]
-  & = &   \mathbb{E}_{q(\theta \mid \phi)}[\log q(\theta \mid \phi)]
-        - \mathbb{E}_{q(\theta \mid \phi)}[\log p(\theta \mid y)]
- \\[6pt]
- & = &   - \textrm{H}\!\left[q(\theta \mid y)\right] - \mathbb{E}_{q(\theta \mid \phi)}[\log p(\theta, y)] + \textrm{const.}
-  \\[6pt]
-%  & = & - \textrm{H}\!\left[q(\theta \mid y)\right] - \int_{\theta} q(\theta \mid \phi) \cdot \log p(\theta, y) \, \textrm{d}\theta + \textrm{const.}
-%  \\[4pt]
-  & \approx & -\textrm{H}\!\left[q(\theta \mid \phi)\right] - \frac{1}{M} \sum_{m=1}^M \log p(\theta^{(m)}, y) + \textrm{const.}
-  \end{eqnarray*}
-  \vspace*{-6pt}
-\begin{subitemize}
-\item where $\theta^{(m)} \sim q(\theta \mid \phi)$ are \myemph{Monte Carlo
-  draws} from (normal) approximation
-  \item \myemph{minimizing KL} balances high entropy and containment within target
-\item \myemph{analytic entropy} $\textrm{H}\!\left[q(\theta \mid y)\right]$ for normal family $q(\theta \mid \phi) = \textrm{normal}(\theta \mid \mu, \Sigma)$
-\end{subitemize}
-
-\sld{Quasi-Newton inverse Hessian optimization}
-\begin{itemize}
-\item L-BFGS approximates $N \times N$ inverse Hessians with diagonal plus rank $J$ outer product,
-  \[
-    \Sigma = \textrm{diag}(\alpha) + \beta^{\top} \cdot \gamma \cdot \beta
-  \]
-\item reduces matrix op time/space complexity from $\mathcal{O}(N^3)$ to $\mathcal{O}(N \cdot J^2)$
-  \begin{subitemize}
-  \item random draws for evaluating KL-divergence: $\theta \sim \textrm{normal}(\mu, \Sigma)$
-  \item evaluating approximate log density: $f(\theta) = \log \textrm{normal}(\theta \mid \mu, \Sigma)$
-  \item preconditioner in quasi-Newton optimization within L-BFGS
-    \[
-      \delta = \left( -\nabla^2 \log p(\theta \mid y)\right)^{-1} \cdot \nabla \log p(\theta \mid y)
-    \]
-    uses approximation for inverse Hessian, $\left( \nabla^2 \log p(\theta \mid y) \right)^{-1}$
-    \end{subitemize}
-\end{itemize}
-
-\sld{Competitor I: Autodiff variational inference (ADVI)}
-\begin{itemize}
-\item state-of-art \myemph{black-box variational inference in Stan} (Kucukelbir++, \textit{JMLR})
-\item $q(\theta \mid \phi) = \textrm{normal}(\theta \mid \mu, \Sigma)$ with $\Sigma$ \myemph{diagonal} (``mean field'') or \myemph{dense}
-\item \myemph{stochastic gradient} descent on the ELBO objective, i.e., gradients
-  \[
-    \nabla_{\phi} \left( -\textrm{H}\!\left[q(\theta \mid \phi)\right] - \frac{1}{M} \sum_{m=1}^M \log p(\theta^{(m)}, y) \right)
-  \]
-  where $\theta^{(m)} \sim \textrm{normal}(\theta \mid \mu, \Sigma)$ drawn from approximating distribution
-\item using \myemph{``reparameterization trick''} for gradients
-\item poor \myemph{stability, convergence} with stochastic gradients
-\item optimization through KL-divergence is \myemph{intrinsically serial}
-\end{itemize}
-
-\sld{Competitor II: Stan phase I warmup}
-\begin{itemize}
-\item Stan currently uses \myemph{75 HMC iterations} of its sampler for \myemph{phase I warmup} (aka ``burn-in'')
-  \begin{subitemize}
-  \item \myemph{no U-turn sampler} (NUTS) (adaptive number of leapfrog steps, multinomial sampling over path) 
-  \item \myemph{unit metric} (inverse mass matrix)
-  \item lightly \myemph{adapted step size}
-  \item \myemph{max 1024} leapfrog steps per iteration
-  \end{subitemize}
-\item this is \myemph{sufficient} for most of our test problems 
-\item but it can be \myemph{very expensive} in number of log density/gradient evals
-\end{itemize}
-
-\sld{posteriordb evaluation set}
-\begin{itemize}
-\item \myemph{posteriordb} has about 50 models \hfill (Magnusson et al.)
-  \begin{subitemize}
-  \item generalized linear models
-  \item hierarchical GLMs
-  \item differential equation inverse problems
-  \item time-series and stochastic volatility models
-  \item mixture models and hidden Markov models
-  \item Gaussian processes
-  \end{subitemize}
-\item 10K \myemph{reference posterior draws} per model (thinned HMC chains)
-\item \myemph{not carefully parameterized} for HMC (e.g., centered params.)
-\end{itemize}
-
-\sld{How much faster is Pathfinder?}
-\begin{center}
-  \includegraphics[width=0.6\textwidth]{img/log-density-evals.eps}
-\end{center}
-\vspace*{-10pt}
-\begin{subitemize}
-\item \myemph{1--3 orders of magnitude} fewer gradient (and log
-  density) evaluations
-\item \myemph{embarrassingly parallel} after L-BFGS (aside from a max operation) 
-\end{subitemize}
-
-\sld{But does it work?}
-\begin{itemize}
-\item sought a \myemph{neutral evaluation} not based on KL-divergence
-  \begin{subitemize}
-  \item KL-divergence is \myemph{asymmetric} (not a distance metric)
-  \item KL-divergence as used favors \myemph{under-concentrated} approximations
-  \end{subitemize}
-\item we evaluate using \myemph{Wasserstein-1 distance} (aka ``earth mover's distance'')
-  \begin{subitemize}
-  \item proper \myemph{distance metric}
-  \item \myemph{discrete optimal transport} problem solved in libraries
-  \end{subitemize}
-\item also \myemph{evaluate KL-divergence} (\textit{JMLR} editor Dave Blei told us reviewers would insist)
-\end{itemize}
-
-\sld{Wasserstein distance evaluation w.\ posteriordb}
-\vspace*{-6pt}
-\begin{center}
-  \includegraphics[width=0.4\textwidth]{img/wasserstein-eval.eps}
-\end{center}
-\vspace*{-6pt}
-\begin{subitemize}
-\item Pathfinder approximations are \myemph{better than ADVI} and \myemph{close to Stan Phase I}
-\end{subitemize}
-
-
-\sld{Is KL-divergence lower, too?}
-\vspace*{-10pt}
-\begin{center}
-  \includegraphics[width=0.4\textwidth]{img/elbo-eval.eps}
-\end{center}
-\vspace*{-10pt}
-\begin{subitemize}
-\item despite direct KL minimization,
-  \myemph{ADVI optimization is unstable}
-  \hfill (Vehtari et al.)
-\item ELBO is negative KL-divergence plus constant (as shown earlier)
-\end{subitemize}
-
-
-\sld{Multi-path Pathfinder}
-\begin{itemize}
-\item sometimes L-BFGS gets \myemph{stuck in local optima} corresponding to a minor modes (i.e., low mass regions)
-\item sometimes the posterior \myemph{isn't approximately normal} (e.g., low data, complex models)
-\item \myemph{multi-path Pathfinder} runs multiple single-chain Pathfinder runs \myemph{in parallel}
-\item \myemph{importance resamples} the draws (with \myemph{Pareto smoothing}) (very fast)
-\item generalizes \myemph{variational family} to a \myemph{mixture of normals} (with low-rank plus diagonal covariance)
-\end{itemize}
-
-\sld{Importance sampling and resampling}
-\begin{itemize}
-\item \myemph{importance weight} for draw $\theta^{(m)}$ is
-  \[
-    w_m = \frac{p(\theta^{(m)} \mid y)}
-    {q(\theta^{(m)} \mid \phi)}
-  \]
-\item \myemph{importance sampling} calculates estimates
-  \[
-    \mathbb{E}[f(\theta) \mid y]
-    \approx \frac{1}{\textrm{sum}(w)} \sum_{m=1}^M w_m \cdot f(\theta^{(m)})
-  \]
-\item \myemph{importance resampling} draws a sample of size $M$
-  \myemph{with replacement} from $\theta^{(1)}, \ldots, \theta^{(M)}$,
-  with probabilities \myemph{proportional to weights}
-\[
-    p(\theta^{(m)}) \propto w_m
-\]
-\end{itemize}
-
-\sld{Pareto smoothed importance (re)sampling}
-\begin{itemize}
-\item weights can have \myemph{high variance} (or even infinite) when proposal density $q$ is \myemph{far from target} density $p$
-\item one approach is to \myemph{truncate} the weights, but \myemph{smoothing} is better
-\item \myemph{fit Pareto} (power law) distribution to weights \hfill (Aki Vehtari et al.)
-\item byproduct is a \myemph{goodness of fit} statistic $\widehat{K}$ \hfill (Yuling Yao et al.)
-\item divide $(0, 1)$ into $M$ \myemph{evenly spaced} points
-\item \myemph{map} points in $(0, 1)$ back to weights in $(0, \infty)$ with Pareto \myemph{inverse cdf}
-\item \myemph{sort} the weights and \myemph{replace} with the Pareto-distributed points
-\end{itemize}
-
-\sld{Multi-path Pathfinder evaluation}
-\vspace*{-10pt}
-\begin{center}
-  \includegraphics[width=0.45\textwidth]{img/multi-path-Wasserstein.eps}
-\end{center}
-\vspace*{-6pt}
-\begin{subitemize}
-\item multi-path is mostly \myemph{a bit better} but in some cases \myemph{much better}
-\end{subitemize}
-
-
-
-\end{document}
-
-
