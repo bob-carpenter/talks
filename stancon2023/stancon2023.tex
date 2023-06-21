@@ -590,7 +590,7 @@ where $\draw{\theta}{m} \sim \textrm{multi\_normal}(\mu, \Sigma).$
   \end{subitemize}
 \item Stan uses standard normal \myemph{initialization}
   \begin{subitemize}
-  \item Multiple inits better (Laplace, prior, standard normal, etc.)
+  \item \myemph{Multiple inits} better (Laplace, prior, standard normal, etc.)
   \end{subitemize}
 \item Stan just \myemph{returns constrained draws}
   \begin{subitemize}
@@ -598,6 +598,54 @@ where $\draw{\theta}{m} \sim \textrm{multi\_normal}(\mu, \Sigma).$
   \end{subitemize}
 \end{itemize}
 
+\sld{Pathfinder \hfill (next release!)}
+\begin{itemize}
+\item \myemph{Quasi-Newton} variational inference with \myemph{L-BFGS}
+\item At each point on optimization trajectory:
+  \begin{subitemize}
+    \item lay down a multivariate normal approximation
+    \item covariance is approximate \myemph{negative inverse Hessian}
+    \item estimated with finite differences of autodiff gradient
+    \item low-rank (number of gradients $\approx$ 5) plus diagonal
+  \end{subitemize}
+\item Choose approximation with \myemph{lowest KL-divergence} (Monte Carlo)
+\item Importance \myemph{resample}
+\item More robust: \myemph{multiple paths}, combined importance resampling
+\end{itemize}
+
+\sld{Pathfinder illustrated}
+\begin{subitemize}
+\item Ellipses = Taylor approximation; \myemph{lower left} is best
+  (but \myemph{overconcentrated})
+\end{subitemize}
+\begin{center}
+\includegraphics[width=0.65\textwidth]{img/pathfinder.png}
+\end{center}
+
+\sld{The future: normalizing flows \hfill \normalsize(Domke and Agrawal)}
+\begin{itemize}
+\item Like ADVI with \myemph{normalizing flows} as approximating family
+  \begin{subitemize}
+  \item Generate \myemph{inital} $X \sim q_X(x)$ (cf. Domke and Agrawal)
+  \item \myemph{Transform} with \myemph{deep neural net}
+    $f_\beta:\reals^D \rightarrow \reals^D$, $\Theta = f_\beta(X),$
+$$q_\Theta(\theta \mid \beta) = q_X\!\left(f^{-1}_\beta(\theta)\right) \cdot \left|
+  J_{f^{-1}_\beta}(\theta) \right|
+$$
+  \item \myemph{Optimize} as in ADVI: $\beta^* =
+    \textrm{arg min}_\beta \ \textrm{KL}\!\left[ \, q_\Theta(\theta \mid \beta)
+    \,\big|\big|\, p(\theta \mid y) \, \right]$
+\end{subitemize}
+\item For VI, neural net must have \myemph{efficient Jacobian and sampling}
+\item Real non-volume preserving (\myemph{RealNVP}) flows work with \myemph{JAX}
+  \begin{subitemize}
+  \item complementary affine layers, tanh non-linearity ($\approx$
+    10 deep,
+    12 wide)
+  \item fits centered hieararchical IRT-2PL (additive + multiplicative
+    + funnel)
+  \end{subitemize}
+\end{itemize}
 
 
 \end{document}
