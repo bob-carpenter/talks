@@ -279,25 +279,33 @@ $\displaystyle
 \end{itemize}
 
 
-\sld{No-U-Turn Sampler \hfill \normalsize (Hoffman and Gelman 2013)}
+\sld{No-U-turn sampler (NUTS) \hfill \normalsize (Hoffman and Gelman 2013)}
 \begin{itemize}
 \item \myemph{Tuning HMC} dynamics (step size, number of steps) is
   \myemph{very hard}
-\item NUTS auto tunes
+\item No-U-turn sampler (NUTS) automatically tunes
   \begin{subitemize}
   \item \myemph{stepsize} during warmup iterations
+  \item \myemph{metric} during warmup iterations
   \item \myemph{number of steps} dynamically
-  \item \myemph{metric} during warmup iterations (revision)
   \end{subitemize}
+\item Betancourt (2017) revised NUTS for Stan
+\end{itemize}
+
+\sld{NUTS (cont.)}
+\begin{itemize}
 \item Sampling algorithm
   \begin{subitemize}
-  \item simulate \myemph{forward or backward} time at random, \myemph{double steps} each time
+  \item randomly simulate \myemph{forward vs.\ backward} time, \myemph{doubling steps}
   \item \myemph{until U-turn} (ends' momentum brings them closer)
   \item \myemph{select a step} along path, \myemph{biased} toward \myemph{last
         doubling}
     \item \myemph{slice sampling}, revised to more efficient \myemph{multinomial}
     \end{subitemize}
-\end{itemize}
+    \begin{center}
+      \includegraphics[width=0.725\textwidth]{img/nuts-doubling.png}
+    \end{center}
+  \end{itemize}
 
 \sld{Generalized HMC \hfill \normalsize (Horowitz 1991)}
 \begin{itemize}
@@ -346,18 +354,20 @@ where $z_m \sim \textrm{normal}(0, \textrm{I}_D).$
 
 \sld{Delayed Rejection \hfill \normalsize(Mira 2001)}
 \begin{itemize}
+\item Deals with \myemph{multiple scales} (varying curvature) 
+  along an \myemph{entire path}
 \item $K$-step delayed rejection involves $K$ distinct proposals
   \begin{subitemize}
 \item Step 1.  Propose and accept/reject as usual with Metropolis.
 \item Step 2.  \myemph{If rejected, propose again} with a new proposal
   and accept/reject with \myemph{Metropolis-Hastings}
-\item Step 3.  If rejected again, propose again.
 \\
 \qquad \qquad    $\vdots$
 \item Step $K$.  If rejected, propose one last time.
 \end{subitemize}
 \item Need \myemph{Hastings correction} to ensure detailed balance.
 \item Proposals may depend on previous proposal(s).
+\item \myemph{Innovation:} Only retry if acceptance probability was low 
 \end{itemize}
 
 \sld{Delayed Rejection HMC \hfill \normalsize(Modi et al.\ 2022)}
@@ -367,12 +377,11 @@ where $z_m \sim \textrm{normal}(0, \textrm{I}_D).$
   by $c$ (e.g., $c = 2$ or $c = 5$)
   \begin{subitemize}
   \item earlier attempts kept step size and extended path
-  \item our approach better if rejection was because \myemph{Hamiltonian
-    diverged}\\[2pt] (gradient-based first-order approximation of curvature fails)
+  \item ours better if gradient-based \myemph{Hamiltonian diverged}
   \end{subitemize}
-\item \myemph{Chirag innovation:} Only retry if acceptance probability was low
-\item Deals with \myemph{multiple scales} (varying curvature)
-  along an \myemph{entire path}
+\begin{center}
+  \spc\includegraphics[height=1.1in]{img/dr.png} \hfill (HMC wall vs. accept)
+\end{center}
 \end{itemize}
 
 \sld{MEADS \hfill \normalsize(Hoffman and Sountsov 2022)}
@@ -487,9 +496,53 @@ x.1 += 1;       x.2 = sqrt(x.2);  // lvalue (assign)
 \end{itemize}
 
 \sld{}
-\vfill
+\vfill 
 \begin{center}
-  {\Huge \myemph{Part III\\[12pt] Approximate Inference}}
+  {\Huge \myemph{Part III\\[18pt] Automatic\\[12pt] Differentiation}}
+\end{center}
+\vfill 
+\vfill
+
+\sld{Mat-var to Var-mat \hfill\normalsize(underway)}
+\begin{itemize}
+\item \myemph{Reverse-mode} autodiff uses \myemph{autodiff variables}
+  \begin{subitemize}
+  \item one per value evaluated in the constraints and log density
+  \item C++ class instance store a \myemph{value} and \myemph{adjoint}
+  \item virtual function to apply chain rule 
+  \end{subitemize}
+\item Stan matrices currently store a \myemph{matrix of variables}
+\item Moving to more efficient \myemph{variable of matrixes}
+  \begin{subitemize}
+  \item more \myemph{memory locality}
+  \item less \myemph{copying}
+  \end{subitemize}
+\item \myemph{huge refactor} of math lib and transpiler
+\end{itemize}
+
+\sld{Expression templates \hfill\normalsize(well underway)}
+\begin{itemize}
+\item lazy evaluation plus static compilation 
+  \begin{subitemize}
+  \item how C++ can be so much faster than C for matrices 
+  \end{subitemize}
+  \item original Stan \myemph{evaluated} expression templates 
+  \item improved Stan tries to \myemph{propagate} them 
+  \item very \myemph{tricky C++}
+\end{itemize}
+
+\sld{GPU kernel \hfill\normalsize(starting)}
+\begin{itemize}
+\item very \myemph{expensive to move} data between GPU and CPU
+\item write \myemph{GPU code} for entire \myemph{math library}
+\item \myemph{order of magnitude (or two!)} speedup (cf. JAX)
+\item \myemph{enormous} undertaking 
+\end{itemize}
+
+\sld{}
+\vfill 
+\begin{center}
+  {\Huge \myemph{Part IV\\[12pt] Approximate Inference}}
 \end{center}
 \vfill 
 \vfill 
