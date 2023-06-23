@@ -30,12 +30,28 @@
 \includegraphics[width=1.5in]{img/flatiron_logo.png}
 \includegraphics[width=0.5in]{img/stan-logo.png}
 
-\sld{Pop Quiz}
+\sld{Flatiron Institute}
+\begin{quote}
+The \myemph{mission} of the \myemph{Flatiron Institute} is to
+\myemph{advance scientific research} through
+\myemph{computational methods}, including data analysis, theory, modeling and simulation.
+\end{quote}
 \begin{itemize}
-\item Who's the most famous Stan in St.\ Louis?
+\item \myemph{Center for Computationa}: Math (stats/ML), Biology, Neuroscience, Astrophysics,
+  Quantum Physics
+\item part of \myemph{Simons Foundation}
+  \begin{subitemize}
+  \item US\$300M+ science and education grants per year
+  \item US\$5B endowment
+    \end{subitemize}
 \end{itemize}
 
-\sld{Stan the Man \hfill (active 1941--1963 - WWII)}
+\sld{Pop Quiz}
+\begin{itemize}
+\item Who's the \myemph{most famous Stan} in \myemph{St.\ Louis}?
+\end{itemize}
+
+\sld{Stan the Man \hfill (active 1941--1963)}
 \begin{itemize}
 \item Not Ulam. Not a stalker fan.
 \item \myemph{Stan ``The Man'' Musial}.  Outfielder, \myemph{\slshape St. Louis Cardinals.}
@@ -62,7 +78,7 @@
   Gelman. 
 \item I was \myemph{getting scooped} on crowdsourcing. 
 \item Michael Collins (CS) suggests I \myemph{work on harder problems}.
-\item I \myemph{listened} and started the \myemph{Stan} project.
+\item I \myemph{listened} and we started the \myemph{Stan} project.
 \end{itemize}
 \begin{center}
   \spc\includegraphics[width=0.6\textwidth]{img/fenway-fences.jpeg}
@@ -98,13 +114,13 @@
 \sld{Bayesian Inference \hfill\normalsize (Bayes $\approx$ 1750,
   Laplace $\approx$ 1800)}
 \begin{itemize}
-\item unknown (parameters) $\theta \in \reals^D;$ \quad 
-  observed (data) $y \in \reals{N}$
+\item \myemph{unknown} (parameters) $\theta \in \reals^D;$ \quad 
+  \myemph{observed} (data) $y \in \reals^N$
 \item \myemph{Estimation}: 
 $$
 \widehat{\theta}
 = \expect{\theta \mid y}
-= \int_{\reals^D} \theta \cdot p(\theta \mid y) \textrm{d}\theta. 
+= \int_{\reals^D} \theta \cdot p(\theta \mid y) \, \textrm{d}\theta. 
 $$
 \item \myemph{Event probabilities}
 $$
@@ -130,12 +146,11 @@ $$
 \expect{f(\theta)] \mid y}
 \approx \frac{1}{M} \sum_{m = 1}^M f\!\left(\draw{\theta}{m}\right) 
 $$
-for 
+for \myemph{independent and identically distributed} (i.i.d.) draws 
 $$
 \draw{\theta}{m} \sim p(\theta \mid y) 
 $$
-\myemph{independent and identically distributed} (i.i.d.) 
-\item Proof: \myemph{central limit theorem}
+\item Proof: \myemph{central limit theorem} (CLT)
   + law of \myemph{unconscious statistician}. 
 \end{itemize}
 
@@ -149,7 +164,7 @@ $$
   \\[8pt]
   \theta_{m + 1} &\sim q(\theta_{m + 1} \mid \theta_{m}).
 \end{align}
-\item Evaluate with averages like Monte Carlo, when Markov chain 
+\item \myemph{Ergodic theorem} says we can use MCMC just like MC, when chain
   \begin{subitemize}
   \item is \myemph{irreducible} (doesn't get stuck),
   \item is \myemph{aperiodic} (doesn't visit partition cyclically), and
@@ -157,7 +172,7 @@ $$
     $\draw{\theta}{m + 1} \sim p(\theta \mid y)$ if
     $\draw{\theta}{m} \sim p(\theta \mid y).$
   \end{subitemize}
-\item Proof: MCMC CLT + law of unconscious statistician
+\item Proof: equilibrium convergence + law of unconscious statistician
 \end{itemize}
 
 \sld{Accept/reject balance \hfill \normalsize(Metropolis et al.\ 1950)}
@@ -197,9 +212,9 @@ $\displaystyle
 \min\!\left( 1, 
   \frac{p(\theta^* \mid y)}{p(\theta_m \mid y)}
     \cdot 
-    \frac{p(\theta_m \mid \theta^*)}{p(\theta^* \mid \theta_m)}
+    \frac{q(\theta_m \mid \theta^*)}{q(\theta^* \mid \theta_m)}
      \right)t$
-\item If $q$ is symmetric, second term drops out, left with Metropolis
+\item If $q$ is symmetric, second term drops out, reduces to Metropolis
 \end{itemize}
 
 \sld{Detailed Balance}
@@ -209,7 +224,7 @@ $\displaystyle
   \begin{subitemize}
   \item reject probability makes it mixed discrete/continuous
   \end{subitemize}
-\item MH accept ensures MCMC kernel satisfies
+\item Metropolis-Hastings \myemph{accept} step ensures MCMC kernel satisfies
   \myemph{detailed balance},
   $$
   p(\theta \mid y) \cdot p(\theta' \mid \theta)
@@ -242,14 +257,13 @@ $\displaystyle
     $(\theta_m, \rho_{m + 1})$ to proposal $(\theta^*, \rho^*)$ at
     time $t$.
   \item Metropolis \myemph{corrects numerical integration error} solving ODE
-  \item Momentum \myemph{flip for reversibility}
+  \item Momentum \myemph{flip for reversibility} (required, but erased)
   \end{subitemize}
 \end{itemize}
 
 \sld{Why is HMC so good?}
 \begin{itemize}
-\item Its Metropolis steps makes large distance proposals with high
-  acceptance rates
+\item \myemph{Long distance} proposals with \myemph{high acceptance} rates
 \item \myemph{Effective sample size} (and hence \myemph{mixing}) is proportional to expected squared
   jump distance
 \item An \myemph{exact solution} preserves initial Hamiltonian, so 100\% accept 
@@ -258,21 +272,33 @@ $\displaystyle
     \item steps preserve volume (hence no Hastings correction for Jacobian)
     \item symplectic integrators very good at \myemph{preserving Hamiltonian}
     \item not so great at \myemph{solving dynamics}, but doesn't matter---we
-      only need \myemph{big jumps with high acceptance}
+      only need \myemph{long jumps with high acceptance}
   \end{subitemize}
 \end{itemize}
+
+\sld{HMC is hard to tune}
+\begin{itemize}
+\item \myemph{$y$-axis}: ESS; \qquad \myemph{$x$-axis}:  step size; \qquad
+  \myemph{facets}: steps
+\item \myemph{blue}: $Y$; \qquad \myemph{red}: $Y^2$
+\item \myemph{dashed lines}: NUTS
+\end{itemize}
+\begin{center}
+  \includegraphics[width=0.9\textwidth]{img/hmc-jitter.png}
+\end{center}  
 
 \sld{HMC + Euclidean metric}
 \begin{itemize}
 \item add symmetric, positive-definite \myemph{metric} $M$ to
   define distance
-  $$
-  d(\theta, \theta') = (\theta - \theta')^{\top} \cdot M \cdot (\theta
-  - \theta').
-  $$
+  \begin{align}
+    ||\theta|| &= \theta^{\top} \cdot M \cdot \theta
+    \\[8pt]
+  d(\theta, \theta') &= ||\theta - \theta'||
+  \end{align}
 \item Stan estimates $M$ as inverse posterior covariance,
   $$
-  \widehat{M} = \textrm{cov}[\theta \mid y].
+  \widehat{M} \approx \textrm{cov}[\theta \mid y].
   $$
 \item \myemph{kinetic energy} now $-\log p(\rho) = \frac{1}{2} \cdot \rho^{\top} \cdot M \cdot \rho,$
 \item so \myemph{momentum refresh} $\rho \sim \textrm{normal}(0, M^{-1}).$
@@ -289,7 +315,7 @@ $\displaystyle
   \item \myemph{metric} during warmup iterations
   \item \myemph{number of steps} dynamically
   \end{subitemize}
-\item Betancourt (2017) revised NUTS for Stan
+\item Betancourt (2017) added several improvements to NUTS for Stan
 \end{itemize}
 
 \sld{NUTS (cont.)}
@@ -297,7 +323,7 @@ $\displaystyle
 \item Sampling algorithm
   \begin{subitemize}
   \item randomly simulate \myemph{forward vs.\ backward} time, \myemph{doubling steps}
-  \item \myemph{until U-turn} (ends' momentum brings them closer)
+  \item \myemph{until U-turn} (momentum brings ends closer)
   \item \myemph{select a step} along path, \myemph{biased} toward \myemph{last
         doubling}
     \item \myemph{slice sampling}, revised to more efficient \myemph{multinomial}
@@ -319,11 +345,11 @@ $\displaystyle
   \rho_{m + 1} = \sqrt{\lambda} \cdot z_m + \sqrt{1 - \lambda}
   \cdot \rho_m,
   $$
-where $z_m \sim \textrm{normal}(0, \textrm{I}_D).$
+where $z_m \sim \textrm{normal}(0, M^{-1}).$
 \item This is also an \myemph{exact update}
   \begin{subitemize}
-    \item i.e., if $\rho_m \sim  \textrm{normal}(0, \textrm{I}_d),$ then $\rho_{m + 1} \sim 
-    \textrm{normal}(0, \textrm{I}_d).$
+    \item i.e., if $\rho_m \sim  \textrm{normal}(0, M^{-1}),$ then $\rho_{m + 1} \sim 
+    \textrm{normal}(0, M^{-1}).$
     \end{subitemize}
 \end{itemize}
 
@@ -337,16 +363,16 @@ where $z_m \sim \textrm{normal}(0, \textrm{I}_D).$
   \item but \myemph{preserved} in G-HMC
   \end{subitemize}
 \item \myemph{Without high acceptance}, momentum flip produces \myemph{random walk}. 
-\item High acceptance means \myemph{small steps} in Hamiltonian dynamics.
+\item High acceptance means \myemph{small step size} in Hamiltonian dynamics.
 \end{itemize}
 
 \sld{Non-reversible accept \hfill \normalsize(Neal 2020)}
 \begin{itemize}
-\item Instead of uniform $u$, use \myemph{sawtooth}, \myemph{perturbed} for ergodicity
+\item Instead of uniform $u$, use \myemph{sawtooth} pattern, \myemph{jittered} for ergodicity
   \begin{subitemize}
   \item \myemph{not reversible}, but \myemph{preserves stationary}
   \end{subitemize}
-\item Iteration vs.\ $u$ (red reject) shows grouped acceptance:
+\item Iteration vs.\ accept probability $u$ (red reject) \myemph{groups acceptance}:
 \begin{center}
   \spc\includegraphics[height=1.5in]{img/neal-nonrevu.png}
 \end{center}
@@ -354,8 +380,6 @@ where $z_m \sim \textrm{normal}(0, \textrm{I}_D).$
 
 \sld{Delayed Rejection \hfill \normalsize(Mira 2001)}
 \begin{itemize}
-\item Deals with \myemph{multiple scales} (varying curvature) 
-  along an \myemph{entire path}
 \item $K$-step delayed rejection involves $K$ distinct proposals
   \begin{subitemize}
 \item Step 1.  Propose and accept/reject as usual with Metropolis.
@@ -372,7 +396,8 @@ where $z_m \sim \textrm{normal}(0, \textrm{I}_D).$
 
 \sld{Delayed Rejection HMC \hfill \normalsize(Modi et al.\ 2022)}
 \begin{itemize}
-\item Just what it \myemph{says on the tin}: DR applied to HMC
+\item \myemph{Multiple scales} (varying curvature) 
+  along an \myemph{entire path}
 \item Each \myemph{retry cuts step size} by constant $c$ and \myemph{multiplies steps}
   by $c$ (e.g., $c = 2$ or $c = 5$)
   \begin{subitemize}
@@ -380,30 +405,36 @@ where $z_m \sim \textrm{normal}(0, \textrm{I}_D).$
   \item ours better if gradient-based \myemph{Hamiltonian diverged}
   \end{subitemize}
 \begin{center}
-  \spc\includegraphics[height=1.1in]{img/dr.png} \hfill (HMC wall vs. accept)
+  \spc\includegraphics[height=1.1in]{img/dr.png} \ \small (funnel draws/accept)
 \end{center}
 \end{itemize}
 
 \sld{MEADS \hfill \normalsize(Hoffman and Sountsov 2022)}
 \begin{itemize}
 \item \myemph{Massively parallel} version of Neal's non-reversible
-  accept form of \myemph{G-HMC}
+  accept \myemph{G-HMC}
 \item Uses \myemph{complementary chains for adaptation}
   \begin{subitemize}
   \item novel, efficient \myemph{principal eigenvalue} estimation of
     step size
   \item covariance in complementary chains used to \myemph{estimate metric}
-  \item \myemph{accelerates adaptation}, robust to single chains getting stuck (Bales 2019)
+  \item \myemph{accelerates adaptation}, robust to single chains
+    getting stuck (Bales 2019)
+  \item much easier to \myemph{parallelize}
+  \item \myemph{little waste} and \myemph{easy restart}
   \end{subitemize}
 \item conveniently a Markov chain \myemph{w.o.\ warmup phase}
+  \begin{subitemize}
+  \item still need \myemph{burn-in}
+  \end{subitemize}
 \end{itemize}
 
-\sld{DR-G-HMC \hfill \normalsize(Modi et al. in progress)}
+\sld{DR-G-HMC \hfill \normalsize(Modi, Roualdes, $\ldots$ in progress)}
 \begin{itemize}
 \item Apply \myemph{delayed rejection} to \myemph{generalized HMC}
 \item \myemph{Retries} use \myemph{one step} instead of constant time
-\item \myemph{Multiple scales} within {a trajectory}
-\item solves \myemph{non-centered funnel}
+\item \myemph{Multiple scales} adapted \myemph{within a trajectory}
+\item solves \myemph{non-centered funnel} (like DR-HMC)
 \item Use MEADS-like \myemph{parallel tuning}
 \end{itemize}
 
@@ -420,7 +451,7 @@ where $z_m \sim \textrm{normal}(0, \textrm{I}_D).$
 
 
 
-
+\sld{}
 \vfill 
 \begin{center}
   {\Huge \myemph{Part II\\[12pt] Stan Language}}
@@ -434,7 +465,8 @@ where $z_m \sim \textrm{normal}(0, \textrm{I}_D).$
   \begin{subitemize}
   \item mainly on syntax and including \myemph{named structs}
   \end{subitemize}
-\item \myemph{Massive refactoring} required in transpiler and I/O
+\item \myemph{Massive refactoring} required in transpiler \& I/O
+  (thanks Brian and Steve)
   \begin{subitemize}
     \item \myemph{my bad} in original code assuming \myemph{dense rectangular}
     \end{subitemize}
@@ -522,21 +554,28 @@ x.1 += 1;       x.2 = sqrt(x.2);  // lvalue (assign)
 
 \sld{Expression templates \hfill\normalsize(well underway)}
 \begin{itemize}
-\item lazy evaluation plus static compilation 
+\item original Stan \myemph{evaluated} expression templates 
+\item goal: \myemph{lazy evaluation} plus \myemph{static compilation}
+\item improved Stan tries to \myemph{propagate} expression templates
   \begin{subitemize}
-  \item how C++ can be so much faster than C for matrices 
+  \item \myemph{reduces copying}
+  \item accelerate \myemph{composed code compilation}avoids eager, unnecessary copies 
+  \item Fortrain-like speed; how C++ is faster than C
   \end{subitemize}
-  \item original Stan \myemph{evaluated} expression templates 
-  \item improved Stan tries to \myemph{propagate} them 
   \item very \myemph{tricky C++}
 \end{itemize}
 
 \sld{GPU kernel \hfill\normalsize(starting)}
 \begin{itemize}
-\item very \myemph{expensive to move} data between GPU and CPU
-\item write \myemph{GPU code} for entire \myemph{math library}
-\item \myemph{order of magnitude (or two!)} speedup (cf. JAX)
-\item \myemph{enormous} undertaking 
+\item Very \myemph{expensive to move} data between GPU and CPU
+\item now use where order of computation $/gg$ order of data
+  \begin{subitemize}
+  \item e.g., matrix-matrix multiply, Cholesky factorization,
+    \myemph{not} matrix-vector multiply, dot prducts, etc.
+  \end{subitemize}
+\item Write \myemph{GPU code} for entire \myemph{math library}
+\item \myemph{Order of magnitude (or two!)} speedup (cf. JAX)
+\item \myemph{Enormous} undertaking 
 \end{itemize}
 
 \sld{}
@@ -564,11 +603,9 @@ x.1 += 1;       x.2 = sqrt(x.2);  // lvalue (assign)
   \item uses \myemph{L-BFGS} for local curvature adjustment (i.e., \myemph{precondition})
   \end{subitemize}
   \vfill
-\item \myemph{Impoved} by (1) Welandawe, Andersen, Vehtari, and
-  Huggins (2022); (2) Domke and Agrawal (2022).  (\myemph{see below})
 \end{itemize}
 
-\sld{Autodiff Variational Inference (ADVI) \hfill (released)}
+\sld{Autodiff Variational Inference (ADVI)}
 \begin{itemize}
 \item Given posterior $p(\theta \mid y)$ on the
   \myemph{unconstrained scale}
@@ -586,6 +623,8 @@ x.1 += 1;       x.2 = sqrt(x.2);  // lvalue (assign)
 \item \myemph{Sample} $\draw{\theta}{1}, \ldots \draw{\theta}{M} \sim \textrm{multi\_normal}\!\left(\theta \mid
     \widehat{\mu}, \widehat{\Sigma}\right),$
 \item \myemph{Inverse transform} draws back to constrained scale
+\item \myemph{Impovements} by (1) Welandawe, Andersen, Vehtari, and 
+  Huggins (2022); (2) Domke and Agrawal (2022).
 \end{itemize}
 
 \sld{ADVI objective evaluation}
@@ -593,7 +632,7 @@ x.1 += 1;       x.2 = sqrt(x.2);  // lvalue (assign)
 \item KL-divergence is integral, w.\ $q(\theta) =
   \textrm{multi\_normal}(\mu, \Sigma).$
 \begin{align}
-  \ \textrm{KL}\!\left[q \ || \ p\right]
+  \ \textrm{KL}\!\left[\, q \ || \ p \, \right]
    &= \underbrace{\int_{\mathbb{R}^D}
      q(\theta) \cdot \log q(\theta) 
      \, \textrm{d}\theta}_{\textrm{entropy of } q}
@@ -610,8 +649,9 @@ where $\draw{\theta}{m} \sim \textrm{multi\_normal}(\mu, \Sigma).$
 
 \sld{ADVI SGD}
 \begin{itemize}
-\item Need \myemph{gradient} $\nabla_{\theta} \, \textrm{KL}\!\left[q \
-    || \ p\right]$ to minimize
+\item Need \myemph{gradient} $\nabla_{\theta} \, \textrm{KL}\!\left[\,
+    q \
+    || \ p\,\right]$ to minimize
   $$
   \textrm{arg min}_{\mu, \Sigma} \
   \textrm{KL}\!\left[ \, \textrm{multi\_normal}(\theta \mid \mu, \Sigma) \
@@ -659,7 +699,8 @@ where $\draw{\theta}{m} \sim \textrm{multi\_normal}(\mu, \Sigma).$
     \item lay down a multivariate normal approximation
     \item covariance is approximate \myemph{negative inverse Hessian}
     \item estimated with finite differences of autodiff gradient
-    \item low-rank (number of gradients $\approx$ 5) plus diagonal
+    \item low-rank (number of gradients $J \approx 5$) plus diagonal:
+      $\mathcal{O}(D \cdot J^2)$
   \end{subitemize}
 \item Choose approximation with \myemph{lowest KL-divergence} (Monte Carlo)
 \item Importance \myemph{resample}
@@ -682,8 +723,8 @@ where $\draw{\theta}{m} \sim \textrm{multi\_normal}(\mu, \Sigma).$
   \item Generate \myemph{inital} $X \sim q_X(x)$ (cf. Domke and Agrawal)
   \item \myemph{Transform} with \myemph{deep neural net}
     $f_\beta:\reals^D \rightarrow \reals^D$, $\Theta = f_\beta(X),$
-$$q_\Theta(\theta \mid \beta) = q_X\!\left(f^{-1}_\beta(\theta)\right) \cdot \left|
-  J_{f^{-1}_\beta}(\theta) \right|
+    $$q_\Theta(\theta \mid \beta) = q_X\!\left(f^{-1}_\beta(\theta)\right)
+    \cdot \left| \, J_{f^{-1}_\beta}(\theta) \, \right|
 $$
   \item \myemph{Optimize} as in ADVI: $\beta^* =
     \textrm{arg min}_\beta \ \textrm{KL}\!\left[ \, q_\Theta(\theta \mid \beta)
@@ -692,7 +733,7 @@ $$
 \item For VI, neural net must have \myemph{efficient Jacobian and sampling}
 \item Real non-volume preserving (\myemph{RealNVP}) flows work with \myemph{JAX}
   \begin{subitemize}
-  \item complementary affine layers, tanh non-linearity ($\approx$
+  \item complementary affine layers, $\textrm{tanh}()$ non-linearity ($\approx$
     10 deep,
     12 wide)
   \item fits centered hieararchical IRT-2PL (additive + multiplicative
