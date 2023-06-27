@@ -1,0 +1,74 @@
+\documentclass[9pt]{report}
+
+\usepackage{talks}
+\newcommand{\expect}[1]{\mathbb{E}\!\left[ #1 \right]}
+\newcommand{\reals}{\mathbb{R}}
+\newcommand{\draw}[2]{#1^{(#2)}}
+\usepackage{mathpazo}
+\usepackage{sourcecodepro}
+
+\begin{document}
+
+\sf \mbox{}
+\\[12pt]
+\spc{{\LARGE\bfseries \color{MidnightBlue}{Language models for statisticians:}}
+\\[8pt]
+\spc{\Large\bfseries \color{MidnightBlue}{from $n$-grams to
+    transformers to chatbots}}
+\\[24pt]
+\noindent 
+\spc{\large\bfseries \color{MidnightBlue}{Bob Carpenter}}
+\\[2pt]
+\spc{\small Center for Computational Mathematics}
+\\[2pt]
+\spc{\small Flatiron Institute}
+\vfill 
+\noindent 
+\spc{\footnotesize July 2023}
+\hfill
+\includegraphics[width=1.25in]{img/flatiron_logo.png}
+
+\sld{What is a language model?}
+\begin{itemize}
+\item \myemph{Language} uses a \myemph{finite} number of
+  symbols called \myemph{tokens}
+  \subit{we assume a finite \myemph{token set} $\mathsf{Tok}$ of size $K$}
+\item Tokens may be letters, words,
+  sounds, syllables, etc.
+  \begin{subitemize}
+  \item letters or words traditional (e.g., Shannon 1948)
+  \item GPT uses \myemph{sequences of letters} (average 1.5 tokens per
+    English word)
+  \end{subitemize}
+\item Treat language as a \myemph{stochastic process}
+  \subit{$Y = Y_1, Y_2, \ldots$ for random variables $Y_n \in T$}
+\item Models typically \myemph{autoregressive}, predicting next
+  word from previous
+  $$
+  p_{Y_{n+1} \mid Y_n, Y_{n-1}, \ldots, Y_1}\!\!\left(y_{n + 1} \mid y_n, y_{n-1}, \ldots, y_1\right).
+  $$
+\end{itemize}
+
+\sld{$N$-gram language models \hfill \normalsize{(Shannon 1948)}}
+\begin{itemize}
+\item Assume language process is \myemph{order-$N$ Markov}
+  \subit{$p(y_{n+1} \mid y_n, y_{n-1}, \ldots, y_1)
+    = p(y_{n+1} \mid y_n, y_{n-1}).$}
+\item Even \myemph{GPT-4 is Markovian}
+  \subit{in the way that a real computer is technically a
+    finite-state machine}
+\item Limited context allows \myemph{efficient algorithms}
+\end{itemize}
+    
+\sld{Shannon's $N$-gram models}
+\begin{itemize}
+\item Assume \myemph{training data} $z = z_1, \ldots, z_N$ for $z_n \in T$
+\item Use Laplace's \myemph{law of succession}
+    $$p(y_{n+1} \mid y_n) = \frac{1 + \textrm{count of } (y_n,
+      y_{n+1}) \textrm{ in } z}{N - 1 + K}$$
+    where number of tokens is $|\mathsf{Tok}| = K$
+  \subit{equivalent to prior $\textrm{Dirichlet}(2)$}
+  \end{itemize}
+  
+
+\end{document}
