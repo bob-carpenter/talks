@@ -62,13 +62,15 @@
     
 \sld{Shannon's $N$-gram models}
 \begin{itemize}
-\item Assume \myemph{training data} $z = z_1, \ldots, z_N$ for $z_n \in T$
+\item Assume \myemph{training data} $z = z_1, \ldots, z_M$ for $z_m
+  \in T$
+\item Shannon considered English \myemph{letters and words}, with $N = 1, 2, 3$
 \item Use Laplace's \myemph{law of succession}
-    $$p(y_{n+1} \mid y_n) = \frac{1 + \textrm{count of } (y_n,
-      y_{n+1}) \textrm{ in } z}{N - 1 + K}$$
-    where number of tokens is $|\mathsf{Tok}| = K$
+  $$p(y_{n+1} \mid y_n) = \frac{1 + \textrm{count of } (y_n,
+    y_{n+1}) \textrm{ in } z}{N - 1 + K}$$
+  where number of tokens is $|\mathsf{Tok}| = K$
   \subit{equivalent to prior $\textrm{Dirichlet}(2)$}
-  \end{itemize}
+\end{itemize}
   
 
 \end{document}
