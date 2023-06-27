@@ -55,21 +55,54 @@
   \subit{$p(y_{n+1} \mid y_n, y_{n-1}, \ldots, y_1)
     = p(y_{n+1} \mid y_n, y_{n-1}).$}
 \item Even \myemph{GPT-4 is Markovian}
-  \subit{in the way that a real computer is technically a
-    finite-state machine}
-\item Limited context allows \myemph{efficient algorithms}
+  \begin{subitemize}
+    \item but with $N = 4096$ (GPT-3) or $N = 8192$ (GPT-4)
+    \item cf. a real computer is technically a finite-state machine
+    \end{subitemize}
+  \item Limited context allows relatively \myemph{efficient algorithms}
 \end{itemize}
     
 \sld{Shannon's $N$-gram models}
 \begin{itemize}
-\item Assume \myemph{training data} $z = z_1, \ldots, z_M$ for $z_m
-  \in T$
+\item \myemph{Claude Shannon}. 1948. \myemph{A Mathematical Theory of Communication.}
+  \textit{Bell System Technical Journal}.
 \item Shannon considered English \myemph{letters and words}, with $N = 1, 2, 3$
-\item Use Laplace's \myemph{law of succession}
-  $$p(y_{n+1} \mid y_n) = \frac{1 + \textrm{count of } (y_n,
-    y_{n+1}) \textrm{ in } z}{N - 1 + K}$$
-  where number of tokens is $|\mathsf{Tok}| = K$
-  \subit{equivalent to prior $\textrm{Dirichlet}(2)$}
+\item Shannon used \myemph{books of frequencies}
+  \begin{subitemize}
+  \item letter trigrams (1939 book)
+  \item word bigrams (1923 book)
+  \end{subitemize}
+\item Through 2010s, people used \myemph{regularized MLE}
+  \begin{subitemize}
+  \item assigns \myemph{non-zero probability} to any sequence
+  \item e.g., Laplace's law of succession
+  \item can also use Bayesian models
+  \end{subitemize}
+\end{itemize}
+
+\sld{Shannon's fit}
+\begin{itemize}
+\item MLE probabilities from compiled tables of letters (1923), words 
+      (1939) 
+    \subit{or, open books at random, find current context, generate 
+        following word}
+\item Shannon generated random examples
+  \begin{subitemize}
+    \item \myemph{Order 1, letters}: OCRO HLI RGWR NMIELWIS EU LL NBNESEBYA TH EEI ALHENHTTPA OOBTTVA
+      NAH BRL.
+    \item \myemph{Order 3, letters}: IN NO IST LAT WHEY CRATICT FROURE
+      BIRS GROCID PONDENOME OF DEMONSTURES OF THE REPTAGIN IS
+      REGOACTIONA OF
+      % CRE.
+    \item \myemph{Order 1, words}: REPRESENTING AND SPEEDILY IS AN
+      GOOD APT OR COME CAN DIFFERENT NATURAL HERE HE THE A IN CAME THE
+      TO OF TO EXPERT
+      % GRAY COME TO FURNISHES THE LINE MESSAGE HAD BE THESE.
+      \item \myemph{Order 2, words}: THE HEAD AND IN FRONTAL ATTACK ON
+        AN ENGLISH WRITER THAT THE CHARACTER OF THIS POINT IS
+        THEREFORE ANOTHER
+        % METHOD FOR THE LETTERS THAT THE TIME OF WHO EVER TOLD THE PROBLEM FOR AN UNEXPECTED.
+  \end{subitemize}
 \end{itemize}
   
 
