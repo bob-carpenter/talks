@@ -44,40 +44,45 @@
   \subit{$Y = Y_1, Y_2, \ldots$ for random variables $Y_n \in T$}
 \item Models typically \myemph{autoregressive}, predicting next
   word from previous
-  $$
-  p_{Y_{n+1} \mid Y_n, Y_{n-1}, \ldots, Y_1}\!\!\left(y_{n + 1} \mid y_n, y_{n-1}, \ldots, y_1\right).
-  $$
 \end{itemize}
 
-\sld{$N$-gram language models \hfill \normalsize{(Shannon 1948)}}
+\sld{$K$-gram language models \hfill \normalsize{(Shannon 1948)}}
 \begin{itemize}
-\item Assume language process is \myemph{order-$N$ Markov}
-  \subit{$p(y_{n+1} \mid y_n, y_{n-1}, \ldots, y_1)
-    = p(y_{n+1} \mid y_n, y_{n-1}).$}
-\item Even \myemph{GPT-4 is Markovian}
+\item Assume language process is \myemph{order-$K$ Markov}
   \begin{subitemize}
-    \item but with $N = 4096$ (GPT-3) or $N = 8192$ (GPT-4)
+  \item tokens conditionally independent given previous $K$ tokens
+    $$
+    p(y_n \mid y_{n-1}, \ldots, y_1)
+    = p(y_n \mid y_{n - 1}, \ldots, y_{n - K}).
+    $$
+  \end{subitemize}
+\item Even \myemph{GPT is Markovian}
+  \begin{subitemize}
+    \item Chatbots use $N = 4096$ (GPT-3) or $N = 8192$ (GPT-4)
+    \item API provides $N = 32,768$ GPT-4 and $N = 8192$ code specialization GPT-3
     \item cf. a real computer is technically a finite-state machine
     \end{subitemize}
   \item Limited context allows relatively \myemph{efficient algorithms}
 \end{itemize}
     
-\sld{Shannon's $N$-gram models}
+\sld{Shannon's $K$-gram models}
 \begin{itemize}
 \item \myemph{Claude Shannon}. 1948. \myemph{A Mathematical Theory of Communication.}
   \textit{Bell System Technical Journal}.
-\item Shannon considered English \myemph{letters and words}, with $N = 1, 2, 3$
+\item Shannon considered English \myemph{letters} ($K = 1, 2, 3$) and
+  words ($K = 1, 2$)
+\item \myemph{What is English?}  How do we collect a \myemph{sample}?
 \item Shannon used \myemph{books of frequencies}
   \begin{subitemize}
-  \item letter trigrams (1939 book)
-  \item word bigrams (1923 book)
+  \item \myemph{letter trigrams} (1939 book); \myemph{word bigrams} (1923 book)
   \end{subitemize}
-\item Through 2010s, people used \myemph{regularized MLE}
+\item Fit and inference usually \myemph{regularized MLE}
   \begin{subitemize}
-  \item assigns \myemph{non-zero probability} to any sequence
-  \item e.g., Laplace's law of succession
-  \item can also use Bayesian models
+  \item ensures \myemph{non-zero probability} for any sequence
+  \item (non-parametric) \myemph{Bayes} usually too \myemph{expensive}
+  \item often \myemph{heuristic driven} for efficiency (e.g., speech to text)
   \end{subitemize}
+  
 \end{itemize}
 
 \sld{Shannon's fit}
@@ -104,6 +109,62 @@
         % METHOD FOR THE LETTERS THAT THE TIME OF WHO EVER TOLD THE PROBLEM FOR AN UNEXPECTED.
   \end{subitemize}
 \end{itemize}
-  
+
+\sld{Measuring accuracy with entropy}
+\begin{itemize}
+\item Accuracy of $K$-gram language model $p_Y$ measured with
+  \myemph{entropy (rate)}
+\item Given a random sequence $Y \in \textsf{Tok}^N,$ its
+  \myemph{entropy} in \myemph{bits} (base 2) is
+  $$
+  \textrm{H}[Y]
+  \ = \ \mathbb{E}\!\left[ \log_2 p_Y(Y) \right]
+  \ = \ \sum_{y \in \textsf{Tok}^N} p_Y(y) \cdot \log_2 p_Y(y).
+  $$
+\item The \myemph{entropy rate} is average entropy per token, $\lim_{N \rightarrow \infty} \,
+  \textrm{H}[Y] / N,$
+\item The entropy rate for $K$-grams is given by \myemph{conditional entropy},
+  \begin{align*}
+    \textrm{H}[Y_n \mid Y_{n - 1}, \ldots, Y_{n -K}]
+    \ &= \ \mathbb{E}\!\left[\, \log_2 p(Y_n \mid Y_{n - 1}, \ldots,
+        Y_{n -K}) \, \right]
+    \\[4pt]
+    &= \ \sum_{y \in \textsf{Tok}^{K + 1}}
+    \ p(y) \cdot \log_2 p(y_{K + 1} \mid y_{K}, \ldots, y_1).
+  \end{align*}
+\end{itemize}
+
+\sld{Entropy and compression}
+\begin{itemize}
+\item Shannon (1948) introduced \myemph{information theory} to model
+  signal compression and decompression for communication
+\item Assume a language model with pmf $p_Y$
+\item Given a string $y \in \textsf{Tok}^*,$ the language model can be
+  used to \myemph{compress} $y$ to $\lceil \log_2 p_Y(y) \rceil$ bits
+\item Can be done in practice using \myemph{arithmetic
+    coding} (Rissanen 1976; Witten, Neal, Cleary 1987) using
+  \myemph{GPT output}
+\end{itemize}
+
+\sld{GPT-3 training set sizes}
+\begin{center}
+  \begin{tabular}{r|r}
+    \myemph{Source} & \myemph{Tokens} \\ \hline
+    Common Crawl & 410 billion  \\
+    Books2 & 55 billion \\
+    WebText2 & 19 billion \\
+    Books1 & 12 billion \\
+    Wikipedia & 3 billion \\ \hline \hline
+    & $\approx$ 500 billion
+  \end{tabular}
+\end{center}
+\begin{itemize}
+\item GPT-4 training set \myemph{size undisclosed}
+  \subit{``Given both
+the competitive landscape and the safety implications of large-scale models like GPT-4, this report
+contains no further details about the architecture (including model size), hardware, training compute,
+dataset construction, training method, or similar.''}
+\end{itemize}
+
 
 \end{document}
