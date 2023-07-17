@@ -6,6 +6,8 @@
 \newcommand{\draw}[2]{#1^{(#2)}}
 \usepackage{mathpazo}
 \usepackage{sourcecodepro}
+\usepackage{tikz}
+    \usetikzlibrary{positioning, shapes, arrows.meta}
 
 \begin{document}
 
@@ -146,9 +148,11 @@
   \myemph{GPT output}
 \end{itemize}
 
-\sld{GPT-3 training set sizes}
-\begin{center}
-  \begin{tabular}{r|r}
+\sld{OpenAI's GPT-3: Published}
+\begin{itemize}
+\item \myemph{Training set} sizes \\[8pt]
+  \small
+  \begin{tabular}[t]{r|r}
     \myemph{Source} & \myemph{Tokens} \\ \hline
     Common Crawl & 410 billion  \\
     Books2 & 55 billion \\
@@ -157,14 +161,175 @@
     Wikipedia & 3 billion \\ \hline \hline
     & $\approx$ 500 billion
   \end{tabular}
+\item \myemph{Number of parameters}: $\approx$175 billion
+  \vfill
+\item \myemph{Context history size}: 4K tokens
+\item Let's turn to \myemph{how it works $\ldots$}
+\end{itemize}
+
+  
+\sld{Top-level architecture}
+\begin{center}\hfill
+  \vspace*{-3in}
+  \begin{minipage}[t]{2in}
+    \begin{itemize}
+    \item hello
+    \end{itemize}
+  \end{minipage}\hfill
+\vspace*{-24pt}
+\hfill\includegraphics[height=\textheight]{img/transformer-diagram.pdf}
 \end{center}
+
+\sld{Attention architecture}
+\begin{center}
+\vspace*{-24pt}
+\hfill\includegraphics[height=\textheight]{img/attention-diagram.pdf}
+\end{center}
+
+\sld{Top-level pseudocode}
+\footnotesize
+\begin{center}
+\begin{verbatim}
+   DECODE(tok:  int<low=1,up=T>[N],    alpha:  matrix(T, V),
+     betas: { query:matrix(K, V),  key:matrix(K, V),  value: matrix(V, V) }[A]
+     gammas:  nn(V, L)[A],
+     delta:   { 1: vector[T], 2: matrix(T, N * V) }):  simplex[T]
+   -------------------------------------------
+   for n in 1:N:                                         // for tokens:
+       xs[0, n] = LEX(tok[n], alpha) + POS(n)               // embed
+   for a in 1:A:                                         // for each layer:
+       xs[a] = ATTEND(xs[a - 1], betas[a], gammas[a])       // attend
+       for n in 1:N:                                        // for tokens:
+           xs[a, n] = FEED_FORWARD(xs[a, n], gammas[a])         // shared nn
+   y = STANDARDIZE(delta.1 + delta.2 * xs[A].flatten())  // GLM: linear layer
+   return SOFTMAX(y)                                     // inverse link
+\end{verbatim}
+\end{center}
+\normalsize
+
+\sld{Lexical and positional embedding}
+\footnotesize
+\begin{center}
+\begin{verbatim}
+    LEX(t:      int<low=1,up=T>,
+        alpha:  vector(V)[T]):  vector(V)  
+    -----------------------------------------------------
+    return alpha[t]                // one-hot
+
+    POS(n:  int<low=1,up=N>):  vector(V)
+    -----------------------------------------------------
+    for i in 1:V / 2:
+        r = n / N**(2 * i / V)      // pos / max_pos^(0..2]
+        u[2 * i] = sin(r)
+        u[2 * i + 1] = cos(r)
+    return u
+\end{verbatim}
+\end{center}
+
+\sld{Attention}
+\footnotesize
+\begin{center}
+\begin{verbatim}
+  ATTEND(x:      vector(V)[N],
+         beta:   {query: matrix(K, V), key: matrix(K, V), value: matrix(V, V)},
+         gamma:  nn(V, L)):  vector(V)[N]
+  -----------------------------------------------------------
+  for n in 1:N:                                         // for tokens:
+      q[n] = beta.query * x[n]                              // embed query
+      k[n] = beta.key * x[n]                                // embed key
+      v[n] = beta.value * x[n]                              // embed value
+  for n in 1:N:                                        // for tokenss:
+      lp[1:n-1] = [q[n]' * k[1], ..., q[n]' * k[n-1]]      // attend log probs
+                  / sqrt(V)                                //     scaled
+      lp[n:N] = -inf                                         // mask future
+      p = SOFTMAX(lp)                                        // attend probs
+      u[n] = SUM(n in 1:N) p[n] * v[n]                       // weight vals
+      y[n] = STANDARDIZE(u[n] + x[n])                        // residual + std
+  return y
+\end{verbatim}
+\end{center}
+
+\sld{Feedforward neural network}
+\footnotesize
+\vspace*{-6pt}
+\begin{verbatim}
+   FEED_FORWARD(x:     real[R], 
+         alpha: { 1: real[S], 2: real[S, R], 
+                  3: real[R], 4: real[R, S]):  real[R]
+   ----------------------------------------------------
+   u = alpha.1 + alpha.2 * x          // linear
+   v = GELU(u)                        // nonlinear activation
+   y = alpha.3 + alpha.4 * v          // linear
+   return STANDARDIZE(x + y)          // residual + standardize
+
+   GELU(v:  real[R]):  real[R]
+       return [vi * Phi(vi) for vi in v]          // Phi(x) std normal cdf
+
+   STANDARDIZE(v:  real[R]):  real[R]
+       return (v - mean(v)) / standard_deviation(v)  // arithmetic stability
+
+   SOFTMAX(real[R] v):  simplex(R)              // multi-logit inverse link
+       return exp(v) / sum(exp(v))
+\end{verbatim}
+
+\sld{Alignment fine tuning}
 \begin{itemize}
-\item GPT-4 training set \myemph{size undisclosed}
-  \subit{``Given both
+\item \myemph{2017}:  \myemph{Transformers}: BeRT, GPT-2, GPT-3, $\ldots$
+\item \myemph{2023}:  \myemph{Alignment fine tuning}: ChatGPT 3.5 and
+  4, Alpaca, Claude
+\item \myemph{Goal} is to produce a \myemph{ChatBot} that is
+  \subit{\myemph{helpful}, \myemph{truthful}, and \myemph{harmless}}
+\end{itemize}
+
+
+\sld{OpenAI's GPT-4: Unpublished}
+\begin{itemize}
+\item \myemph{Training set} unpublished (estimated $\approx$5 trillion)
+\item \myemph{Parameter set} unpublished (estimated $\approx$2
+  trillion)
+\item \myemph{Context history size}: 8K or 32K tokens
+\item \myemph{Hardware cost} training: $\approx$US\$500 million
+  (incl.\ 10K+ US\$15K GPUs)
+\item \myemph{Marginal cost} training: $\approx$US\$100s of
+  millions (hardware, power, staff)
+  \vfill
+\item \myemph{Open AI (2023) now CLOSED}: {\small ``Given both
 the competitive landscape and the safety implications of large-scale models like GPT-4, this report
 contains no further details about the architecture (including model size), hardware, training compute,
 dataset construction, training method, or similar.''}
 \end{itemize}
 
+\sld{The cat's out of the bag}
+\begin{itemize}
+\item Transformer LLM architecture published by \myemph{Google} (2017)
+\item Alignment to ChatBots published by \myemph{OpenAI} (2022)
+\begin{subitemize}
+\item Meta (aka Facebook): \myemph{LLaMA}
+  \vspace*{3pt}
+  \begin{subitemize}
+    \item \myemph{Open source} for research (since leaked)
+    \item Stanford CS: \myemph{Alpaca} fine-tuned
+    \item Runs 2 tokens/second on iMac with 4-bit floating point
+    \end{subitemize}
+  \item Google: \myemph{Bard}
+  \item Google and OpenAI: \myemph{Copilot} (code/programming API integration)
+\item Anthropic: \myemph{Claude} (100K token context) (branded as \myemph{Poe} for writing) 
+\item Many smaller, less widely used alternatives
+\end{subitemize}
+\end{itemize}
+
+
+\sld{References}
+\begin{itemize}
+\item Vaswani, A., Shazeer, N., Parmar, N., Uszkoreit, J., Jones, L.,
+  Gomez, A.N., Kaiser, Ł. and Polosukhin, I., 2017. \\ \myemph{Attention is all
+  you need}. \textit{NeurIPS} 30. \hfill (82K~citations)
+\item Ouyang, L., Wu, J., Jiang, X., Almeida, D., Wainwright, C.,
+  Mishkin, P., Zhang, C., Agarwal, S., Slama, K., Ray, A. and
+  Schulman, J., 2022. \myemph{Training language models to follow instructions
+  with human feedback}. \textit{NeurIPS} 35. \hfill (1.5K~citations)
+\item Phuong, M. and Hutter, M., 2022.  \myemph{Formal algorithms for
+  transformers}. \textit{arXiv} 2207.09238. \hfill (0.02K~citations)
+\end{itemize}
 
 \end{document}
