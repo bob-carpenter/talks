@@ -14,7 +14,7 @@
 \sf \mbox{}
 \\[12pt]
 \spc{{\LARGE\bfseries \color{MidnightBlue}{Language models for statisticians:}}
-\\[8pt]
+\\[4pt]
 \spc{\Large\bfseries \color{MidnightBlue}{from $n$-grams to
     transformers to chatbots}}
 \\[24pt]
@@ -22,7 +22,7 @@
 \spc{\large\bfseries \color{MidnightBlue}{Bob Carpenter}}
 \\[2pt]
 \spc{\small Center for Computational Mathematics}
-\\[2pt]
+\\[-1pt]
 \spc{\small Flatiron Institute}
 \vfill 
 \noindent 
@@ -168,9 +168,7 @@
 \end{itemize}
 
 
-\vspace*{-2.5in}
 \sld{Top-level architecture}
-\vspace*{-2.5in}
 \hfill\includegraphics[height=\textheight]{img/transformer-diagram.pdf}
 
 \sld{Attention architecture}
@@ -265,15 +263,63 @@
        return exp(v) / sum(exp(v))
 \end{verbatim}
 
-\sld{Alignment fine tuning}
+\sld{From LLM to Chatbot}
 \begin{itemize}
-\item \myemph{2017}:  \myemph{Transformers}: BeRT, GPT-2, GPT-3, $\ldots$
-\item \myemph{2023}:  \myemph{Alignment fine tuning}: ChatGPT 3.5 and
-  4, Alpaca, Claude
-\item \myemph{Goal} is to produce a \myemph{ChatBot} that is
-  \subit{\myemph{helpful}, \myemph{truthful}, and \myemph{harmless}}
+\item \myemph{LLM goal}: predict \myemph{next token on web} page
+\item \myemph{Chatbot goal} is to train a model that is
+  \begin{subitemize}
+  \item \myemph{helpful}: help users solve task
+  \item \myemph{honest}: shouldn't fabricate or mislead user
+  \item \myemph{harmless}: shouldn't cause physical, psychological,
+    social, or environmental harm
+  \end{subitemize}
+\item Strategy is to \myemph{align} an LLM to be a Chatbot with
+  \myemph{fine tuning}
+  \begin{subitemize}
+  \item LLM acts as an \myemph{informative prior}
+  \item In ML terms, LLM provides \myemph{inductive bias}
+  \end{subitemize}
 \end{itemize}
 
+\sld{Reinforcement learning with human feedback \\ \null\hspace*{1em}(RLHF)}
+\begin{enumerate}
+\item Supervised fine tuning
+  \begin{subitemize}
+  \item human raters \myemph{provide desired output} for sampled prompts
+  \item \myemph{fine-tune} LLM with \myemph{supervised learning}
+  \end{subitemize}
+\item Reward model training
+  \begin{subitemize}
+  \item human raters \myemph{rank multiple outputs} for sample prompts
+  \item train a \myemph{reward model}
+  \end{subitemize}
+\item Reinforcement learning
+  \begin{subitemize}
+  \item \myemph{policy ranks outputs} for sample prompts
+  \item fine-tune LLM with \myemph{proximal policy optimization} (PPO)
+  \end{subitemize}
+\end{enumerate}
+
+\sld{Some caveats}
+\begin{itemize}
+\item 
+{\LARGE ``\null}This procedure aligns the behavior of GPT-3 to the \myemph{stated preferences of a
+specific group} of people (mostly our labelers and researchers),\\[4pt] rather
+than to any broader notion of `human values'.{\LARGE \null''} \hfill {\small (OpenAI 2022)}
+\subit{cf. \myemph{Cultural consensus theory} provides mixture model of
+  ``values''}
+\vfill
+\item {\LARGE ``\null}During RLHF fine-turning, we observe \myemph{performance
+    regressions} compared to GPT-3 on certain public NLP
+  datasets.{\LARGE\null''}
+  \hfill {\small (OpenAI~2022)}
+  \begin{subitemize}
+    \vspace*{-12pt}
+  \item i.e., performance degrades relative to unaligned model
+  \item partially mitigated by \myemph{hierarchical modeling}
+    alternating reinforcement and supervision
+  \end{subitemize}
+\end{itemize}
 
 \sld{OpenAI's GPT-4: Unpublished}
 \begin{itemize}
@@ -283,7 +329,7 @@
 \item \myemph{Context history size}: 8K or 32K tokens
 \item \myemph{Hardware cost} training: $\approx$US\$500 million
   (incl.\ 10K+ US\$15K GPUs)
-\item \myemph{Marginal cost} training: $\approx$US\$100s of
+\item \myemph{Marginal cost} training: $\approx$US\$10s of
   millions (hardware, power, staff)
   \vfill
 \item \myemph{Open AI (2023) now CLOSED}: {\small ``Given both
@@ -314,15 +360,21 @@ dataset construction, training method, or similar.''}
 
 \sld{References}
 \begin{itemize}
-\item Vaswani, A., Shazeer, N., Parmar, N., Uszkoreit, J., Jones, L.,
-  Gomez, A.N., Kaiser, Ł. and Polosukhin, I., 2017. \\ \myemph{Attention is all
-  you need}. \textit{NeurIPS} 30. \hfill (82K~citations)
-\item Ouyang, L., Wu, J., Jiang, X., Almeida, D., Wainwright, C.,
-  Mishkin, P., Zhang, C., Agarwal, S., Slama, K., Ray, A. and
-  Schulman, J., 2022. \myemph{Training language models to follow instructions
-  with human feedback}. \textit{NeurIPS} 35. \hfill (1.5K~citations)
-\item Phuong, M. and Hutter, M., 2022.  \myemph{Formal algorithms for
-  transformers}. \textit{arXiv} 2207.09238. \hfill (0.02K~citations)
+\item Vaswani et al. (Google). 2017. \hfill (82K~citations) 
+  \\
+  \myemph{Attention is all  you need}. \textit{NeurIPS}.
+\item Brown et al. (OpenAI). 2020.  \hfill (12K~citations)  
+  \\ \myemph{Language models are few-shot
+    learners}. \textit{NeurIPS}.
+\item Ouyang et al. (OpenAI). 2022.  \hfill (1.5K~citations)
+  \\
+  \myemph{Training language models to follow instructions}.
+  \textit{NeurIPS}.
+\item Phuong \& Hutter (DeepMind). 2022.  \hfill (0.02K~citations)
+  \\ \myemph{Formal algorithms for
+  transformers}. \textit{arXiv}.
+\item Bubeck et al. (Microsoft). 2023.  \hfill (0.4K~citations)
+  \\ \myemph{Sparks of artificial general intelligence}. \textit{arXiv}.
 \end{itemize}
 
 \end{document}
