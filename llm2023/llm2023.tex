@@ -15,7 +15,7 @@
 \\[12pt]
 \spc{{\LARGE\bfseries \color{MidnightBlue}{Language models for statisticians:}}
 \\[4pt]
-\spc{\Large\bfseries \color{MidnightBlue}{from $n$-grams to
+\spc{\Large\bfseries \color{MidnightBlue}{from \textit{n}-grams to
     transformers to chatbots}}
 \\[24pt]
 \noindent 
@@ -38,51 +38,48 @@
 \item Tokens may be letters, words,
   sounds, syllables, etc.
   \begin{subitemize}
-  \item letters or words traditional (e.g., Shannon 1948)
   \item GPT uses \myemph{sequences of letters} (average 1.5 tokens per
     English word)
   \end{subitemize}
 \item Treat language as a \myemph{stochastic process}
-  \subit{$Y = Y_1, Y_2, \ldots$ for random variables $Y_n \in T$}
+  \subit{$Y = Y_1, Y_2, \ldots$ for random variables $Y_n \in \textsf{Tok}$}
 \item Models typically \myemph{autoregressive}, predicting next
   word from previous
 \end{itemize}
 
-\sld{$K$-gram language models \hfill \normalsize{(Shannon 1948)}}
+\sld{\textit{N}-gram language models \hfill \normalsize{(Shannon 1948)}}
 \begin{itemize}
-\item Assume language process is \myemph{order-$K$ Markov}
+\item Assume language process is \myemph{order-\textit{N} Markov}
   \begin{subitemize}
-  \item tokens conditionally independent given previous $K$ tokens
+  \item tokens conditionally independent given previous $N - 1$ tokens
     $$
-    p(y_n \mid y_{n-1}, \ldots, y_1)
-    = p(y_n \mid y_{n - 1}, \ldots, y_{n - K}).
+    p(y_k \mid y_{k-1}, \ldots, y_1)
+    = p(y_k \mid \underbrace{y_{k - 1}, \ldots, y_{k - N - 1}}_{N - 1
+      \textrm{ tokens}}).
     $$
   \end{subitemize}
 \item Even \myemph{GPT is Markovian}
   \begin{subitemize}
-    \item Chatbots use $N = 4096$ (GPT-3) or $N = 8192$ (GPT-4)
-    \item API provides $N = 32,768$ GPT-4 and $N = 8192$ code specialization GPT-3
+    \item GPT-3: $N = 4096$ \qquad GPT-4: $N = 8192$ \qquad Claude: $N = 100,000$
+    \item \myemph{bottleneck} is $\mathcal{O}(N^2)$ attention algorithm
     \item cf. a real computer is technically a finite-state machine
     \end{subitemize}
-  \item Limited context allows relatively \myemph{efficient algorithms}
 \end{itemize}
     
-\sld{Shannon's $K$-gram models}
+\sld{Shannon's \textit{N}-gram models}
 \begin{itemize}
 \item \myemph{Claude Shannon}. 1948. \myemph{A Mathematical Theory of Communication.}
   \textit{Bell System Technical Journal}.
-\item Shannon considered English \myemph{letters} ($K = 1, 2, 3$) and
-  words ($K = 1, 2$)
+\item Shannon used English \myemph{letters} ($K = 1, 2, 3$) and
+  \myemph{words} ($K = 1, 2$)
 \item \myemph{What is English?}  How do we collect a \myemph{sample}?
 \item Shannon used \myemph{books of frequencies}
   \begin{subitemize}
   \item \myemph{letter trigrams} (1939 book); \myemph{word bigrams} (1923 book)
   \end{subitemize}
-\item Fit and inference usually \myemph{regularized MLE}
+\item Fit and inference usually \myemph{regularized MLE} for efficiency
   \begin{subitemize}
   \item ensures \myemph{non-zero probability} for any sequence
-  \item (non-parametric) \myemph{Bayes} usually too \myemph{expensive}
-  \item often \myemph{heuristic driven} for efficiency (e.g., speech to text)
   \end{subitemize}
   
 \end{itemize}
@@ -95,57 +92,52 @@
         following word}
 \item Shannon generated random examples
   \begin{subitemize}
-    \item \myemph{Order 1, letters}: OCRO HLI RGWR NMIELWIS EU LL NBNESEBYA TH EEI ALHENHTTPA OOBTTVA
+    \item \footnotesize \myemph{Order 1, letters}: OCRO HLI RGWR NMIELWIS EU LL NBNESEBYA TH EEI ALHENHTTPA OOBTTVA
       NAH BRL.
-    \item \myemph{Order 3, letters}: IN NO IST LAT WHEY CRATICT FROURE
+    \item \footnotesize \myemph{Order 3, letters}: IN NO IST LAT WHEY CRATICT FROURE
       BIRS GROCID PONDENOME OF DEMONSTURES OF THE REPTAGIN IS
-      REGOACTIONA OF
+      REGOACTIONA
       % CRE.
-    \item \myemph{Order 1, words}: REPRESENTING AND SPEEDILY IS AN
+    \item \footnotesize \myemph{Order 1, words}: REPRESENTING AND SPEEDILY IS AN
       GOOD APT OR COME CAN DIFFERENT NATURAL HERE HE THE A IN CAME THE
-      TO OF TO EXPERT
+      TO
       % GRAY COME TO FURNISHES THE LINE MESSAGE HAD BE THESE.
-      \item \myemph{Order 2, words}: THE HEAD AND IN FRONTAL ATTACK ON
+      \item \footnotesize \myemph{Order 2, words}: THE HEAD AND IN FRONTAL ATTACK ON
         AN ENGLISH WRITER THAT THE CHARACTER OF THIS POINT IS
-        THEREFORE ANOTHER
+        THEREFORE
         % METHOD FOR THE LETTERS THAT THE TIME OF WHO EVER TOLD THE PROBLEM FOR AN UNEXPECTED.
   \end{subitemize}
 \end{itemize}
 
 \sld{Measuring accuracy with entropy}
 \begin{itemize}
-\item Accuracy of $K$-gram language model $p_Y$ measured with
+\item Accuracy of $N$-gram language model $p_Y$ measured with
   \myemph{entropy (rate)}
-\item Given a random sequence $Y \in \textsf{Tok}^N,$ its
+\item Given a random sequence $Y \in \textsf{Tok}^K,$ its
   \myemph{entropy} in \myemph{bits} (base 2) is
   $$
   \textrm{H}[Y]
   \ = \ \mathbb{E}\!\left[ \log_2 p_Y(Y) \right]
-  \ = \ \sum_{y \in \textsf{Tok}^N} p_Y(y) \cdot \log_2 p_Y(y).
+  \ = \ \sum_{y \in \textsf{Tok}^K} p_Y(y) \cdot \log_2 p_Y(y).
   $$
-\item The \myemph{entropy rate} is average entropy per token, $\lim_{N \rightarrow \infty} \,
-  \textrm{H}[Y] / N,$
-\item The entropy rate for $K$-grams is given by \myemph{conditional entropy},
-  \begin{align*}
-    \textrm{H}[Y_n \mid Y_{n - 1}, \ldots, Y_{n -K}]
-    \ &= \ \mathbb{E}\!\left[\, \log_2 p(Y_n \mid Y_{n - 1}, \ldots,
-        Y_{n -K}) \, \right]
-    \\[4pt]
-    &= \ \sum_{y \in \textsf{Tok}^{K + 1}}
-    \ p(y) \cdot \log_2 p(y_{K + 1} \mid y_{K}, \ldots, y_1).
-  \end{align*}
+\item The \myemph{entropy rate} is average entropy per token, $\lim_{K \rightarrow \infty} \,
+  \textrm{H}[Y] / K,$
+\item The entropy rate for $N$-grams is given by \myemph{conditional entropy},
+$$
+    \textrm{H}[Y_K \mid Y_{K - 1}, \ldots, Y_{K - N - 1}]
+    \ = \ \mathbb{E}\!\left[\, \log_2 p(Y_K \mid Y_{K - 1}, \ldots,
+        Y_{K - N - 1}) \, \right]
+$$
 \end{itemize}
 
-\sld{Entropy and compression}
+\sld{Signal processing: entropy and compression}
 \begin{itemize}
 \item Shannon (1948) introduced \myemph{information theory} to model
-  signal compression and decompression for communication
+  \myemph{signal compression} and decompression for communication
 \item Assume a language model with pmf $p_Y$
-\item Given a string $y \in \textsf{Tok}^*,$ the language model can be
-  used to \myemph{compress} $y$ to $\lceil \log_2 p_Y(y) \rceil$ bits
-\item Can be done in practice using \myemph{arithmetic
-    coding} (Rissanen 1976; Witten, Neal, Cleary 1987) using
-  \myemph{GPT output}
+\item \myemph{Compress} $y \in \textsf{Tok}^*,$ to $\lceil \log_2 p_Y(y) \rceil$ bits
+\subit{in practice with \myemph{arithmetic
+    coding} (Witten, Neal, Cleary 1987)}
 \end{itemize}
 
 \sld{OpenAI's GPT-3: Published}
@@ -177,91 +169,104 @@
 \hfill\includegraphics[height=\textheight]{img/attention-diagram.pdf}
 \end{center}
 
-\sld{Top-level pseudocode}
+\clearpage
+\renewcommand{\baselinestretch}{1.1}
 \footnotesize
-\begin{center}
+\begin{verbatim}
+    SIZES
+    ------------------------------------
+    T:  number of distinct tokens
+    N:  size of context (history)
+
+    V:  size of token embedding vectors
+    A:  number of attention layers
+    K:  size of keys and queries
+    L:  width of neural network
+\end{verbatim}
+
+\clearpage
+\footnotesize 
 \begin{verbatim}
    DECODE(tok:  int<low=1,up=T>[N],    alpha:  matrix(T, V),
-     betas: { query:matrix(K, V),  key:matrix(K, V),  value: matrix(V, V) }[A]
-     gammas:  nn(V, L)[A],
-     delta:   { 1: vector[T], 2: matrix(T, N * V) }):  simplex[T]
-   -------------------------------------------
-   for n in 1:N:                                         // for tokens:
-       xs[0, n] = LEX(tok[n], alpha) + POS(n)               // embed
-   for a in 1:A:                                         // for each layer:
-       xs[a] = ATTEND(xs[a - 1], betas[a], gammas[a])       // attend
-       for n in 1:N:                                        // for tokens:
-           xs[a, n] = FEED_FORWARD(xs[a, n], gammas[a])         // shared nn
-   y = STANDARDIZE(delta.1 + delta.2 * xs[A].flatten())  // GLM: linear layer
-   return SOFTMAX(y)                                     // inverse link
+          betas: { query:matrix(K, V),
+                   key:matrix(K, V),
+                   value: matrix(V, V) }[A]
+          gammas:  nn(V, L)[A],
+          delta:   {1: vector[T],
+                    2: matrix(T, N * V)}): simplex[T]
+   ----------------------------------------------------------
+   for n in 1:N:
+       xs[0, n] = LEX(tok[n], alpha) + POS(n)
+   for a in 1:A:
+       xs[a] = ATTEND(xs[a - 1], betas[a], gammas[a])
+       for n in 1:N:
+           xs[a, n] = FEED_FORWARD(xs[a, n], gammas[a])
+   y = STANDARDIZE(delta.1 + delta.2 * xs[A].flatten())
+   return SOFTMAX(y)
 \end{verbatim}
-\end{center}
 \normalsize
 
-\sld{Lexical and positional embedding}
+\clearpage
 \footnotesize
-\begin{center}
 \begin{verbatim}
     LEX(t:      int<low=1,up=T>,
         alpha:  vector(V)[T]):  vector(V)  
-    -----------------------------------------------------
-    return alpha[t]                // one-hot
+    ----------------------------------------------------------
+    return alpha[t]
+
 
     POS(n:  int<low=1,up=N>):  vector(V)
-    -----------------------------------------------------
+    ----------------------------------------------------------
     for i in 1:V / 2:
         r = n / N**(2 * i / V)      // pos / max_pos^(0..2]
         u[2 * i] = sin(r)
         u[2 * i + 1] = cos(r)
     return u
 \end{verbatim}
-\end{center}
 
-\sld{Attention}
+\clearpage
 \footnotesize
-\begin{center}
 \begin{verbatim}
-  ATTEND(x:      vector(V)[N],
-         beta:   {query: matrix(K, V), key: matrix(K, V), value: matrix(V, V)},
-         gamma:  nn(V, L)):  vector(V)[N]
-  -----------------------------------------------------------
-  for n in 1:N:                                         // for tokens:
-      q[n] = beta.query * x[n]                              // embed query
-      k[n] = beta.key * x[n]                                // embed key
-      v[n] = beta.value * x[n]                              // embed value
-  for n in 1:N:                                        // for tokenss:
-      lp[1:n-1] = [q[n]' * k[1], ..., q[n]' * k[n-1]]      // attend log probs
-                  / sqrt(V)                                //     scaled
-      lp[n:N] = -inf                                         // mask future
-      p = SOFTMAX(lp)                                        // attend probs
-      u[n] = SUM(n in 1:N) p[n] * v[n]                       // weight vals
-      y[n] = STANDARDIZE(u[n] + x[n])                        // residual + std
-  return y
+    ATTEND(x:      vector(V)[N],
+           beta:   { query: matrix(K, V), key: matrix(K, V),
+                     value: matrix(V, V)},
+           gamma:  nn(V, L)):  vector(V)[N]
+    -----------------------------------------------------------
+    for n in 1:N:
+        q[n] = beta.query * x[n]
+        k[n] = beta.key * x[n]
+        v[n] = beta.value * x[n]
+    for n in 1:N:
+        lp[1:n-1] = [q[n]' * k[1], ..., q[n]' * k[n-1]] / sqrt(V)
+        lp[n:N] = -inf                                 
+        p = SOFTMAX(lp)                                
+        u[n] = SUM(n in 1:N) p[n] * v[n]               
+        y[n] = STANDARDIZE(u[n] + x[n])                
+    return y
 \end{verbatim}
-\end{center}
 
-\sld{Feedforward neural network}
-\footnotesize
-\vspace*{-6pt}
+\clearpage
 \begin{verbatim}
    FEED_FORWARD(x:     real[R], 
-         alpha: { 1: real[S], 2: real[S, R], 
-                  3: real[R], 4: real[R, S]):  real[R]
-   ----------------------------------------------------
-   u = alpha.1 + alpha.2 * x          // linear
-   v = GELU(u)                        // nonlinear activation
-   y = alpha.3 + alpha.4 * v          // linear
-   return STANDARDIZE(x + y)          // residual + standardize
+                alpha: { 1: real[S], 2: real[S, R], 
+                         3: real[R], 4: real[R, S]):  real[R]
+   ----------------------------------------------------------
+   u = alpha.1 + alpha.2 * x
+   v = GELU(u)              
+   y = alpha.3 + alpha.4 * v
+   return STANDARDIZE(x + y)
 
    GELU(v:  real[R]):  real[R]
-       return [vi * Phi(vi) for vi in v]          // Phi(x) std normal cdf
+       return [v_i * Phi(v_i) for v_i in v]
 
    STANDARDIZE(v:  real[R]):  real[R]
-       return (v - mean(v)) / standard_deviation(v)  // arithmetic stability
+       return (v - mean(v)) / std_dev(v)
 
-   SOFTMAX(real[R] v):  simplex(R)              // multi-logit inverse link
+   SOFTMAX(real[R] v):  simplex(R)
        return exp(v) / sum(exp(v))
 \end{verbatim}
+\normalsize
+\renewcommand{\baselinestretch}{1}
 
 \sld{From LLM to Chatbot}
 \begin{itemize}
@@ -300,21 +305,19 @@
   \end{subitemize}
 \end{enumerate}
 
-\sld{Some caveats}
+\sld{Some caveats (OpenAI 2022)}
 \begin{itemize}
 \item 
 {\LARGE ``\null}This procedure aligns the behavior of GPT-3 to the \myemph{stated preferences of a
-specific group} of people (mostly our labelers and researchers),\\[4pt] rather
-than to any broader notion of `human values'.{\LARGE \null''} \hfill {\small (OpenAI 2022)}
+specific group} of people (mostly our labelers and researchers), rather
+than to any \myemph{broader notion of ``human values''}.
 \subit{cf. \myemph{Cultural consensus theory} provides mixture model of
   ``values''}
 \vfill
 \item {\LARGE ``\null}During RLHF fine-turning, we observe \myemph{performance
     regressions} compared to GPT-3 on certain public NLP
-  datasets.{\LARGE\null''}
-  \hfill {\small (OpenAI~2022)}
+  datasets.
   \begin{subitemize}
-    \vspace*{-12pt}
   \item i.e., performance degrades relative to unaligned model
   \item partially mitigated by \myemph{hierarchical modeling}
     alternating reinforcement and supervision
@@ -327,14 +330,14 @@ than to any broader notion of `human values'.{\LARGE \null''} \hfill {\small (Op
 \item \myemph{Parameter set} unpublished (estimated $\approx$2
   trillion)
 \item \myemph{Context history size}: 8K or 32K tokens
-\item \myemph{Hardware cost} training: $\approx$US\$500 million
+\item \myemph{Cluster cost} training: $\approx$US\$500 million
   (incl.\ 10K+ US\$15K GPUs)
 \item \myemph{Marginal cost} training: $\approx$US\$10s of
   millions (hardware, power, staff)
   \vfill
-\item \myemph{Open AI (2023) now CLOSED}: {\small ``Given both
-the competitive landscape and the safety implications of large-scale models like GPT-4, this report
-contains no further details about the architecture (including model size), hardware, training compute,
+\item \myemph{Open AI} is now \myemph{Closed}: {\small ``Given both
+the competitive landscape and the safety implications of large-scale models like GPT-4, \myemph{this report
+contains no further details} about the architecture (including model size), hardware, training compute,
 dataset construction, training method, or similar.''}
 \end{itemize}
 
@@ -343,7 +346,7 @@ dataset construction, training method, or similar.''}
 \item Transformer LLM architecture published by \myemph{Google} (2017)
 \item Alignment to ChatBots published by \myemph{OpenAI} (2022)
 \begin{subitemize}
-\item Meta (aka Facebook): \myemph{LLaMA}
+\item Meta (nee Facebook): \myemph{LLaMA}
   \vspace*{3pt}
   \begin{subitemize}
     \item \myemph{Open source} for research (since leaked)
@@ -358,7 +361,7 @@ dataset construction, training method, or similar.''}
 \end{itemize}
 
 
-\sld{References}
+\sld{LLM References}
 \begin{itemize}
 \item Vaswani et al. (Google). 2017. \hfill (82K~citations) 
   \\
