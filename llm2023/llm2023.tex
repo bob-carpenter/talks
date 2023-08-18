@@ -34,12 +34,12 @@
 \begin{itemize}
 \item \myemph{Language} uses a \myemph{finite} number of
   symbols called \myemph{tokens}
-  \subit{we assume a finite \myemph{token set} $\mathsf{Tok}$ of size $K$}
+  \subit{we assume a finite \myemph{token set} $\mathsf{Tok}$}
 \item Tokens may be letters, words,
   sounds, syllables, etc.
   \begin{subitemize}
-  \item GPT uses \myemph{sequences of letters} (average 1.5 tokens per
-    English word)
+  \item GPT uses 50K distinct \myemph{sequences of letters}
+  \item average 1.5 tokens per English word
   \end{subitemize}
 \item Treat language as a \myemph{stochastic process}
   \subit{$Y = Y_1, Y_2, \ldots$ for random variables $Y_n \in \textsf{Tok}$}
@@ -86,7 +86,7 @@
 
 \sld{Shannon's fit}
 \begin{itemize}
-\item MLE probabilities from compiled tables of letters (1923), words 
+\item MLE probabilities from \myemph{compiled tables} of letters (1923), words 
       (1939) 
     \subit{or, open books at random, find current context, generate 
         following word}
@@ -378,6 +378,13 @@ dataset construction, training method, or similar.''}
   transformers}. \textit{arXiv}.
 \item Bubeck et al. (Microsoft). 2023.  \hfill (0.4K~citations)
   \\ \myemph{Sparks of artificial general intelligence}. \textit{arXiv}.
+\end{itemize}
+
+\sld{One more reference}
+\begin{itemize}
+\item Andrej Karpathy:  Build your own transformers (with Colab
+  notebook!)
+  \subit{fits GPT model to complete Shakespeare}
 \end{itemize}
 
 \end{document}

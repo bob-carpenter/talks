@@ -1,0 +1,176 @@
+\documentclass[9pt]{report}
+
+\usepackage{talks}
+\newcommand{\expect}[1]{\mathbb{E}\!\left[ #1 \right]}
+\newcommand{\reals}{\mathbb{R}}
+\newcommand{\draw}[2]{#1^{(#2)}}
+\usepackage{mathpazo}
+\usepackage{sourcecodepro}
+\usepackage{tikz}
+    \usetikzlibrary{positioning, shapes, arrows.meta}
+
+\begin{document}
+
+\sf \mbox{}
+\\[12pt]
+\spc{{\LARGE\bfseries \color{MidnightBlue}{Softening human feedback}}}
+\\[4pt]
+\spc{\Large\bfseries \color{MidnightBlue}{improves classification calibration}}
+\\[24pt]
+\noindent 
+\spc{\large\bfseries \color{MidnightBlue}{Bob Carpenter}}
+\\[2pt]
+\spc{\small Center for Computational Mathematics}
+\\[-1pt]
+\spc{\small Flatiron Institute}
+\vfill 
+\noindent 
+\spc{\footnotesize Berkeley Simons Institute LLM Meeting \hfill August 2023}
+\hfill
+\includegraphics[width=1.25in]{img/flatiron_logo.png}
+
+\sld{GPT-3 RL-HF}
+\begin{itemize}
+\item Transformer \myemph{pre-trained} on massive amounts of text (the ``P'' in ``GPT'')
+\item Transformer \myemph{retrained} (``aligned'') to be
+  \myemph{helpful}, \myemph{harmless}, and \myemph{truthful}
+%  (competing goals)
+\item Alignment training data is based on \myemph{human feedback} (HF)
+  \begin{itemize}
+  \item humans \myemph{rank} examples, eg., $A_n > B_n$; use
+    \myemph{reinforcement learning}
+  \end{itemize}
+\item Training \myemph{loss} for $A_n > B_n$ is \myemph{log logistic difference} 
+   {\small (Bradley, Terry 1952)}
+  \subit{$\textrm{reward}(A \mid w)$ is reward/utility of answer $A$ given weights
+  $w$}
+  $$
+\textrm{loss}_n = -\log \,
+    \textrm{logit}^{-1}\!\left( \strut \textrm{reward}(A_n \mid w) -
+      \textrm{reward}(B_n \mid w)\right)
+$$
+\end{itemize}
+
+\sld{Human feedback relatively inexpensive}
+\begin{itemize}
+\item 40 \myemph{contractors} from Upwork/ScaleAI
+\item \myemph{Pre-tested} vs.\ desired answers
+\item 40 contractors \myemph{cost} $\approx$ US\$2M per year, cf.
+  \begin{subitemize}
+  \item training hardware ($\approx$ US\$500M)
+  \item AI researchers ($\approx$ US\$500K+ per year)
+  \item data licensing (?)
+  \item servers (?) 
+  \end{subitemize}
+\mbox{ } \vspace*{-12pt}
+\item Conjecture: headroom for \myemph{more investment}
+\end{itemize}
+  
+\sld{Raters are {\slshape very}\, noisy}
+\begin{itemize}
+\item \myemph{inter-annotator agreement} only \myemph{73\%} \hfill {\small (Ouyang et al. 2022)}
+\\
+\item \myemph{Goals conflict}: helpful vs.\ harmless vs.\ truthful
+\subit{OpenAI \myemph{prioritized helpful}; then \myemph{filtered} for harmless/truthful}
+\item \myemph{Traditional approaches} to multi-annotation
+  \begin{subitemize}
+  \item just don't do it (single annotate) 
+  \item majority voting
+  \item censor non-agreement (i.e., remove from data set)
+  \end{subitemize}
+\end{itemize}
+
+\sld{A simple classifier example}
+\begin{itemize}
+\item Suppose I simulate a Bayesian \myemph{logistic regression} for
+  $X_n \in \mathbb{R}^D$
+  \begin{align*}
+    Y_n &\sim \textrm{bernoulli}(\alpha + \beta^{\top} \cdot X_n) & \textrm{likelihood}
+    \\
+    X_n &\sim \textrm{normal}(\mu, \Sigma) & \textrm{covariate data}
+    \\
+    \alpha, \beta_d &\sim \textrm{normal}(0, \tau) & \textrm{prior}
+  \end{align*}
+  i.e., $\textrm{logit} \Pr[Y_n = 1 \mid X_n = x_n, \alpha, \beta] = \alpha + \beta^{\top} \cdot
+  X_n$
+\item How to create a \myemph{``gold'' standard} with $y_n \in \{ 0, 1 \}$?
+  \begin{subitemize}
+  \item \myemph{Best Guess}: $y_n = 1$ if $\Pr[Y_n = 1 \mid X_n = x_n,
+    \alpha, \beta] \geq \frac{1}{2}$
+  \item \myemph{Sample}: $y_n = 1$ if $\textrm{uniform}(0, 1) <
+    \Pr[Y_n = 1 \mid X_n = x_n, \alpha, \beta]$
+  \end{subitemize}
+  \vfill
+\end{itemize}
+
+\sld{It's \slshape Fool's Gold}
+\begin{itemize}
+\item \myemph{Sampling dominates best guess} \ (best guess biased)
+\item \myemph{Oversampling} $Y_n$ dominates single sampling
+\item \myemph{Weighted training} is \myemph{optimal}; let $\phi_n = \Pr[Y_n = 1
+  \mid X_n = x_n, \alpha, \beta]$
+\begin{align*}
+  \textrm{loss}_n = &- \phi_n \cdot \log  \textrm{logit}^{-1}\!\left(\strut \textrm{reward}(A_n \mid w) -                 \textrm{reward}(B_n \mid w)\right) 
+  \\
+  &- (1 - \phi_n) \cdot \log \textrm{logit}^{-1}\!\left(\strut \textrm{reward}(B_n \mid w) -                 \textrm{reward}(A_n \mid w)\right) 
+\end{align*}
+\item \myemph{Why?}  It provides \myemph{task-driven regularization}
+  \subit{\myemph{calibrated} means assigning probability $\phi_n$ to item $y_n
+    = 1$ given $x_n$}
+\end{itemize}
+
+\sld{Models of annotation}
+\begin{itemize}
+\item \myemph{No access to truth} $\Pr[A_n > B_n \mid X_n = x_n, \alpha,
+  \beta]$ during training
+\item Can ask multiple raters and build a \myemph{model of annotation}
+\item e.g., Dawid and Skene (1978) model of rater \myemph{accuracy and
+    bias} yields
+$$\Pr\left[A_n > B_n \mid \textrm{human feedback}\right]$$
+\item Weighted training $\gg$ sampling $\gg\!\gg$ highest probability
+  \begin{subitemize}
+  \item weighting training \myemph{Rao-Blackwellizes} sampling
+  \item multiple sampling $\rightarrow$ weighting as sample size
+    increases
+  \item majority voting is best guess w.r.t.\ degenerate model
+  \end{subitemize}
+\end{itemize}
+
+\sld{Weighted training regularizes}
+\begin{itemize}
+\item \myemph{Dawid-Skene model is effective} \hfill {\small (Raykar et
+    al. 2010)}
+  \subit{\myemph{jointly estimate} classifier and Dawid-Skene, but not necessary}
+\item Effectiveness due to \myemph{task-specific regularization}
+\item e.g., if $\Pr[A_n > B_n \mid \textrm{human rating}] = \psi_n$ and
+\begin{align*}
+  \textrm{loss}_n = &- \psi_n \cdot \log  \textrm{logit}^{-1}\!\left(\strut \textrm{reward}(A_n \mid w) -                 \textrm{reward}(B_n \mid w)\right) 
+  \\
+  &- (1 - \psi_n) \cdot \log \textrm{logit}^{-1}\!\left(\strut \textrm{reward}(B_n \mid w) -                 \textrm{reward}(A_n \mid w)\right) 
+\end{align*}
+\item Regularizes because \myemph{loss minimized} at $\Pr[A_n > B_n \mid X_n
+  = x, w] = \psi_n$
+\end{itemize}
+
+\sld{Some references}
+\begin{subitemize}
+  \footnotesize
+\item Ouyang et al. 2022. \myemph{Training language models to follow
+    instructions with human feedback}. OpenAI Blog.
+\item Cheng, C., Asi, H. and Duchi, J., 2022. \myemph{How many 
+    labelers do you have? A closer look at gold-standard 
+    labels}. \textit{arXiv}. 
+\item Passonneau, R.J. and Carpenter, B., 2014. \myemph{The benefits of a 
+  model of annotation}. \textit{TACL}. 
+\item Raykar, V.C., Yu, S., Zhao, L.H., Valadez, G.H., Florin, C., 
+  Bogoni, L. and Moy, L., 2010. \myemph{Learning from 
+    crowds}. \textit{JMLR}. 
+\item Bradley, R.A. and Terry, M.E., 1952. \myemph{Rank analysis of
+    incomplete block designs: I. The method of paired comparisons.}
+  \textit{Biometrika}. 
+\item Dawid, A.P. and Skene, A.M., 1979. \myemph{Maximum likelihood estimation
+  of observer error‐rates using the EM algorithm}. \textit{JRSS(C)}.
+\end{subitemize}
+
+\end{document}
+
