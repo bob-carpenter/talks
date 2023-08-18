@@ -61,7 +61,8 @@
 \item Even \myemph{GPT is Markovian}
   \begin{subitemize}
     \item GPT-3: $N = 4096$ \qquad GPT-4: $N = 8192$ \qquad Claude: $N = 100,000$
-    \item \myemph{bottleneck} is $\mathcal{O}(N^2)$ attention algorithm
+    \item \myemph{bottleneck} is $\mathcal{O}(N^2)$ attention
+      algorithm (Claude more clever?)
     \item cf. a real computer is technically a finite-state machine
     \end{subitemize}
 \end{itemize}
@@ -159,17 +160,34 @@ $$
 \item Let's turn to \myemph{how it works $\ldots$}
 \end{itemize}
 
-
 \sld{Top-level architecture}
+\begin{itemize}
+\item \myemph{Transformer}, but \myemph{decoder only}
+\item $\textsf{tok}_n$:  $n$-th \myemph{input token}
+\item $x^k_n$: \myemph{value of token} $n$ at layer $k$
+\item $\textsf{prob}_t$: \myemph{probability next token} is $t$
+\item \myemph{circles} enclose model parameters
+\end{itemize}
+\vspace*{-1.75in}
 \hfill\includegraphics[height=\textheight]{img/transformer-diagram.pdf}
 
 \sld{Attention architecture}
-\begin{center}
-\vspace*{-24pt}
+\begin{itemize}
+\item attention then feedforward neural net
+\item \myemph{ResNet architecture}: tees to add input
+  \begin{subitemize}
+  \item $\approx$ \myemph{hierarchical model} of differences
+  \item non-centered parameterization
+  \end{subitemize}
+\item standard two-layer \myemph{neural nets}
+  \subit{\myemph{shared params} for each value}
+\item \myemph{standardized} for numerics
+\end{itemize}
+\vspace*{-2in}
 \hfill\includegraphics[height=\textheight]{img/attention-diagram.pdf}
-\end{center}
 
-\clearpage
+\sld{Pseudocode: GPT in 40 lines}
+
 \renewcommand{\baselinestretch}{1.1}
 \footnotesize
 \begin{verbatim}
@@ -187,86 +205,109 @@ $$
 \clearpage
 \footnotesize 
 \begin{verbatim}
-   DECODE(tok:  int<low=1,up=T>[N],    alpha:  matrix(T, V),
-          betas: { query:matrix(K, V),
-                   key:matrix(K, V),
-                   value: matrix(V, V) }[A]
-          gammas:  nn(V, L)[A],
-          delta:   {1: vector[T],
-                    2: matrix(T, N * V)}): simplex[T]
-   ----------------------------------------------------------
-   for n in 1:N:
-       xs[0, n] = LEX(tok[n], alpha) + POS(n)
-   for a in 1:A:
-       xs[a] = ATTEND(xs[a - 1], betas[a], gammas[a])
-       for n in 1:N:
-           xs[a, n] = FEED_FORWARD(xs[a, n], gammas[a])
-   y = STANDARDIZE(delta.1 + delta.2 * xs[A].flatten())
-   return SOFTMAX(y)
+     DECODE(tok:  int<low=1,up=T>[N],    alpha:  matrix(T, V),
+            betas: { query:matrix(K, V),
+                     key:matrix(K, V),
+                     value: matrix(V, V) }[A]
+            gammas:  nn(V, L)[A],
+            delta:   {1: vector[T],
+                      2: matrix(T, N * V)}): simplex[T]
+     ----------------------------------------------------------
+     for n in 1:N:
+         xs[0, n] = LEX(tok[n], alpha) + POS(n)
+     for a in 1:A:
+         xs[a] = ATTEND(xs[a - 1], betas[a], gammas[a])
+         for n in 1:N:
+             xs[a, n] = FEED_FORWARD(xs[a, n], gammas[a])
+     y = STANDARDIZE(delta.1 + delta.2 * xs[A].flatten())
+     return SOFTMAX(y)
 \end{verbatim}
 \normalsize
 
 \clearpage
 \footnotesize
 \begin{verbatim}
-    LEX(t:      int<low=1,up=T>,
-        alpha:  vector(V)[T]):  vector(V)  
-    ----------------------------------------------------------
-    return alpha[t]
+      LEX(t:      int<low=1,up=T>,
+          alpha:  vector(V)[T]):  vector(V)  
+      ----------------------------------------------------------
+      return alpha[t]
 
 
-    POS(n:  int<low=1,up=N>):  vector(V)
-    ----------------------------------------------------------
-    for i in 1:V / 2:
-        r = n / N**(2 * i / V)      // pos / max_pos^(0..2]
-        u[2 * i] = sin(r)
-        u[2 * i + 1] = cos(r)
-    return u
+      POS(n:  int<low=1,up=N>):  vector(V)
+      ----------------------------------------------------------
+      for i in 1:V / 2:
+          r = n / N**(2 * i / V)      // pos / max_pos^(0..2]
+          u[2 * i] = sin(r)
+          u[2 * i + 1] = cos(r)
+      return u
 \end{verbatim}
 
 \clearpage
 \footnotesize
 \begin{verbatim}
-    ATTEND(x:      vector(V)[N],
-           beta:   { query: matrix(K, V), key: matrix(K, V),
-                     value: matrix(V, V)},
-           gamma:  nn(V, L)):  vector(V)[N]
-    -----------------------------------------------------------
-    for n in 1:N:
-        q[n] = beta.query * x[n]
-        k[n] = beta.key * x[n]
-        v[n] = beta.value * x[n]
-    for n in 1:N:
-        lp[1:n-1] = [q[n]' * k[1], ..., q[n]' * k[n-1]] / sqrt(V)
-        lp[n:N] = -inf                                 
-        p = SOFTMAX(lp)                                
-        u[n] = SUM(n in 1:N) p[n] * v[n]               
-        y[n] = STANDARDIZE(u[n] + x[n])                
-    return y
+      ATTEND(x:      vector(V)[N],
+             beta:   { query: matrix(K, V), key: matrix(K, V),
+                       value: matrix(V, V)},
+             gamma:  nn(V, L)):  vector(V)[N]
+      -----------------------------------------------------------
+      for n in 1:N:
+          q[n] = beta.query * x[n]
+          k[n] = beta.key * x[n]
+          v[n] = beta.value * x[n]
+      for n in 1:N:
+          lp[1:n-1] = [q[n]' * k[1], ..., q[n]' * k[n-1]] / sqrt(V)
+          lp[n:N] = -inf                                 
+          p = SOFTMAX(lp)                                
+          u[n] = SUM(n in 1:N) p[n] * v[n]               
+          y[n] = STANDARDIZE(u[n] + x[n])                
+      return y
 \end{verbatim}
 
 \clearpage
 \begin{verbatim}
-   FEED_FORWARD(x:     real[R], 
-                alpha: { 1: real[S], 2: real[S, R], 
-                         3: real[R], 4: real[R, S]):  real[R]
-   ----------------------------------------------------------
-   u = alpha.1 + alpha.2 * x
-   v = GELU(u)              
-   y = alpha.3 + alpha.4 * v
-   return STANDARDIZE(x + y)
+     FEED_FORWARD(x:     real[R], 
+                  alpha: { 1: real[S], 2: real[S, R], 
+                           3: real[R], 4: real[R, S]):  real[R]
+     ----------------------------------------------------------
+     u = alpha.1 + alpha.2 * x
+     v = GELU(u)              
+     y = alpha.3 + alpha.4 * v
+     return STANDARDIZE(x + y)
 
-   GELU(v:  real[R]):  real[R]
-       return [v_i * Phi(v_i) for v_i in v]
+     GELU(v:  real[R]):  real[R]
+         return [v_i * Phi(v_i) for v_i in v]
 
-   STANDARDIZE(v:  real[R]):  real[R]
-       return (v - mean(v)) / std_dev(v)
+     STANDARDIZE(v:  real[R]):  real[R]
+         return (v - mean(v)) / std_dev(v)
 
-   SOFTMAX(real[R] v):  simplex(R)
-       return exp(v) / sum(exp(v))
+     SOFTMAX(real[R] v):  simplex(R)
+         return exp(v) / sum(exp(v))
 \end{verbatim}
 \normalsize
 \renewcommand{\baselinestretch}{1}
+
+\sld{Multi-head attention}
+\begin{itemize}
+\item What we have presented is \myemph{single-head attention}
+\item In practice, GPT uses \myemph{multi-head attention}
+  \begin{subitemize}
+    \item $J$ parallel attention ``heads''
+    \item keys, values, queries for each head \myemph{projected from
+        previous layer value}
+    \item \myemph{value projected} for each head down to size to $V / J$
+    \item \myemph{concatenate} output of each head to produce size $V$ value
+    \end{subitemize}
+\item GPT-4 rumored to use parallel GPTs in an ensemble
+\end{itemize}
+
+\sld{GPT-3 sizes}
+\begin{itemize}
+\item 175 billion parameters 
+\item 96 layers 
+\item 12,288 total value width 
+\item 96 parallel attention heads 
+  \subit{128 value width per head}
+\end{itemize}
 
 \sld{From LLM to Chatbot}
 \begin{itemize}
@@ -324,6 +365,29 @@ than to any \myemph{broader notion of ``human values''}.
   \end{subitemize}
 \end{itemize}
 
+\sld{Loss vs.\ tokens, model size \hfill (OpenAI)}
+\begin{itemize}
+\item Accuracy is \myemph{bounded by parameter size} (right)
+\item Accuracy is \myemph{bounded by data size} (left)
+  \\[8pt]
+  \includegraphics[height=0.6\textheight]{img/accuracy-vs-tokens-size.pdf}
+  \quad
+  \includegraphics[height=0.6\textheight]{img/loss-vs-model-dataset-size.pdf}
+\end{itemize}
+
+\sld{Scaling models \hfill (DeepMind)}
+\begin{itemize}
+\item Accuracy \myemph{determined by flops}
+  \begin{subitemize}
+  \item for given \myemph{flops}, there is an \myemph{optimal choice} of
+    \myemph{training tokens} and \myemph{model size}
+  \item fits held out predictions \myemph{very well}
+  \end{subitemize}
+  \includegraphics[width=\textwidth]{img/flops-chinchilla.pdf}
+  \vspace*{-12pt}
+  \subit{(l) loss by model size, (c) optimal parameters, (r) optimal train tokens}
+\end{itemize}
+
 \sld{OpenAI's GPT-4: Unpublished}
 \begin{itemize}
 \item \myemph{Training set} unpublished (estimated $\approx$5 trillion)
@@ -335,7 +399,7 @@ than to any \myemph{broader notion of ``human values''}.
 \item \myemph{Marginal cost} training: $\approx$US\$10s of
   millions (hardware, power, staff)
   \vfill
-\item \myemph{Open AI} is now \myemph{Closed}: {\small ``Given both
+\item \myemph{Open AI} is now \myemph{ClosedAI}: {\small ``Given both
 the competitive landscape and the safety implications of large-scale models like GPT-4, \myemph{this report
 contains no further details} about the architecture (including model size), hardware, training compute,
 dataset construction, training method, or similar.''}
@@ -362,23 +426,49 @@ dataset construction, training method, or similar.''}
 
 
 \sld{LLM References}
-\begin{itemize}
-\item Vaswani et al. (Google). 2017. \hfill (82K~citations) 
+\begin{enumerate}
+\item \textit{The transformer paper}:
+  \\[4pt]
+  Vaswani et al. (Google). 2017. \hfill (82K~citations) 
   \\
   \myemph{Attention is all  you need}. \textit{NeurIPS}.
-\item Brown et al. (OpenAI). 2020.  \hfill (12K~citations)  
+\item \textit{LLMs are highly generalizable}:
+  \\[4pt]
+  Brown et al. (OpenAI). 2020.  \hfill (12K~citations)  
   \\ \myemph{Language models are few-shot
     learners}. \textit{NeurIPS}.
-\item Ouyang et al. (OpenAI). 2022.  \hfill (1.5K~citations)
+\item \textit{Going from GPT to ChatGPT}:
+  \\[4pt]
+  Ouyang et al. (OpenAI). 2022.  \hfill (1.5K~citations)
   \\
   \myemph{Training language models to follow instructions}.
   \textit{NeurIPS}.
-\item Phuong \& Hutter (DeepMind). 2022.  \hfill (0.02K~citations)
-  \\ \myemph{Formal algorithms for
-  transformers}. \textit{arXiv}.
-\item Bubeck et al. (Microsoft). 2023.  \hfill (0.4K~citations)
+\clearpage
+\item \textit{Original OpenAI paper on scaling}:
+  \\[4pt]
+  Kaplan et al. 2020. \hfill (0.6K~citations)
+  \\
+  \myemph{Scaling laws for neural language models}. \textit{arXiv}
+\item \textit{Chinchilla paper on scaling laws for transformers}:
+  \\[4pt]
+  Hoffmann et al. (DeepMind) 2022. \hfill (0.1K citations)
+  \\
+  \myemph{Training compute-optimal large language models}. \textit{arXiv}
+\item \textit{What can GPT-4 do?}
+  \\[4pt]
+  Bubeck et al. (Microsoft). 2023.  \hfill (0.4K~citations)
   \\ \myemph{Sparks of artificial general intelligence}. \textit{arXiv}.
-\end{itemize}
+\clearpage
+\item \textit{Another pseudocode I found after I did mine}:
+  \\[4pt]
+  Phuong \& Hutter (DeepMind). 2022.  \hfill (0.02K~citations) 
+  \\ \myemph{Formal algorithms for 
+    transformers}. \textit{arXiv}. 
+\item \textit{Reproducible PyTorch case study with Colab notebook fitting Shakespeare}:
+  \\[4pt]
+  Andrej Karpathy (now at OpenAI). 2023. \hfill (2.8M views)
+  \\ \myemph{Let's build GPT: from scratch, in code, spelled out}. YouTube!
+\end{enumerate}
 
 \sld{One more reference}
 \begin{itemize}
