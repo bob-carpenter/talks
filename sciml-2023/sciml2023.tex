@@ -28,53 +28,84 @@
 \spc{\footnotesize \url{bcarpenter@flatironinstitute.org}}
 \vfill 
 \noindent 
-\spc{\footnotesize September 2023}
+\spc{\footnotesize September 2023 \qquad University of Michigan SciML Webinar}
 \hfill
 \includegraphics[width=1.25in]{img/flatiron-logo.eps}
 
-\sld{The problem}
+
+\sld{The problem and the solution}
+\begin{itemize}
+\item \myemph{Goal}: Bayesian posterior inference for multiscale
+  posteriors
+\item \myemph{Measure of curvature}: Spectrum (eigenvalues) of Hessian
+  (2nd derivative matrix) of log posterior density 
+\item \myemph{Multiscale}: Spectrum varies with parameters
+  \begin{subitemize}
+    \item \myemph{Examples}: hierarchical prior for varying effects, stochastic
+      volatility models, ODEs of varying stiffness w.r.t.\ parameters,
+      etc.
+    \end{subitemize}
+  \item \myemph{Problem}: \myemph{0th order} (Gibbs, RWM) and \myemph{1st
+        order} (MALA, HMC, NUTS) methods fail
+      \myemph{2nd order} (Riemannian HMC) is too expensive in high dimensions
+\item \myemph{Solution}: multiscale integrator (generalized HMC with
+  delayed rejection)
+\end{itemize}
+
+\sld{Bayesian quantities of interest are expectations}
+\begin{itemize}
+\item \myemph{Posterior} $p(\theta \mid y) \propto p(y \mid \theta) \cdot
+  p(\theta)$ with \myemph{data} $y$ and \myemph{parameters} $\theta \in \mathbb{R}^D$.
+\item \myemph{Parameter estimate} minimizing expected square error:
+  $$ \textstyle
+  \widehat{\theta}
+  = \expect{\theta \mid y}
+  = \int_{\mathbb{R}^D}
+  \theta \cdot p(\theta \mid y)
+  \, \textrm{d}\theta 
+  $$
+\item \myemph{Event probability} for event $A \subseteq \mathbb{R}^D$:
+  $$ \textstyle
+  \Pr[A \mid y]
+  = \expect{\textrm{I}(\theta \in A) \mid y}
+  = \int_{\mathbb{R}^D}
+  \textrm{I}(\theta \in A) \cdot p(\theta \mid y) 
+  \, \textrm{d}\theta 
+  $$
+\item \myemph{Posterior predictive density} for new data $\widetilde{y}$:
+  $$ \textstyle
+  p(\widetilde{y} \mid y) 
+  = \expect{p(\widetilde{y} \mid \theta) \mid y}
+  = \int_{\mathbb{R}^D}
+  p(\widetilde{y} \mid \theta) \cdot p(\theta \mid y) 
+  \, \textrm{d}\theta 
+  $$
+\end{itemize}
+
+
+\sld{Monte Carlo integration in high dimensions}
 \begin{itemize}
 \item Given a Bayesian \myemph{posterior density} $p(\theta \mid y),$
   with support for \myemph{parameters} $\theta \in \mathbb{R}^D$ and \myemph{data} $y$,
   draw a \myemph{sample}
-  $$
+  $$ \textstyle
   \draw{\theta}{1}, \ldots \draw{\theta}{M} \sim p(\theta \mid y)
   $$
 \item to evaluate \myemph{posterior expectations} of functions $f$
-\begin{align}
+  \begin{align}
+    \textstyle 
   \expect{f(\theta) \mid y}
-  &= \int_{\mathbb{R}^D} f(\theta) \cdot p(\theta \mid y) \,
+  &= \textstyle \int_{\mathbb{R}^D} f(\theta) \cdot p(\theta \mid y) \,
     \textrm{d}\theta
   \\[4pt]
-  &= \lim_{M \rightarrow \infty} \frac{1}{M} \sum_{m=1}^M 
+  &= \textstyle \lim_{M \rightarrow \infty} \frac{1}{M} \sum_{m=1}^M 
 f\left( \draw{\theta}{m} \right)
-  \\[4pt]
-  &\approx \frac{1}{M} \sum_{m=1}^M f\left(\draw{\theta}{m}\right) 
+  \\[4pt] \textstyle
+  &\approx \textstyle \frac{1}{M} \sum_{m=1}^M f\left(\draw{\theta}{m}\right) 
 \end{align}
 \end{itemize}
 
-\sld{Bayesian quantities of interest}
-\begin{itemize}
-\item \myemph{Parameter estimate} minimizing expected square error
-  $$\widehat{\theta} = \expect{\theta \mid y}$$
-\item \myemph{Event probability} for event $A \subseteq \mathbb{R}^D$
-  $$\Pr[A \mid y] = \expect{\textrm{I}(\theta \in A) \mid y}$$
-\item \myemph{Posterior predictive density} for new data $\widetilde{y}$
-  $$p(\widetilde{y} \mid y) = \expect{p(\widetilde{y} \mid \theta)
-    \mid y}.$$
-\end{itemize}
 
-\sld{What's the problem?}
-\begin{itemize}
-\item Some target densities $p(\theta \mid y)$ are very hard to sample
-\item The major reasons why they are hard:
-  \begin{subitemize}
-  \item very \myemph{high dimensional} or expensive to evaluate
-  \item difficult to compute gradients
-  \item very \myemph{badly conditioned}
-  \item {\huge $\star$} multiple target scales (i.e., varying curvature)
-  \end{subitemize}
-\end{itemize}
 
 
 
