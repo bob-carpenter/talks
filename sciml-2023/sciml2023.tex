@@ -105,8 +105,105 @@ f\left( \draw{\theta}{m} \right)
 \end{align}
 \end{itemize}
 
+\sld{Hessians are second derivatives}
+\begin{itemize}
+\item Given a posterior density $p(\theta \mid y),$ its \myemph{Hessian} is the
+  matrix of \myemph{second (partial) derivatives},
+  $$
+  \textrm{H}(\theta) = \nabla_{\!\!\theta} \, \nabla_{\!\!\theta}^\top \ p(\theta \mid y).
+  $$
+  with entries
+  $$
+  \textrm{H}_{i, j}(\theta) = \frac{\partial^2}{\partial \theta_i \, \partial
+    \theta_j} p(\theta \mid y).
+  $$
+\item If $p(\theta \mid y) = \textrm{normal}(\theta \mid \mu, \Sigma)$ with
+  \myemph{positive definite covariance} $\Sigma$, then the Hessian is the
+  negative inverse covariance (i.e., negative precision),
+  $$
+  \textrm{H}(\theta) = -\Sigma^{-1}.
+  $$
+\item 
+  
+  $\Sigma = \textrm{diag}([\sigma_1^2 \cdots \sigma_D^2])$ is
+  \myemph{diagonal}, then its Hessian is $\textrm{diag}([\sigma_1^{-2} \cdots
+  \sigma_D^{-2}])$
+\end{itemize}
 
+\sld{The spectrum of eigenvalues}
 
+\begin{itemize}
+\item If $A$ is a $D \times D$ matrix, its \myemph{eigendecomposition} is
+  $$
+  A = Q \cdot \textrm{diag}(\lambda) \cdot Q^{-1}
+  $$
+  $\lambda$ a $D$-vector of \myemph{eigenvalues}, $Q$ a
+  $D \times D$ orthonormal matrix of \myemph{eigenvectors}
+\item Eigenvalues are \myemph{inverse squared scales} in the direction of the eigenvalues
+\end{itemize}
+
+\sld{Positive definiteness and log concavity}
+\begin{itemize}
+\item A matrix is \myemph{positive definite} if the eigenvalues are
+  all positive
+\item A density is \myemph{log concave} at a point if its Hessian is positive definite. 
+\item A multivariate normal with \myemph{diagnonal covariance} $\Sigma =
+  \textrm{diag}([\sigma_1^2 \cdots \sigma_D^2])$ has
+  \begin{subitemize}
+    \item axis-aligned eigenvectors, $Q = \textrm{I}$ ($\textrm{I}$ is
+      identity)
+    \item eigenvalues $\lambda = \sigma_1^{-2}, \ldots, \sigma_D^{-2}$
+  \end{subitemize}
+\item Eigenvalues are \myemph{rotation invariant}.
+\item For non-diagonal covariance, just \myemph{rotate to diagonal}.
+\end{itemize}
+
+\sld{Condition numbers and iterative algorithms}
+\begin{itemize}
+\item The \myemph{condition} of a positive definite matrix $A$ is the 
+  ratio of largest to smallest eigenvalue,
+  $$c = \frac{\max(\lambda)}{\min(\lambda)}.$$
+\item To move a ``unit,'' gradient-based algorithms take \myemph{steps
+    proportional to smallest scale} and a \myemph{number of steps
+    equal to the condition}.
+\item A posterior $p(\theta \mid y)$ has
+  \begin{subitemize}
+    \item \myemph{varying curvature} if its Hessian changes for
+      different
+    $\theta$, and
+    \item \myemph{varying scale} if its smallest scale changes for
+      different $\theta$.
+  \end{subitemize}
+\item Thus \myemph{varying scales require varying step sizes} (for
+  gradient-based algo).
+\end{itemize}
+
+\sld{Neal's funnel as a proxy for hierarchical priors}
+\begin{itemize}
+  \item Neal's funnel for log scale (times two) $y \in \mathbb{R}$ and
+    varying effects $x \in \mathbb{R}^N$ is
+    $$ \textstyle 
+    p(x, y) = \textrm{normal}(y \mid 0, 3) \cdot \prod_{n=1}^N 
+    \textrm{normal}(x_n \mid 0, \exp(y / 2)). 
+    $$
+    \begin{center}
+      \vspace*{-9pt}
+    \includegraphics[width=2.25in]{img/funnel.png}
+  \end{center}
+\end{itemize}
+
+\sld{Neal's funnel has varying curvature and scale}
+\begin{itemize}
+\item Here's a plot of the (rotated) funnel and its condition number
+  vs.\ scale $\beta$
+\item central 95\% interval for constant scale $\beta$---condition
+  worsens in tails
+\item Eigenvectors change orientation (biggest along $\beta$ in neck,
+  along $\alpha$ in mouth)
+\end{itemize}
+  \begin{center}
+    \includegraphics[width=3.25in]{img/funnel-condition.pdf}
+  \end{center} 
 
 
 
