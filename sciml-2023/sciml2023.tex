@@ -264,6 +264,27 @@ discretization time $\epsilon > 0$
   \includegraphics[width=1.75in]{img/hmc-rejections.png}
 \end{center}
 
+\sld{HMC works, but generalized HMC fails}
+\begin{itemize}
+\item \myemph{HMC scales in dimension} by making \myemph{directed
+    progress} per iteration
+\item \myemph{Hamiltonian flow} keeps trajectory in region of high probability
+\item Leapfrog integrator is \myemph{symplectic}
+  \begin{subitemize}
+  \item preserves Hamiltonian well, so \myemph{high Metropolis accept} rate
+  \item it's \textit{not} an accurate ODE solver (but that's OK)
+  \end{subitemize}
+\vspace*{-8pt}
+\item \myemph{G-HMC reverts to random walk} because of the \myemph{flipped momentum}
+  \begin{subitemize}
+  \item G-HMC usually configured to use \myemph{one leapfrog step}
+    (like MALA)
+  \item required to preserve stationarity (cf. 100\% refreshed in standard HMC) 
+  \item \myemph{reverses momentum} on failure, so need \myemph{sequences of acceptances}
+  \item need large step size to move, small step sizes for acceptance
+  \end{subitemize}
+\end{itemize}
+
 \sld{Dramatis Personae}
 \begin{center}
   \begin{tabular}{cccc}
