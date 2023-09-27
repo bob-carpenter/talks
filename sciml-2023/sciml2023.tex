@@ -248,6 +248,21 @@ discretization time $\epsilon > 0$
   \textrm{normal}\!\left( \sqrt{1 - \lambda} \cdot \draw{\rho}{m-1}, \ \lambda \cdot \Sigma \right).$
 \end{itemize}
 
+\sld{HMC fails on the funnel}
+\begin{itemize}
+\item \myemph{Fixed step size} leads to \myemph{truncated sampling}
+  with HMC (and NUTS), either
+  \begin{subitemize}
+    \item \myemph{Neck}: step size too big, \myemph{Hamiltonian diverges} and we \myemph{reject}.
+    \item \myemph{Mouth}: step size too small, \myemph{diffusion too slow}.
+      explore.
+    \end{subitemize}
+  \item Vertical dashed lines show the left truncation (color = step size)
+\end{itemize}
+\begin{center}
+  \includegraphics[width=2in]{img/hmc-rejections.png}
+\end{center}
+
 \sld{Dramatis Personae}
 \begin{center}
   \begin{tabular}{cccc}
