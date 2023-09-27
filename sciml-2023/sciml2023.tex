@@ -92,8 +92,8 @@
   \draw{\theta}{1}, \ldots \draw{\theta}{M} \sim p(\theta \mid y)
   $$
 \item to evaluate \myemph{posterior expectations} of functions $f$
-  \begin{align}
-    \textstyle 
+\begin{align*}
+  \textstyle 
   \expect{f(\theta) \mid y}
   &= \textstyle \int_{\mathbb{R}^D} f(\theta) \cdot p(\theta \mid y) \,
     \textrm{d}\theta
@@ -102,7 +102,7 @@
 f\left( \draw{\theta}{m} \right)
   \\[4pt] \textstyle
   &\approx \textstyle \frac{1}{M} \sum_{m=1}^M f\left(\draw{\theta}{m}\right) 
-\end{align}
+\end{align*}
 \end{itemize}
 
 \sld{Hessians are second derivatives}
@@ -201,10 +201,78 @@ f\left( \draw{\theta}{m} \right)
 \item Eigenvectors change orientation (biggest along $\beta$ in neck,
   along $\alpha$ in mouth)
 \end{itemize}
-  \begin{center}
-    \includegraphics[width=3.25in]{img/funnel-condition.pdf}
-  \end{center} 
+\begin{center}
+  \includegraphics[width=3.25in]{img/funnel-condition.pdf}
+\end{center}
+
+\sld{Hamiltonian dynamics}
+\begin{itemize}
+\item \myemph{Potential energy} at $\theta \in \mathbb{R}^D$ is negative log density $U(\theta) = -\log
+  \left( \strut p(\theta \mid y) \right)$.
+\item \myemph{Kinetic energy} for momentum $\rho \in \mathbb{R}^D$ is
+  $V(\rho) = -\log \left( \strut \textrm{normal}(\rho \mid 0, 1) \right).$
+\item \myemph{Hamiltonian} is sum $H(\theta) = U(\theta) + V(\theta)$
+\item \myemph{Leapfrog step} for Hamiltonian dynamics w.\
+discretization time $\epsilon > 0$
+\begin{align*}
+  \rho_{t+1/2} &= \rho_t - \frac{\epsilon}{2} \cdot \nabla U(\theta)
+  \\
+  \theta_{t + 1} &= \theta_t - \epsilon \cdot \nabla V(\theta)
+  \\
+  \rho_{t+1} &= \rho_{t + 1/2} - \frac{\epsilon}{2} \cdot \nabla U(\theta)
+\end{align*}
+\item \myemph{Precondition} with pos.\ def.\ metric $\Sigma$ by $V(\rho) =
+  -\log \left( \strut \textrm{normal}(\rho \mid 0, Sigma) \right).$
+\end{itemize}
+
+\sld{Hamiltonian Monte Carlo (HMC)}
+\begin{itemize}
+\item \myemph{Input}: initial position $\draw{\theta}{0}$, step size
+  $\epsilon$, steps $L$, metric $\Sigma$
+\item For each iteration $m$
+  \begin{subitemize}
+  \item (Gibbs) Resample momentum $\rho \sim \textrm{normal}(0, \Sigma)$
+  \item (Metropolis) Run leapfrog algorithm $L$ steps from $(\draw{\theta}{m-1}, \rho)$
+    to $(\theta^*, \rho^*)$
+  \item if $\textrm{uniform}(0, 1)
+    < \textrm{min}\left(1, \frac{\displaystyle \strut \exp(-H(\theta^*, \rho^*))}
+           {\displaystyle \strut \exp(-H(\draw{\theta}{t-1}, \rho))}\right)$, then
+           $(\draw{\theta}{t}, \draw{\rho}{t}) = (\theta^*, -\rho^*)$
+  \item else $(\theta_t, \rho_t) = (\draw{\theta}{t-1}, \draw{\rho}{t-1})$.
+  \end{subitemize}
+\item \myemph{Output}: sample $\draw{\theta}{1}, \ldots, \draw{\theta}{M}$
+  \vfill
+\item \myemph{Generalized HMC}: Partially resample $\rho =
+  \sqrt{\lambda^2} \cdot \draw{\rho}{t-1} + \sqrt{1 - \lambda^2} \cdot
+  \textrm{normal}(0, \Sigma)$
+\end{itemize}
+
+\sld{Dramatis Personae}
+\begin{center}
+  \begin{tabular}{cccc}
+    \includegraphics[width=0.85in]{img/turok.png}
+    & \includegraphics[width=0.85in]{img/modi.png}
+    & \includegraphics[width=0.85in]{img/roualdes.png}
+    & \includegraphics[width=0.85in]{img/barnett.png}
+    \\
+    \includegraphics[width=0.85in]{img/neal.png}
+    & \includegraphics[width=0.85in]{img/hoffman.png}
+    & \includegraphics[width=0.85in]{img/sountsov.png}
+  \end{tabular}
+\end{center}
 
 
+
+
+\sld{References}
+\begin{itemize}
+\item Modi, C., Barnett, A. and Carpenter, B., 2023. \myemph{Delayed rejection
+  Hamiltonian Monte Carlo for sampling multiscale
+  distributions}. \textit{Bayesian Analysis}.
+\item Hoffman, M.D. and Sountsov, P., 2022. \myemph{Tuning-free
+  generalized Hamiltonian Monte Carlo}.  \textit{AISTATS}.
+\item Neal, R.M., 2020.  \myemph{Non-reversibly updating a uniform [0, 1] value
+  for Metropolis accept/reject decisions}. \textit{arXiv}.
+\end{itemize}
 
 \end{document}
