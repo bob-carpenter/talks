@@ -228,23 +228,24 @@ discretization time $\epsilon > 0$
 \sld{Hamiltonian Monte Carlo (HMC)}
 \begin{itemize}
 \item \myemph{Input}: initial position $\draw{\theta}{0}$, step size
-  $\epsilon$, steps $L$, metric $\Sigma$
-\item For each iteration $m$
+  $\epsilon$, steps $L$, metric $\Sigma$, sample size $M$
+\item For each iteration $m \in 1, \ldots, M$
   \begin{subitemize}
   \item (Gibbs) Resample momentum $\rho \sim \textrm{normal}(0, \Sigma)$
-  \item (Metropolis) Run leapfrog algorithm $L$ steps from $(\draw{\theta}{m-1}, \rho)$
+  \item (Metropolis) Run leapfrog algorithm $L$ steps from $(\draw{\theta}{m-1}, \underbrace{-\rho}_{\textrm{flip}})$
     to $(\theta^*, \rho^*)$
-  \item if $\textrm{uniform}(0, 1)
+  \item  \vspace*{-6pt} $\textrm{accept} = \textrm{uniform}(0, 1)
     < \textrm{min}\left(1, \frac{\displaystyle \strut \exp(-H(\theta^*, \rho^*))}
-           {\displaystyle \strut \exp(-H(\draw{\theta}{t-1}, \rho))}\right)$, then
-           $(\draw{\theta}{t}, \draw{\rho}{t}) = (\theta^*, -\rho^*)$
-  \item else $(\theta_t, \rho_t) = (\draw{\theta}{t-1}, \draw{\rho}{t-1})$.
+           {\displaystyle \strut \exp(-H(\draw{\theta}{m-1},
+             \rho))}\right)$
+  \vspace*{6pt}
+  \item $(\draw{\theta}{m}, \draw{\rho}{m}) = (\theta^*, \rho^*)$
+         if \ $\textrm{accept}$ \ else $(\draw{\theta}{m-1}, \draw{\rho}{m-1})$.
   \end{subitemize}
 \item \myemph{Output}: sample $\draw{\theta}{1}, \ldots, \draw{\theta}{M}$
   \vfill
-\item \myemph{Generalized HMC}: Partially resample $\rho =
-  \sqrt{\lambda^2} \cdot \draw{\rho}{t-1} + \sqrt{1 - \lambda^2} \cdot
-  \textrm{normal}(0, \Sigma)$
+\item \myemph{Generalized HMC}: Partially resample $\rho \sim
+  \textrm{normal}\!\left( \sqrt{1 - \lambda} \cdot \draw{\rho}{m-1}, \ \lambda \cdot \Sigma \right).$
 \end{itemize}
 
 \sld{Dramatis Personae}
