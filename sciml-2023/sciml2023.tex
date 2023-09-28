@@ -9,6 +9,8 @@
 \usepackage{tikz}
     \usetikzlibrary{positioning, shapes, arrows.meta}
 
+\newcommand{\ddfrac}[2]{\frac{\strut \displaystyle #1}{\strut \displaystyle #2}}
+    
 \begin{document}
 
 \sf \mbox{}
@@ -170,7 +172,7 @@ f\left( \draw{\theta}{m} \right)
 \item A matrix is \myemph{positive definite} if the eigenvalues are
   all positive
 \item A density is \myemph{log concave} at a point if its Hessian is positive definite. 
-\item A multivariate normal with \myemph{diagnonal covariance} $\Sigma =
+\item A multivariate normal with \myemph{diagonal covariance} $\Sigma =
   \textrm{diag}([\sigma_1^2 \cdots \sigma_D^2])$ has
   \begin{subitemize}
     \item axis-aligned eigenvectors, $Q = \textrm{I}$ ($\textrm{I}$ is
@@ -379,24 +381,154 @@ discretization time $\epsilon > 0$
 \end{itemize}
 \begin{center}
   \includegraphics[width=1.75in]{img/hmc-rejections.png}
+  \includegraphics[width=2.5in]{img/funnel-condition.pdf}
 \end{center}
 
 
 \sld{Delayed rejection Metropolis \hfill {\small (Mira and Green 2001)}}
 \begin{itemize}
 \item Within a single iteration, \myemph{try again if proposal rejected}.
-\item Require \myemph{Hastings adjustment} for detailed balance for trying again.
+\item Require \myemph{Hastings adjustment} for detailed balance for
+  trying again.
+\item Assume first level \myemph{proposal} $F_1$ and second-level $F_2$, and so on
+\item \myemph{First level}: accept $s = F_1(x)$ $\alpha_1(x, s) =
+  \textrm{min}\left(1, \ddfrac{p(s)}{p(x)} \right).$
+\item \myemph{Second level}: accept $x \mapsto z$: $\alpha_2(x, y) =
+  \textrm{min}\left(1, \ddfrac{p(y)}{p(x)} \ddfrac{1 - \alpha_1(y, g)}{1 -
+      \alpha_1(x, s)}
+  \right).$
+  \begin{subitemize}
+    \item     where $g = F_1(v)$ is a first level \myemph{``ghost proposal''}
+    \end{subitemize}
+  \item \myemph{Third level (and beyond)}: next page figure (paper for
+    \myemph{general recursion})
 \end{itemize}
 
-\sld{Delayed rejection HMC (Modi, Carpenter, Barnett 2022)}
+\sld{Picture of delayed rejection}
+\begin{center}
+\includegraphics[width=2in]{img/dr-1.pdf}
+\includegraphics[width=2in]{img/dr-2.pdf}
+\end{center}
+
+\sld{Delayed rejection HMC \hfill \small (Modi, Barnett, Carpenter 2022)}
 \begin{itemize}
 \item For HMC, key is to try again with \myemph{reduced step size}.
   \begin{subitemize}
-    \item earlier attempts tried to save computation by extending
-      rejected proposal
-    \end{subitemize}
+  \item earlier attempts tried to save computation by extending
+    rejected proposal (Sohl-Dickstein et al.\ 2014, Campos and Sanz-Serna 2014)
+  \end{subitemize}
+\item We evaluated up to 3 levels of retries,
+  \begin{subitemize}
+  \item with step sizes $\epsilon, \epsilon \cdot \lambda, \epsilon
+    \cdot \lambda^2$ for  $\lambda = \frac{1}{2}, \frac{1}{3},
+    \frac{1}{5}$
+  \end{subitemize}
 \end{itemize}
 
+\sld{Evaluation of DR-HMC}
+\begin{subitemize}
+\item \myemph{Neal's funnel} various dims, step sizes, step reduction ratios
+  \vspace*{-4pt}
+\item vertical axis (log scale) is \myemph{cost in gradients vs.\ ground truth}
+  \vspace*{-4pt}
+\item \myemph{DR-HMC works} and is \myemph{also cheaper} (HMC isn't
+  convergent here)
+\end{subitemize}
+\begin{center}
+  \includegraphics[width=1.85in]{img/dr-hmc-results.pdf}
+\end{center}
+
+\sld{Delayed rejection, generalized HMC \quad \small (Turok et
+  al. 2023+)}
+\begin{itemize}
+\item \myemph{Two great tastes} that go great together.
+\item \myemph{Swaps} delayed rejection for Neal's non-reversible uniform accept probs
+\item Two benefits:
+  \begin{subitemize}
+  \item \myemph{high acceptance rate} needed for mixing in G-HMC
+  \item works for \myemph{multiscale distributions}
+  \end{subitemize}
+\item DR-G-HMC \myemph{mixes faster} than DR-HMC per gradient
+  \begin{subitemize}
+    \item DR-HMC mixes as fast or faster than HMC but also handled
+      varying scales
+    \end{subitemize}
+\item \myemph{Gilad Turok} was an (undergrad) intern this summer with Chirag Modi.
+\item \myemph{Edward Roualdes} is working on adaptation (led to BridgeStan
+  package!).
+\end{itemize}
+
+\sld{DR-G-HMC evaluation}
+\begin{center}
+  \vspace*{-18pt}
+\spc \includegraphics[width=\textwidth]{img/sampler-comparison.png}
+\end{center}
+\vspace*{-8pt}
+\begin{subitemize}
+\item HMC and G-HMC fail; \myemph{DR-G-HMC outperforms DR-HMC} (as in Neal's evaluations)
+\vspace*{-4pt}
+\item Results similar with \myemph{constant integration time} on
+  retries (multiplying steps)
+\vspace*{-4pt}
+\item \myemph{Paper} in progress as is \myemph{code for Bayes-Kit} (Python).
+\end{subitemize}
+
+\sld{MEADS: Adaptation for G-HMC \hfill\small (Hoffman, Sountsov 2022)}
+\begin{itemize}
+\item \myemph{Starting point} is Neal's non-reversible acceptance G-HMC
+\item \myemph{Less wasteful} than HMC/NUTS (cf.\ Nicholas Chopin's ``waste-free'' SMC)
+  \begin{subitemize}
+    \item vs. HMC: doesn't \myemph{reject long chain} of leapfrog steps
+    \item vs. NUTS: doesn't go \myemph{forward and backward in time} and choose
+      \myemph{non-final point} on trajectory
+      \end{subitemize}
+\item \myemph{Easier to deploy} than HMC/NUTS
+  \begin{subitemize}
+  \item much easier to \myemph{parallelize} than NUTS recursion
+  \item easier to \myemph{adaptively tune} (steps more granular)
+  \end{subitemize}
+\end{itemize}
+
+\sld{MEADS (cont.) \hfill\small (Hoffman, Sountsov 2022)}
+\begin{itemize}
+\item \myemph{Ensemble} of chains for \myemph{complementary chain
+    adaptation}
+  \begin{subitemize}
+    \item cf. Goodman-Weare affine-invariant, ter Braak differential
+      evolution
+    \end{subitemize}
+\begin{center}
+  \includegraphics[width=1.6in]{img/meads-complementary.pdf}
+\end{center}
+\vspace*{-9pt}
+\item Heuristic \myemph{eigenvalue estimator for step size}
+  \begin{subitemize}
+  \item $\epsilon = \ddfrac{1}{2 \cdot \sqrt{\lambda^{\textrm{max}}(-\overline{H})}},$
+    where $\lambda^{\textrm{max}}$ is max eigenvalue operator
+    \vspace*{3pt}
+  \item $\textstyle \overline{H} = \mathbb{E}[\textrm{H}(\Theta)
+    \mid y] = \mathbb{E}[\nabla \nabla^\top
+    \log p(\Theta \mid y)]$, estimated with empirical average
+  \end{subitemize}
+\end{itemize}
+
+\sld{Summary and Conclusions}
+\begin{itemize}
+\item \myemph{delayed rejection HMC} enables multiscale sampling
+  \hfill {\small (Modi et al.)}
+\item \myemph{one-step generalized HMC} can be tuned to be as efficient as HMC with
+  non-reversible acceptance
+  \hfill {\small (Neal)}
+\item \myemph{delayed rejection} works as well as non-reversible acceptance
+  \textit{and}\ enables multiscale sampling
+  \hfill {\small (Turok et al.)}
+\item \myemph{ensemble methods} and \myemph{eigenvalue step size
+    estimate} allow automatic tuning of one-step G-HMC
+  \hfill {\small (Hoffman~and~Sountsov)}
+\item \myemph{same adaptation} works for DR-G-HMC
+  \hfill {\small (Roualdes et al.)}
+\end{itemize}
+  
 \sld{Dramatis Personae}
 \begin{center}
   \begin{tabular}{cccc}
@@ -416,6 +548,8 @@ discretization time $\epsilon > 0$
 
 \sld{References}
 \begin{itemize}
+\item Turok, G., Roualdes, E., Modi, C., and Carpenter, B. In
+  preparation. \myemph{Delayed rejection generalized Hamiltonian Monte Carlo}.
 \item Modi, C., Barnett, A. and Carpenter, B., 2023. \myemph{Delayed rejection
   Hamiltonian Monte Carlo for sampling multiscale
   distributions}. \textit{Bayesian Analysis}.
