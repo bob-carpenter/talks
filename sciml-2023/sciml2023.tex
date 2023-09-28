@@ -45,9 +45,13 @@
       volatility models, ODEs of varying stiffness w.r.t.\ parameters,
       etc.
     \end{subitemize}
-  \item \myemph{Problem}: \myemph{0th order} (Gibbs, RWM) and \myemph{1st
-        order} (MALA, HMC, NUTS) methods fail
-      \myemph{2nd order} (Riemannian HMC) is too expensive in high dimensions
+  \item \myemph{Problem}:
+    \begin{subitemize}
+      \item \myemph{0th order} (Gibbs, RWM) and \myemph{1st
+        order} (MALA, HMC, NUTS) methods fail.
+      \item \myemph{2nd order} (Riemannian HMC) too expensive in high
+        dimensions.
+      \end{subitemize}
 \item \myemph{Solution}: multiscale integrator (generalized HMC with
   delayed rejection)
 \end{itemize}
@@ -83,7 +87,7 @@
 \end{itemize}
 
 
-\sld{Monte Carlo integration in high dimensions}
+\sld{Monte Carlo method \hfill {\small (Fermi, Ulam 1930s--1940s)}}
 \begin{itemize}
 \item Given a Bayesian \myemph{posterior density} $p(\theta \mid y),$
   with support for \myemph{parameters} $\theta \in \mathbb{R}^D$ and \myemph{data} $y$,
@@ -104,6 +108,25 @@ f\left( \draw{\theta}{m} \right)
   &\approx \textstyle \frac{1}{M} \sum_{m=1}^M f\left(\draw{\theta}{m}\right) 
 \end{align*}
 \end{itemize}
+
+\sld{Markov chain Monte Carlo \hfill {\small (Metropolis et al.\ 1950)}}
+\begin{itemize}
+\item Usually impossible to draw an independent sample from a target density.
+\item Instead, set up a \myemph{Markov chain} where the \myemph{stationary distribution}
+  is the target distribution.
+\item Same \myemph{plug-in estimator} still works with correlated draws.
+\item \myemph{MCMC central limit theorem} says estimation standard error is
+  $\frac{\textrm{sd}}{\sqrt{\textrm{ESS}}}$, where
+  \begin{subitemize}
+    \vspace*{-12pt}
+    \item $\textrm{sd}$ is the \myemph{posterior standard deviation} of the estimand,
+    \item and $\textrm{ESS}$ is the \myemph{effective sample size} of the
+      sample (as measured in independent draws).
+    \item With HMC, effective sample size can exceed sample size
+    \end{subitemize}
+\end{itemize}
+
+
 
 \sld{Hessians are second derivatives}
 \begin{itemize}
@@ -225,7 +248,7 @@ discretization time $\epsilon > 0$
   -\log \left( \strut \textrm{normal}(\rho \mid 0, Sigma) \right).$
 \end{itemize}
 
-\sld{Hamiltonian Monte Carlo (HMC)}
+\sld{Hamiltonian Monte Carlo \hfill {\small (Duane et al.\ 1987)}}
 \begin{itemize}
 \item \myemph{Input}: initial position $\draw{\theta}{0}$, step size
   $\epsilon$, steps $L$, metric $\Sigma$, sample size $M$
@@ -239,30 +262,36 @@ discretization time $\epsilon > 0$
            {\displaystyle \strut \exp(-H(\draw{\theta}{m-1},
              \rho))}\right)$
   \vspace*{6pt}
-  \item $(\draw{\theta}{m}, \draw{\rho}{m}) = (\theta^*, \rho^*)$
+  \item $(\draw{\theta}{m}, \draw{\rho}{m}) = (\theta^*, \underbrace{-\rho^*}_{\textrm{flip}})$
          if \ $\textrm{accept}$ \ else $(\draw{\theta}{m-1}, \draw{\rho}{m-1})$.
   \end{subitemize}
 \item \myemph{Output}: sample $\draw{\theta}{1}, \ldots, \draw{\theta}{M}$
-  \vfill
-\item \myemph{Generalized HMC}: Partially resample $\rho \sim
-  \textrm{normal}\!\left( \sqrt{1 - \lambda} \cdot \draw{\rho}{m-1}, \ \lambda \cdot \Sigma \right).$
 \end{itemize}
 
-\sld{HMC fails on the funnel}
+\sld{Generalized Hamiltonian Monte Carlo \hfill {\small (Horowitz 1991)}}
 \begin{itemize}
-\item \myemph{Fixed step size} leads to \myemph{truncated sampling}
-  with HMC (and NUTS), either
+\item \myemph{Generalized HMC}: Partially resample momentum each iteration
+  $$
+  \rho \sim \textrm{normal}\!\left( \sqrt{1 - \lambda} \cdot
+    \draw{\rho}{m-1}, \ \lambda \cdot \Sigma \right).
+  $$
+\item Still \myemph{(exact) Gibbs} sampling
   \begin{subitemize}
-    \item \myemph{Neck}: step size too big, \myemph{Hamiltonian diverges} and we \myemph{reject}.
-    \item \myemph{Mouth}: step size too small, \myemph{diffusion too slow}.
-      explore.
-    \item Result is \myemph{biased estimation} of quantities of interest.
+  \item if $\draw{\rho}{m-1} \sim \textrm{normal}(0, \Sigma)$, then
+    $\sqrt{1 - \lambda} \cdot \rho \sim \textrm{normal}(0, (1 -
+    \lambda) \cdot \Sigma)$ and
+  $$
+  \rho \sim \textrm{normal}(0, \Sigma)
+  $$
+    \item weights balance variance (sqrt converts to scale)
+  \end{subitemize}
+\item Usually take just \myemph{one leapfrog iteration}
+  \begin{subitemize}
+    \item one step of HMC is identical to \myemph{Metropolis-adjusted Langevin}
+      (MALA)
+    \item but it operates on position and momentum vector
     \end{subitemize}
-  \item Vertical dashed lines show the left truncation (color = step size)
 \end{itemize}
-\begin{center}
-  \includegraphics[width=1.75in]{img/hmc-rejections.png}
-\end{center}
 
 \sld{HMC works, but generalized HMC fails}
 \begin{itemize}
@@ -283,6 +312,86 @@ discretization time $\epsilon > 0$
   \item \myemph{reverses momentum} on failure, so need \myemph{sequences of acceptances}
   \item need large step size to move, small step sizes for acceptance
   \end{subitemize}
+\end{itemize}
+
+\sld{Non-uniform acceptance fixes GHMC (Neal 2020)}
+\begin{itemize}
+\item Neal (2020) replaced the i.i.d.\ $\draw{u}{m} \sim \textrm{uniform}(0, 1)$
+  variate in Metropolis,
+  $$
+  \textrm{accept} = \textrm{uniform}(0, 1)
+  < \textrm{min}(1, \cdots)
+  $$
+  with an identically distributed but not independent variate carving out a
+  \myemph{sawtooth pattern}
+  $$
+  \draw{u}{m} = \draw{u}{m-1} + \delta + \textrm{uniform}(0,
+  \sigma^{\textrm{jitter}})
+  $$
+  and if $\draw{u}{m} \not\in (0, 1)$ add or subtract 2 until it is.
+\item Jitter is for \myemph{ergodicity} so that $\draw{u}{m} \sim
+  \textrm{uniform}(0, 1)$ marginally (correlated)
+\item \myemph{Acceptances cluster} at sequences of small values of $\draw{u}{m}$.
+\item Adds \myemph{tuning parameters} $\delta,
+  \sigma^{\textrm{jitter}} \in (0, \infty)$.
+\end{itemize}
+
+\sld{Neal's evaluation of non-reversible $u$}
+\begin{subitemize}
+  \vspace*{-3pt}
+  \item 16 pairs of normal variables with unit variance and 0.99
+    correlation, $\alpha$ color coded
+  \end{subitemize}
+\begin{center}
+  \vspace*{-3pt}
+  \includegraphics[width=0.65\textwidth]{img/neal-nonrevu.pdf}
+ \qquad {\footnotesize (Neal 2020)}
+\end{center}
+
+\sld{HMC has problems with half-orbits}
+\begin{center}
+  \vspace*{-4pt}
+  \includegraphics[width=2.5in]{img/hmc-harmonics.png}
+\end{center}
+\begin{subitemize}
+  \vspace*{-8pt}
+\item Standard normal, 1000 dimensions; vertical axis
+  ESS; horizontal axis step size ($\epsilon$); columns (4,
+  16, 64) steps ($L$);
+  top row HMC, bottom row steps-jittered HMC;
+  blue mean estimate, red variance; dashed line is NUTS (Stan)
+\end{subitemize}
+
+\sld{HMC \& MALA fail on the funnel}
+\begin{itemize}
+\item \myemph{Fixed step size} leads to \myemph{truncated sampling}
+  with HMC (and NUTS), either
+  \begin{subitemize}
+    \item \myemph{Neck}: step size too big, \myemph{Hamiltonian diverges} and we \myemph{reject}.
+    \item \myemph{Mouth}: step size too small, \myemph{diffusion too slow}.
+      explore.
+    \item Result is \myemph{biased estimation} of quantities of interest.
+    \end{subitemize}
+  \item Vertical dashed lines show the left truncation (color = step size)
+\end{itemize}
+\begin{center}
+  \includegraphics[width=1.75in]{img/hmc-rejections.png}
+\end{center}
+
+
+\sld{Delayed rejection Metropolis \hfill {\small (Mira and Green 2001)}}
+\begin{itemize}
+\item Within a single iteration, \myemph{try again if proposal rejected}.
+\item Require \myemph{Hastings adjustment} for detailed balance for trying again.
+\end{itemize}
+
+\sld{Delayed rejection HMC (Modi, Carpenter, Barnett 2022)}
+\begin{itemize}
+\item For HMC, key is to try again with \myemph{reduced step size}.
+  \begin{subitemize}
+    \item earlier attempts tried to save computation by extending
+      rejected proposal
+    \end{subitemize}
 \end{itemize}
 
 \sld{Dramatis Personae}
