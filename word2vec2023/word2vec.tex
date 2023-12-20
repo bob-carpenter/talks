@@ -42,45 +42,46 @@
 \item Assuming \myemph{finitely many words} is problematic
   \begin{subitemize}
   \item what's a word? (e.g., Chinese)
-  \item productive morphology? (e.g., Turkish)
+  \item productive morphology? (e.g., Turkish, German, or even English)
   \end{subitemize}
 \end{itemize}
 
-\sld{Document and query vectors for retrieval}
-\begin{itemize}
-\item Let $P = W$ (embedding dimension is number of words).
-\item Use \myemph{one-hot embedding}, where $f(w) = v \in
-  \mathbb{R}^W$ such that
-  $$
-  v_u = \begin{cases} 1 & \textrm{if } u = w \\ 0 & \textrm{otherwise} \end{cases}
-  $$
-\item Let $D$ be the number of documents.
-\item Use \myemph{term frequency} document embedding $g$ defined by
-  $g(d)_w$ is the count of word $w \in [W]$ in document $d \in [D]$,
-  i.e., the sum of its word embeddings.
-\end{itemize}
-  
+\sld{Document-based word embeddings}
+\begin{subitemize}
+\item \textit{You shall know a word by the company it keeps.} (Firth 1957) 
+\item Rows: \myemph{word embeddings}, Columns: \myemph{document embeddings}
+\end{subitemize}
+\begin{center}
+\includegraphics[width=0.55\textwidth]{img/term-doc-matrix.jpeg}
+\end{center}
+\vspace*{-4pt}
+\spc {\footnotesize From: \tiny \texttt{https://www.quora.com/What-is-a-term-document-matrix}}
+
 \sld{Document retrieval (cont.)}
 \begin{itemize}
-\item A \myemph{search query} $q$ is another sequence of words.
+\item A \myemph{search query} $q$ is embedded like a document (word frequency).
 \item Score document $d$ for query $q$ using \myemph{cosine}
-  between embedding vectors (lower angle is better),
+  between embedding vectors $g(d)$ and $g(q)$
   $$
   \textrm{dist}(d, q) = g(d)^{\top} \cdot g(q)
   $$
+\item Smaller angle is ``closer.''
 \end{itemize}
 \vfill
 \spc  {\small (Salton 1968)}
 
-\sld{Inverse document frequency}
+\sld{TF-IDF: Inverse document frequency}
 \begin{itemize}
-\item The \myemph{document frequency} of a word is the number of
-  documents in which it appears.
-\item Intuition is rarer words more useful.
-\item Embed documents by dividing word frequencies by their document
-  frequency.
-\item Resulting embedding is term-frequency/inverse document frequency
-  (TF-IDF). 
+\item Let the tinkering begin!
+  \vspace*{12pt}
+\item The \myemph{term frequency} of a word is just its document
+  embedding as word counts.
+\item Intuition is to \myemph{downweight common words}.
+\item Divide word frequency by document frequency
+  \begin{subitemize}
+  \item multiply by \myemph{inverse document frequency} (IDF)
+  \end{subitemize}
+\item Resulting document and word embeddings called \myemph{TF-IDF}.
 \end{itemize}
 \vfill
 \spc {\small (Sp\"arck Jones 1972)}
@@ -91,12 +92,12 @@
   $$
   X = U \cdot \textrm{diagMat}(S) \cdot V^{\top},
   $$
-  so $U$ and $V$ are orthonormal
+  with $U$ and $V$ orthonormal, $S$ non-negative descending
 \item Restrict to rank $K < \textrm{min}(D, W)$ by taking
-  $X \approx U_{1:W,1:K} \cdot \textrm{diagMat}(S_{1:K}) \cdot V_{1:D,
-    1:K}^{\top}$
-\item Minimizes square error (``Mahalanobis'') at rank $K$
-\item Use $U_{w,1:K}$ as document embedding and $V_{d,1:K}$ as
+  $X \approx U_{1\textrm{:}W,1\textrm{:}K} \cdot \textrm{diagMat}(S_{1\textrm{:}K}) \cdot V_{1\textrm{:}D,
+    1\textrm{:}K}^{\top}$
+\item Minimizes square error at rank $K$
+\item Use $U_{w,1\textrm{:}K}$ as document embedding and $V_{d,1\textrm{:}K}$ as
   document embedding (both embedded in $\mathbb{R}^K$).
 \item Embed queries by \myemph{sum of word embeddings} and compare with cosine. 
 \end{itemize}
@@ -112,8 +113,7 @@
   for classification.
 \end{itemize}
 \vfill
-\spc {\small (Peter Brown, Peter de Souza, Robert Mercer, Vincent Della
-Pietra, Jenifer Lai, 1992)}
+\spc {\small (Brown, de Souza, Mercer, Della Pietra, Lai, 1992)}
 
 
 \sld{Pure text embeddings and skip-grams}
@@ -137,33 +137,53 @@ Pietra, Jenifer Lai, 1992)}
 \item Map a query to the sum of the low-rank embeddings of its words.
 \item For example, we used them in \myemph{logistic regression} for call routing
   (target modeled as sum of training queries)
-\\ \qquad {\footnotesize Chu-Caroll, Carpenter. 1999. Vector-based natural 
-    language call routing. \textit{CL}.}
 \item We also used them to \myemph{disambiguate ambiguous queries}
   (e.g., difference of destination embedding vectors minus query)
   \\
-  \qquad {\footnotesize Bob Carpenter and Jennifer Chu-Carroll. 2001. Methods and
-  apparatus for automatic call routing including disambiguating
-  routing decisions. \textit{U.S.\ Patent} \# 6269153.}
+\vfill
+\spc {\small Carpenter and Chu-Carroll, 1999 (paper), 2001 (patent)}
 \end{itemize}
 
-\sld{Word2Vec}
-\begin{center}
-\includegraphics[width=2.5in]{img/word2vec.png}
-\end{center}
+\sld{Latent Dirichlet Allocation (LDA)}
+\begin{itemize}
+\item LDA is a Bayesian version of the LSA factor model
+  \begin{subitemize}
+  \item i.e., a \myemph{mixed-membership} mixture model
+  \end{subitemize}
+\item Documents modeled as an distribution of topics: $\theta_d \sim \textrm{Dirichlet}(\alpha)$
+\item Words independently drawn from topics:\\ $z_{d,n} \sim
+  \textrm{Categorical}(\theta_d)$ \qquad \quad $w_{d,n} \sim \textrm{Categorical}(\phi_{z_{d,n}})$.
+\item Induces word-word similarity vectors by expected co-occurrence
+  in documents (vs. adjacency or near adjacency in skip-grams).
+\item Document embeddings as topic mixture used as covariates
+  (features) for an SVM classifier.
+\end{itemize}
 \vfill
-\spc {\small (Mikolov, Sutskever, Chen, Corrado, Dean 2013)}
+\spc {\small (Blei, Ng, Jordan 2003)}
 
 \sld{What is Word2Vec?}
 \begin{itemize}
-\item Skip-grams trained with a \myemph{neural network}.
-\item \myemph{Large-scale} training.
-\item \myemph{Open-source} software.
-  \vfill
-\item \myemph{Superseded} by transformer embeddings
+\item Train \myemph{discriminative word classifier} based on context
   \begin{subitemize}
-  \item embeddings \myemph{jointly optimized} with other parameters
+  \item 4 past and 4 future tokens and \myemph{$n$-grams} in a
+    \myemph{bag of words} (no order)
+  \item skip-grams (more distant words in past and future context)
   \end{subitemize}
+\item Architecture is \myemph{not autoregressive}, but generation not goal.
+\item Feedforward and recursive neural net architectures.
+\item Tested with \myemph{word similarity} (cf. LSA): skip-gram +
+  recursive net win.
+\item \myemph{Open-source} software. 
 \end{itemize}
+\vfill 
+\spc {\small (Mikolov, Sutskever, Chen, Corrado, Dean 2013)}
+
+\sld{23 Skidoo (i.e., nothing to see, move along)}
+\begin{itemize}
+\item Word2Vec \myemph{Superseded} by jointly optimized transformer embeddings 
+\end{itemize}
+\begin{center}
+\includegraphics[width=2.5in]{img/word2vec.png}
+\end{center}
 
 \end{document}
