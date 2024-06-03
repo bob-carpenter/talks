@@ -143,10 +143,13 @@ f\left( \draw{\theta}{m} \right)
 \begin{itemize}
 \item Usually intractable, if not impossible, to draw an independent sample from a target density.
 \item Instead, set up a \myemph{Markov chain} where the \myemph{stationary distribution}
-  is the target distribution (i.e., $\theta^{(m)} \sim p(\theta \mid y).$)
+  is the target distribution (i.e., $\theta^{(m)} \sim p(\theta \mid
+  y)$ \myemph{marginally})
 \item Same \myemph{plug-in estimator} still works with correlated draws.
-\item \myemph{MCMC central limit theorem} says estimation standard error is
-  $\frac{\textrm{sd}}{\sqrt{\textrm{ESS}}}$,
+\item \myemph{MCMC central limit theorem} says \myemph{standard error}
+  of estimate is
+  $\displaystyle \frac{\textrm{sd}}{\sqrt{\textrm{ESS}}}$,
+  \vspace*{-12pt}
   \begin{subitemize}
     \item $\textrm{sd}$ is the \myemph{posterior standard deviation} of the estimand,
     \item and $\textrm{ESS}$ is the \myemph{effective sample size} of the
@@ -163,9 +166,10 @@ f\left( \draw{\theta}{m} \right)
   \mathbb{R}^D$ with \myemph{position} $\theta \in \mathbb{R}^D$
 \item \myemph{Potential energy}: $U(\theta) = -\log p(\theta \mid y)$
 \item \myemph{Kinetic energy}: $K(\rho) = -\log \textrm{normal}(\rho
-  \mid 0, \Sigma)$
+  \mid 0, \Sigma) = -\frac{1}{2} \cdot \rho^{\top} \cdot \Sigma^{-1} \cdot
+  \rho + \textrm{const.}$
 \item \myemph{Hamiltonian}: $H(\theta, \rho) = U(\theta) + K(\rho)$
-\item \myemph{Dynamics}:
+\item \myemph{Dynamics} (time-independent):
   $$
   \nabla_\theta \, H(\theta, \rho) = \rho
   \qquad
@@ -179,17 +183,18 @@ f\left( \draw{\theta}{m} \right)
 \begin{itemize}
 \item \myemph{Explicit solver} for Hamiltonian dynamics.
 \item \myemph{Given} log density $\log p(\theta)$, step size
-  $\epsilon$, and positive definite mass matrix $\Sigma$ $\ldots$
-\item Define \myemph{one leapfrog step} $\Phi_{\epsilon, \Sigma}(\theta, \rho) = \theta', \rho''$, where
+  $\epsilon$, positive definite mass matrix $\Sigma$, 
+\item define \myemph{one leapfrog step} $\Phi_{\epsilon, \Sigma}(\theta, \rho) = \theta'', \rho''$, where
   \begin{subitemize}
     \item a. $\rho' = \rho + \nabla \log p(\theta \mid y)$
-    \item b. $\theta' = \theta + \Sigma^{-1} \cdot \rho'$
+    \item b. $\theta'' = \theta + \Sigma^{-1} \cdot \rho'$
     \item c. $\rho'' = \rho' + \nabla \log p(\theta' \mid y)$
     \end{subitemize}
 \item \myemph{Zero steps} (base): Let $\Phi^0_{\epsilon, \Sigma}$ be the identity function
 \item \myemph{One or more steps} (induction): Let $\Phi^{t +
     1}_{\epsilon, \Sigma} = \Phi^t_{\epsilon,\Sigma} \circ
   \Phi_{\epsilon,\Sigma}$
+\item \myemph{Leapfrog is stable}: one-step error $\mathcal{O}(\epsilon^3)$, long-range error $\mathcal{O}(\epsilon^2)$
 \end{itemize}
 
 \sld{HMC Markov transition}
@@ -247,7 +252,7 @@ f\left( \draw{\theta}{m} \right)
 \begin{itemize}
 \item HMC works with \myemph{randomized tuning} (e.g., steps $L$ or
   step size $\epsilon$)
-\item Other parameters are fixed (i.e., delta function distributions)
+\item Other tuning parameters are fixed (i.e., delta function distributions)
 \item \myemph{Randomizing} step size or number of steps \myemph{removes
     harmonics} that plague HMC with fixed step size and steps, e.g.,
   $$p(L \mid \theta, \rho) = \textrm{uniform}(L \mid 1, N).$$
@@ -399,7 +404,7 @@ where $N = U(\pos{\theta}{0}, \pos{\rho}{0}) - 1$
 
 % where $(\pos{\theta}{n}\!, \pos{\rho}{n}) = \Phi_h^n(\theta, \rho)$. 
 
-\sld{Sketch of leapfrogs per iteration}
+\sld{Sketch of leapfrogs per iteration (still go back)}
   \begin{center}
 \begin{tikzpicture}[node distance=1cm and 0.5cm]
     % Top row nodes
@@ -433,10 +438,10 @@ where $N = U(\pos{\theta}{0}, \pos{\rho}{0}) - 1$
 \end{center}
 \vspace*{-8pt}
 \begin{subitemize}
-\item $M$ leapfrogs from initial $\theta, \rho$ to U-turn; $p(L \mid
+\item $M$ leapfrogs \myemph{from initial} $\theta, \rho$ to U-turn; $p(L \mid
   \theta, \rho) = \textrm{uniform}(L \mid 1, M)$;
   % $\theta^*, \rho^* = \Phi^{L}_{\epsilon, \Sigma}(\theta, \rho)$
-\item $N$ leapfrogs from proposal $\theta^*, -\rho^*$ to U-turn; $p(L
+\item $N$ leapfrogs \myemph{from proposal} $\theta^*, -\rho^*$ to U-turn; $p(L
   \mid \theta^*, -\rho^*) = \textrm{uniform}(L \mid 1, N)$
 \item \myemph{Metropolis-Hastings accept}: $\frac{\displaystyle p(\theta^*, -\rho^*) \cdot \textrm{uniform}(L \mid
     1, M)}{\displaystyle p(\theta, \rho) \cdot
@@ -453,15 +458,17 @@ where $N = U(\pos{\theta}{0}, \pos{\rho}{0}) - 1$
   = \frac{\displaystyle p(\theta^*, -\rho^*) \cdot N}
   {\displaystyle p(\theta, \rho) \cdot M}$
 \item Ratio of $p(\theta^*, \rho^*) / p(\theta, \rho) = 1$ if
-  Hamiltonian dynamics perfect
+  \myemph{Hamiltonian dynamics perfect}
   \begin{subitemize}
   \item will vary with leapfrog
-  \item typically $< 1$ due to leapfrog, but can be $> 1$
+  \item \myemph{most steps} $< 1$ with decently large step size
   \end{subitemize}
 \item Ratio of $N / M$ depends on how balanced U-turns are
   \begin{subitemize}
-    \item very well behaved in standard normal ($M \approx N$)
-    \item more variable with variable curvature
+    \item very well behaved with constant curvature (e.g., w.\ std.\
+      normal, $M \approx N$)
+    \item more variable with varying curvature (i.e, non-constant log
+      density Hessian)
     \end{subitemize}
 \end{itemize}
 
@@ -471,7 +478,8 @@ where $N = U(\pos{\theta}{0}, \pos{\rho}{0}) - 1$
   $\mathbb{E}[\theta^2]$ for \myemph{{\slshape\bfseries long}\, chains}.
 % \item For example, standard \myemph{HMC asymptotes on funnels} as it can't 
 % sample multiscale well. 
-\item \myemph{1M iterations} of \myemph{100D std.\ normal}; \myemph{dashed is CLT} $\textrm{sd} / \sqrt{N}$.
+\item \myemph{1M iterations} of 100D std.\ normal; \myemph{dashed is
+    CLT} $\textrm{se} = \textrm{sd} / \sqrt{N}$.
 \end{itemize}
 \begin{center}
   \includegraphics[width=3in]{img/learning_curve_uniform_full_100D.pdf}
@@ -482,7 +490,7 @@ where $N = U(\pos{\theta}{0}, \pos{\rho}{0}) - 1$
 \item Simple GIST generalizes to \myemph{initial exclusion fraction} $\psi \in 
     (0, 1)$:
 $$p(n \mid \pos{\theta}{0}, \pos{\rho}{0}) = \textrm{uniform}(n \mid 
-\textrm{max}(1, \lceil \psi \cdot  N \rceil), \ N).$$
+1 \vee \lceil \psi \cdot  N \rceil, \ N).$$
 \item Must balance \myemph{longer accepted paths} with \myemph{more rejections} from \myemph{irreversibility}
   (zero return probability)
 \item \myemph{AAPS} biases \myemph{longer jumps} using clever weighting
@@ -492,7 +500,7 @@ $$p(n \mid \pos{\theta}{0}, \pos{\rho}{0}) = \textrm{uniform}(n \mid
     \item GIST compatible, so \myemph{our engineers} (i.e., me) are evaluating
     \end{subitemize}
 \item Revised \myemph{NUTS} (Betancourt 2017) 
-  biases by \myemph{up weighting second half}.
+  biases by \myemph{up-weighting second half}.
 \end{itemize}
 
 \sld{Evaluation metrics}
@@ -501,7 +509,9 @@ $$p(n \mid \pos{\theta}{0}, \pos{\rho}{0}) = \textrm{uniform}(n \mid
 \item \myemph{Mean square jump distance} (MSJD) (higher is better for
   $\mathbb{E}[\theta]$)
 \begin{subitemize}
-\item $\displaystyle \textrm{MSJD} = \textrm{mean}_{i < N} \, \left(\pos{\theta}{i + 1} - \pos{\theta}{i}\right)^2$
+\item $\displaystyle \textrm{MSJD} = \textrm{mean}_{i < N} \,
+  \left(\pos{\theta}{i + 1} - \pos{\theta}{i}\right)^2$ \hfill (inversely
+  related to lag-1 autocorr)
 \end{subitemize}
 \item \myemph{No return} is number of irreversible paths due to
   \myemph{premature U-turns} (including path fraction).
@@ -518,7 +528,7 @@ $$p(n \mid \pos{\theta}{0}, \pos{\rho}{0}) = \textrm{uniform}(n \mid
   \end{subitemize}
 \end{itemize}
 
-\sld{How does it work? (500 dim std.\ normal)}
+\sld{How does it work?\hfill (500 dim std.\ normal)}
 \vspace*{-9pt}
 \begin{center}
   \includegraphics[width=3.9in]{img/uniform_prob_steps_plot.pdf}
@@ -564,26 +574,27 @@ $$
   \includegraphics[width=2.25in]{img/funnel_density_hessian.png}
 \end{center}
   
-\sld{Delayed rejection}
+\sld{Alternative: delayed rejection HMC}
 \begin{itemize}
 \item I've been working on this problem for \myemph{three years}
 \item \myemph{Delayed rejection HMC} w. Chirag
   Modi, Alex Barnett ({\slshape Bayesian Analysis})
   \begin{subitemize}
   \item if proposal \myemph{fails, try again} with smaller step size
-  \item requires ``ghost proposals'' for balance, which are \myemph{costly}
+  \item requires matching ``ghost proposals'' for balance, which are \myemph{costly}
+    \end{subitemize}
 \item \myemph{Delayed rejection generalized HMC} w.\ Gilad
       Turok, Chirag Modi ({\slshape NeurIPS} submission)
     \item \myemph{DR works}, but \myemph{costly and complicated} and not clear how
       to generalize.
-    \item G-HMC \myemph{tunes locally}; haven't had time for GIST
-      G-HMC
-    \end{subitemize}
+    \item G-HMC \myemph{tunes locally}
+      \item Chirag's exploring \myemph{combining GIST
+      \& DR-G-HMC}
 \end{itemize}
 
 \sld{Tuning step size with GIST}
 \begin{itemize}
-\item \myemph{Fix} integration time $T$, mass matrix $\Sigma$
+\item \myemph{Fix} integration time $T \in (0, \infty)$, mass matrix $\Sigma$
 \item \myemph{Each iteration}, \myemph{find minimum} $N \in \{ 1, 2, 3, 4, 6, 
   8, 11, 16, 22, 32, \ldots \}$ (i.e., $\sqrt{2}^n$) s.t. with $N$ leapfrog 
   steps of size $\epsilon = T / N$, Hamiltonian \myemph{error is bounded}
@@ -598,19 +609,19 @@ $$
   $$
   H^{\textrm{min}} = \textrm{arg min}_n \ H \circ \Phi^{n}_{\epsilon,\Sigma}(\pos{\theta}{n}, \pos{\rho}{n}) 
   $$
-\item \myemph{Sample step size} $N \sim \textrm{poisson}(L)$ (perhaps use
+\item \myemph{Sample step size} $N \sim \textrm{poisson}(L)$ \hfill (perhaps use
   more dispersed?)
 \end{itemize}
 
 \sld{Step size and number of steps adaptation?}
 \begin{itemize}
-\item Idea: it \myemph{step size in outer loop} and \myemph{number of steps} in
-  inner loop
+\item Idea: set \myemph{step size in outer loop} and \myemph{number of steps} in
+  inner loop, then randomize
   \begin{subitemize}
     \item i.e., find max stepsize $\epsilon$ such that trajectory to
       U-turn has bounded error
   \end{subitemize}
-\item Nawaf Bou-Rabee has done the \myemph{preliminary work} and it \myemph{appears to work}
+\item Nawaf Bou-Rabee has a \myemph{prototype implementation} and it \myemph{appears to work}
 \end{itemize}
 
 \sld{GIST fits the tails of the funnel}
@@ -638,26 +649,26 @@ $$
 \end{subitemize}
 \item Trick will be making this \myemph{``implicit''} to use more than
   initial position.
-\item Haven't evaluated yet. 
+\item \myemph{Haven't evaluated} yet. 
 \end{itemize}
 
 \sld{What's next}
 \begin{itemize}
-\item One GIST sampler to rule them all that
+\item \myemph{One GIST sampler to rule them all}, which
 \begin{subitemize}
-\item locally adapts step size (stability condition)
-\item locally adapts number of steps (no-U-turn condition)
-\item locally adapts mass matrix (wide open)
-\item uses generalized HMC (for per-step adaptation) 
+\item locally adapts \myemph{step size} (stability condition)
+\item locally adapts \myemph{number of steps} (no-U-turn condition)
+\item locally adapts \myemph{mass matrix} (wide open)
+\item uses \myemph{generalized HMC} (for per-step adaptation) 
 \end{subitemize}
 \end{itemize}
   
 \sld{\textit{arXiv} paper;\, public GitHub}
 \begin{itemize}
-\item Nawaf Bou-Rabee, Milo Marsden, and Bob Carpenter. 2024. GIST: Gibbs
+\item Nawaf Bou-Rabee, Milo Marsden, and Bob Carpenter. 2024. \myemph{GIST: Gibbs
 self-tuning for locally adaptive Hamiltonian Monte
-Carlo. \textit{arXiv} 2404.15253.
-\item GitHub: \url{https://github.com/bob-carpenter/adaptive-hmc}
+Carlo}. \textit{arXiv} 2404.15253.
+\item GitHub: \texttt{https://github.com/bob-carpenter/\myemph{adaptive-hmc}}
 \vfill
 \item We would \myemph{appreciate feedback} on paper and
   Python code \myemph{before journal submission}.
