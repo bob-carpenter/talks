@@ -1,7 +1,6 @@
 \newcommand{\mathbb}[1]{{\mathbf{#1}}}
 
-
-
+\usepackage{sourcecodepro}
 % \usepackage{fontspec}
 %\setmainfont[Ligatures=TeX]{LucidaBright}
 % \setsansfont{Optima} % LucidaSans
@@ -18,18 +17,10 @@
 % \newfontfamily\handfont{LucidaHandwriting}
 
 
-\IfFileExists{lucimatx.sty}{
-  % ----- if Lucida availalable------------------
-  \usepackage[
-    scale=0.875,
-    stdmathitalics=true,
-    stdmathdigits=true]{lucimatx}
- \linespread{1.02}
-}{
   % ------ if Lucida not available --------------
-  \usepackage{times}
+  \usepackage{mathpazo}
   \usepackage{amssymb}
-}
+
 % \usepackage{helvet}
 
 
@@ -44,11 +35,11 @@
 
 
 \setlength{\paperheight}{3in}
-\setlength{\paperwidth}{4in}
+\setlength{\paperwidth}{5.33in}
 \pdfpagewidth=\paperwidth
 \pdfpageheight=\paperheight
 
-\setlength{\textwidth}{3.75in}
+\setlength{\textwidth}{4.75in}
 \setlength{\textheight}{2.5in}
 
 \setlength{\oddsidemargin}{-1.0in}
@@ -86,6 +77,9 @@
 
 \newenvironment{subitemize}{\vspace*{-4pt}\begin{itemize}\small}{\end{itemize}}
 \newenvironment{subsubitemize}{\begin{itemize}\footnotesize}{\end{itemize}}
+\newcommand{\subit}[1]{\begin{subitemize} \item #1 \end{subitemize}}
+\newcommand{\subsubit}[1]{\begin{subsubitemize} \item #1 \end{subsubitemize}}
+
 \DefineVerbatimEnvironment{stancode}{Verbatim}{fontsize=\footnotesize,xleftmargin=0.225in}
 \DefineVerbatimEnvironment{codeout}{Verbatim}{fontsize=\footnotesize,fontshape=sl,xleftmargin=0.225in}
 \DefineVerbatimEnvironment{codein}{Verbatim}{fontsize=\footnotesize,xleftmargin=0.225in}
@@ -93,7 +87,8 @@
 \newcommand{\bigoh}[1]{{\mathcal{O}}(#1)}
 \newcommand{\distro}[1]{\text{\sf #1}}
 \newcommand{\Prob}[1]{\text{\sf Pr}[#1]}
-\newcommand{\range}[2]{#1{:}#2}
+\newcommand{\range}[2]{#1\text{:}#2}
+\newcommand{\rangeto}[1]{\range{1}{#1}}
 \newcommand{\setcomp}[1]{\{ #1 \}}
 \newcommand{\argmax}{\mbox{arg\,max}}
 \newcommand{\argmin}{\mbox{arg\,min}}

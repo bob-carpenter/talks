@@ -1,0 +1,587 @@
+\documentclass[10pt]{report}
+
+\usepackage{talks}
+\newcommand{\expect}[1]{\mathbb{E}\!\left[ #1 \right]}
+\newcommand{\reals}{\mathbb{R}}
+\newcommand{\draw}[2]{#1^{(#2)}}
+\usepackage{mathpazo}
+\usepackage{sourcecodepro}
+\usepackage{tikz}
+  \usetikzlibrary{arrows.meta, angles, quotes, calc, positioning, shapes}
+\renewcommand{\baselinestretch}{1.05}
+\newcommand{\ddfrac}[2]{\frac{\strut \displaystyle #1}{\strut \displaystyle #2}}
+\newcommand{\pos}[2]{#1^{(#2)}}
+
+\begin{document}
+
+\sf
+\mbox{ } \\
+\spc{\LARGE\bfseries \color{MidnightBlue}{GIST:}}
+\\[4pt]
+\spc{\Large\bfseries \color{MidnightBlue}{Gibbs self-tuning
+    Hamiltonian Monte Carlo}}
+\\[12pt]
+\noindent 
+\spc{\large\bfseries \color{MidnightBlue}{Bob Carpenter}}
+\\[2pt]
+\spc{\small Center for Computational Mathematics}
+\\[-1pt]
+\spc{\small Flatiron Institute}
+\\[2pt]
+\spc{\footnotesize \url{bcarpenter@flatironinstitute.org}}
+\\[12pt]
+\spc{\small Joint work with Nawaf Bou-Rabee (Rutgers), Milo Marsden
+  (Stanford),}
+\\
+\spc{\small Tore Kleppe (Stavanger), and Edward Roualdes (Cal State)}
+\noindent
+\\
+\vfill
+\noindent\spc{\footnotesize June 2024 \qquad UCL Worskhop}
+\hfill
+\includegraphics[width=1.25in]{img/flatiron-logo.png}
+
+\sld{Where are we going?}
+\begin{itemize}
+\item A new {framework} for
+  \myemph{locally tuning} Hamiltonian Monte Carlo (HMC)
+  \begin{subitemize}
+    \item (a) {number of steps}, (b) {step size}, (c) {mass matrix}
+    \end{subitemize}
+\item \myemph{Tuning parameters} are \myemph{Gibbs sampled} given
+  position and momentum.
+\item Metropolis-within-Gibbs \myemph{accept probability} adjusted for balance.
+\item Non-Markovian \myemph{warmup not required}
+\begin{subitemize}
+\item still \myemph{need burn in} to find bulk of probability mass
+\end{subitemize}
+\item \myemph{Simplifies proofs} of correctness for instances
+  \begin{subitemize}
+    \item e.g., randomized HMC, NUTS (original \& revised), multinomial HMC,
+      apogee-to-apogee, etc.
+  \end{subitemize}
+\item Suggests \myemph{new locally adaptive} samplers
+\end{itemize}
+
+\sld{Hamiltonian dynamics}
+\begin{itemize}
+\item \myemph{Auxiliary variable}: couple \myemph{momentum} $\rho \in
+  \mathbb{R}^D$ with \myemph{position} $\theta \in \mathbb{R}^D$
+\item \myemph{Potential energy}: $U(\theta) = -\log p(\theta \mid y)$
+\item \myemph{Kinetic energy}: $K(\rho) = -\log \textrm{normal}(\rho
+  \mid 0, \Sigma) = -\frac{1}{2} \cdot \rho^{\top} \cdot \Sigma^{-1} \cdot
+  \rho + \textrm{const.}$
+\item \myemph{Hamiltonian}: $H(\theta, \rho) = U(\theta) + K(\rho)$
+\item \myemph{Dynamics} (time-independent):
+  $$
+  \nabla_\theta \, H(\theta, \rho) = \rho
+  \qquad
+  \nabla_\rho \, H(\theta, \rho) = -\nabla_{\theta} \, \log
+  p(\theta \mid y)
+  $$
+\item These ordinary differential equations (ODE) can be \myemph{solved numerically}.
+\end{itemize}
+
+\sld{Leapfrog algorithm: $\Phi_{\epsilon, \Sigma}$}
+\begin{itemize}
+\item \myemph{Explicit solver} for Hamiltonian dynamics.
+\item \myemph{Given} log density $\log p(\theta)$, step size
+  $\epsilon$, positive definite mass matrix $\Sigma$, 
+\item \myemph{Leapfrog step}: $\Phi_{\epsilon, \Sigma}(\theta, \rho) = \theta'', \rho''$, where
+  \begin{subitemize}
+    \item a. $\rho' = \rho + \nabla \log p(\theta \mid y)$
+    \item b. $\theta'' = \theta + \Sigma^{-1} \cdot \rho'$
+    \item c. $\rho'' = \rho' + \nabla \log p(\theta' \mid y)$
+    \end{subitemize}
+\item \myemph{Multiple steps}: $\Phi^0_{\epsilon, \Sigma}$ is the
+  identity; \quad $\Phi^{t + 1}_{\epsilon, \Sigma} = \Phi^t_{\epsilon,\Sigma} \circ
+  \Phi_{\epsilon,\Sigma}$
+\item \myemph{Error}: one-step $\mathcal{O}(\epsilon^3)$, more than
+  one step $\mathcal{O}(\epsilon^2)$
+\end{itemize}
+
+\sld{HMC Markov transition}
+\begin{itemize}
+\item \myemph{Input}:
+  \begin{subitemize}
+  \item {position} $\theta$
+  \item {step size} $\epsilon > 0,$
+  \item {number of steps} $T \in \mathbb{N}$
+  \item {mass matrix} $\Sigma$ (symmetric positive definite)
+  \end{subitemize}
+\item \myemph{Refresh momentum}: Gibbs sample $\rho \sim \textrm{normal}(0, \Sigma)$
+\item \myemph{Simulate dynamics}:  Let $\theta^*, \rho^* = \Phi_{\epsilon,\Sigma}^T(\theta, \rho)$
+\item \myemph{Metropolize}: Return $\theta^*$ if $\textrm{uniform}(0, 1) <
+  \dfrac{p(\theta^*, \rho^*)}
+       {p(\theta, \rho)}$ else return $\theta$
+\end{itemize}
+
+\sld{HMC tuning hard: 1000D standard normal}
+\begin{subitemize}
+\item step size ($x$-axis) vs.\ ESS $y$-axis; HMC (top), randomized
+  steps HMC (bottom), NUTS (dashed); 
+  4/16/64 steps (facets); $\mathbb{E}[\theta]$ (blue) and
+  $\mathbb{E}[\theta^2]$ (red)
+\end{subitemize}
+\vspace*{-3pt}
+\begin{center}
+  \includegraphics[width=2.6in]{img/hmc-harmonics.png}
+\end{center}
+
+\sld{Gibbs self tuning (GIST)}
+\begin{itemize}
+\item \myemph{Couple tuning} parameters $\alpha$ (step
+  size, number of steps, mass matrix)
+\item \myemph{Free choice} of conditional tuning-parameter distribution $p(\alpha \mid \theta, \rho)$
+\item Each iteration, \myemph{Gibbs sample} $\alpha^* \sim p( \cdot \mid \theta,
+  \rho)$
+\item \myemph{Propose} $\theta^*, \rho^* = \Phi^{T^*}_{\epsilon^*,
+    \Sigma^*}(\theta, \rho)$ given $\alpha^* = \epsilon^*,
+  \Sigma^*, T^*$
+\item Metropolis-Hastings (within Gibbs) \myemph{accept probability}:
+  $$
+  1 \wedge
+  \dfrac{p(\theta^*, \rho^*)}
+  {p(\theta, \rho)}
+  \cdot
+  \dfrac{p(\alpha^* \mid \theta^*, \rho^*)}
+       {p(\alpha^* \mid \theta, \rho)}
+       $$
+\item Easy to show \myemph{detailed balance}.
+\end{itemize}
+
+\sld{Randomized HMC is GIST}
+\begin{itemize}
+\item HMC works with \myemph{randomized tuning} (e.g., steps $L$ or
+  step size $\epsilon$)
+\item Other tuning parameters are fixed (i.e., delta function distributions)
+\item \myemph{Randomizing} step size or number of steps \myemph{removes
+    harmonics} that plague HMC with fixed step size and steps, e.g.,
+  $$p(L \mid \theta, \rho) = \textrm{uniform}(L \mid 1, N).$$
+\item If tuning parameter distribution does \myemph{not depend on position or
+  momentum}, then $p(\alpha^* \mid \theta, \rho) = p(\alpha^* \mid \theta^*,
+  \rho^*)$, and thus
+  $$
+  1 \wedge
+  \dfrac{p(\theta^*, \rho^*)}
+       {p(\theta, \rho)}
+  \cdot
+  \dfrac{p(\alpha^* \mid \theta^*, \rho^*)}
+       {p(\alpha^* \mid \theta, \rho)}
+       =
+       1 \wedge
+       \dfrac{p(\theta^*, \rho^*)}{p(\theta, \rho)}
+  $$       
+\end{itemize}
+
+\sld{Multinomial HMC is GIST}
+\begin{itemize}
+\item Multinomial HMC fixes \myemph{steps} $L$, step size
+  $\epsilon$, mass matrix $\Sigma$.
+\item Each iteration, take $F \sim \textrm{uniform}(0, L)$ \myemph{forward
+    steps} and $B = L - F$ \myemph{backward steps}.
+  \begin{subitemize}
+  \item Let $\Phi^{-t}_{\epsilon, \Sigma}(\rho, \tau)
+    = \Phi^{t}_{\epsilon, \Sigma}(\rho, -\tau)$ (i.e., \myemph{flip
+      momentum})
+    \end{subitemize}
+  \item \myemph{Generate number of steps} with probability
+    $$p(t) \propto p(\theta(t), \rho(t))$$ from
+    candidates  $\theta(t), \rho(t) = \Phi^t_{\epsilon,
+      \Sigma}(\theta, \rho)$, where $t \in \{ -B, -B + 1, \ldots, 0, 1, \ldots, F \}$
+\item The GIST \myemph{acceptance probability is 100\%}!
+\end{itemize}
+
+\sld{Proof of multinomial 100\% acceptance}
+\begin{itemize}
+\item Without loss of generality, \myemph{assume} $F + B = L$ and selected $n > 0$
+\item GIST \myemph{acceptance probability} is
+  $\frac{p(\theta(n),\,   \rho(n))}
+        {p(\pos{\theta}{0},\, \pos{\rho}{0})}
+   \cdot
+   \frac{p(n \, \mid \, \theta(n),\, -\rho(n))}
+        {p(n \, \mid \, \pos{\theta}{0},\, \pos{\rho}{0})}$
+      \item Length $L$ trajectories from 0 to $n$ same
+        as $n$ to 0, hence
+        \begin{subitemize}
+          \item $p(n \mid \pos{\theta}{0}, \pos{\rho}{0}) = \sum_{i=L-n}^0 
+  \frac{p(\theta(n),\, \rho(n))}
+  {\sum_{j=i}^{i + L} p(\theta(j),\, \rho(j))}$
+\item  $p(n \mid \theta(n),\, -\rho(n)) = \sum_{i=L-n}^0 
+  \frac{p(\pos{\theta}{0},\, \pos{\rho}{0})}
+  {\sum_{j=i}^{i + L} p(\theta(j),\, \rho(j))}$
+\end{subitemize}
+\item The \myemph{correction} for detailed balance reduces to
+$\frac{p(n \, \mid \, \theta(n),\, -\rho(n))}
+      {p(n \, \mid \, \theta(n),\, \rho(n))}
+      = \frac{p(\pos{\theta}{0},\, \pos{\rho}{0})}
+      {p(\theta(n),\, \rho(n))}$
+\item Inverse of Metropolis, so \myemph{acceptance is 100\%}!
+\end{itemize}
+
+% \sld{Multinomial path similarity illustration}
+% \begin{itemize}
+% \item Trajectories \myemph{starting at $0$} and \myemph{including $N$}
+% \end{itemize}
+% \begin{verbatim}
+%      F = L,   B = 0:             0 ... N ...        L
+
+%      F = L-1, B = 1:          -1 0 ... N ... (L-1)
+
+%         .                           .
+%         .                           .
+%         .                           .
+
+%      F = N, B = L-N:  -(L-N) ... 0 ... N
+% \end{verbatim}
+% \begin{itemize}
+% \item are \myemph{identical} to trajectories \myemph{starting at $N$}
+%   and \myemph{including $0$} (flip F \& B)
+% \end{itemize}
+
+\sld{NUTS, AAPS, and autoMALA are GIST samplers}
+\begin{itemize}
+\item The \myemph{no-U-turn sampler} (NUTS) is a GIST sampler.
+\item The \myemph{apogee-to-apogee path
+    sampler} (AAPS) is a GIST sampler.
+\item Cast as conditional \myemph{distributions on number of steps} given
+  current position and momentum with a \myemph{multinomial acceptance}.
+\item There are detailed \myemph{proofs in the paper}.
+\item The \myemph{autoMALA sampler} is a GIST sampler for step size. 
+\end{itemize}
+
+\sld{NUTS's U-turn condition}
+\begin{center}
+$$\textrm{UT}(\pos{\theta}{0}, \pos{\rho}{0}) = \textrm{arg min}_t  (\pos{\theta}{t} -
+  \pos{\theta}{0})^{\top} \cdot \pos{\rho}{t} < 0$$
+\begin{tikzpicture}[>=Stealth]
+  % Define points along the arc
+  \coordinate (A) at (0,0);
+  \coordinate (B) at (1.5,1.5);
+  \coordinate (C) at (3,0.75);
+  \coordinate (D) at (4.5,2.25); % Second to last point
+  \coordinate (E) at (6,1.5); % Last point
+
+  \node at (A) [below=0.125cm] {$\pos{\theta}{0}$};
+  \node at (B) [above=0cm] {$\pos{\theta}{1}$};
+  \node at (C) [below=0.125cm] {$\pos{\theta}{2}$};
+  \node at (D) [above=0cm] {$\pos{\theta}{3}$};
+  \node at (E) [below=0.125cm] {$\theta^*$};
+
+  % Draw trajectory with arrows
+  \draw[->] (A) -- (B);
+  \draw[->] (B) -- (C);
+  \draw[->] (C) -- (D);
+  \draw[->,style=dashed] (D) -- (E);
+
+  % Place solid circles at discretized positions
+  \foreach \point in {A,B,C,D,E}
+    \fill (\point) circle (2pt);
+
+  % Dotted line from first to second to last point
+  \draw[dotted] (A) -- (D);
+
+  % Auxiliary point for angle calculation
+  % This creates an invisible point extending the dotted line beyond 'D' for angle drawing
+  \coordinate (F) at ($(A)!-1.2!(D)$); % Extend line beyond D for angle marking
+
+  % Arc for angle indication
+  \pic[draw, ->, "$\alpha$", angle eccentricity=1.5, angle radius=0.75cm] {angle = F--D--E};
+\end{tikzpicture}
+\vfill \null
+\end{center}
+
+\sld{Number of steps proposal}
+\begin{itemize}
+  \item Non-zero steps distributed \myemph{uniformly up to U-turn}
+$$p(n \mid \pos{\theta}{0}, \pos{\rho}{0}) = \textrm{uniform}(n \mid 1, N),$$
+where $N = \textrm{UT}(\pos{\theta}{0}, \pos{\rho}{0}) - 1$
+    \begin{subitemize}
+    \item \myemph{excludes initial} point and \myemph{excludes U-turn} point
+    \item unlike multinomial, (revised multinomial) NUTS, and AAPS, only \myemph{proposes forward in time}
+    \end{subitemize}
+\end{itemize}
+
+% where $(\pos{\theta}{n}\!, \pos{\rho}{n}) = \Phi_h^n(\theta, \rho)$. 
+
+\sld{Sketch of leapfrogs per iteration (still go back)}
+  \begin{center}
+\begin{tikzpicture}[node distance=1cm and 0.5cm]
+    % Top row nodes
+    \node[circle,draw,minimum size=1cm] (LM) {\footnotesize $L{-}N$};
+    \node[minimum size=1cm,right of=LM] (dots1) {$\cdots$};
+    \node[circle,draw,minimum size=1cm,right of=dots1] (0) {$0$};
+    \node[minimum size=1cm,right of=0] (dots2) {$\cdots$};
+    \node[circle,draw,minimum size=1cm,right of=dots2] (L) {$L$};
+    \node[minimum size=1cm,right of=L] (dots3) {$\cdots$};
+    \node[circle,draw,minimum size=1cm,right of=dots3] (N) {$M$};
+    
+    % 2nd row nodes
+    \node[below = 0.05cm of LM] (n_a1) {$\strut$};
+    \node[below = 0.05cm of 0] (theta_rho) {$\strut (\theta, \rho)$};
+    \node[below = 0.05cm of L] (theta_rho_star) {$\strut (\theta^*, \rho^*)$};
+    \node[below = 0.05cm of N] (n_a2) {$\strut$};
+
+    
+    % 3rd row arrow
+    \node[below = -0.25cm of n_a1] (n_a3) {$\strut$};
+    \node[below = -0.25cm of theta_rho] (start_arrow2) {$\strut$};
+    \node[below = -0.25cm of theta_rho_star] (n_a4) {$\strut$};
+    \node[below = -0.25cm  of n_a2] (end_arrow2) {$\strut$};
+    \draw[->, line width=1pt] (start_arrow2) -- (end_arrow2) node[midway, below] {$M = \textrm{UT}(\theta, \rho)$};
+    
+    % 4th row arrow
+    \node[below = 0.05cm of n_a4] (start_arrow1) {$\strut$};
+    \node[below = 0.05cm of n_a3] (end_arrow1) {$\strut$};
+    \draw[->, line width=1pt] (start_arrow1) -- (end_arrow1) node[midway, below] {$N = \textrm{UT}(\theta^*, \rho^*)$};
+\end{tikzpicture}
+\end{center}
+\vspace*{-8pt}
+\begin{subitemize}
+\item $M$ leapfrogs \myemph{from initial} $\theta, \rho$ to U-turn; $p(L \mid
+  \theta, \rho) = \textrm{uniform}(L \mid 1, M)$;
+  % $\theta^*, \rho^* = \Phi^{L}_{\epsilon, \Sigma}(\theta, \rho)$
+\item $N$ leapfrogs \myemph{from proposal} $\theta^*, -\rho^*$ to U-turn; $p(L
+  \mid \theta^*, -\rho^*) = \textrm{uniform}(L \mid 1, N)$
+\item \myemph{Metropolis-Hastings accept}:
+  $\dfrac{p(\theta^*, -\rho^*) \cdot \textrm{uniform}(L \mid1, M)}
+          {p(\theta, \rho) \cdot \textrm{uniform}(L \mid 1, N)}
+  = \dfrac{p(\theta^*, -\rho^*) \cdot N}
+          {p(\theta, \rho) \cdot M}$
+\end{subitemize}
+
+\sld{Acceptance probability breakdown}
+\begin{itemize}
+\item \myemph{Metropolis-Hastings}: $\dfrac{p(\theta^*, -\rho^*) \cdot \textrm{uniform}(L \mid
+    1, M)}{p(\theta, \rho) \cdot
+    \textrm{uniform}(L \mid 1, N)}
+  = \dfrac{p(\theta^*, -\rho^*) \cdot N}
+  {p(\theta, \rho) \cdot M}$
+\item Ratio of $p(\theta^*, \rho^*) / p(\theta, \rho) = 1$ if
+  \myemph{Hamiltonian dynamics perfect}
+  \begin{subitemize}
+  \item will vary with leapfrog discretization
+  \item \myemph{most steps} $< 1$ with decently large step size
+  \end{subitemize}
+\item Ratio of $N / M$ depends on how \myemph{balanced U-turns} are
+  \begin{subitemize}
+    \item very well behaved with constant curvature (e.g., w.\ std.\
+      normal, $M \approx N$)
+    \item more variable with varying curvature (i.e, non-constant log
+      density Hessian)
+    \end{subitemize}
+\end{itemize}
+
+\sld{``Learning curve'' unit test}
+\begin{itemize}
+\item I like to plot \myemph{estimation error} for $\mathbb{E}[\theta]$ and
+  $\mathbb{E}[\theta^2]$ for \myemph{{\slshape\bfseries long}\, chains}.
+% \item For example, standard \myemph{HMC asymptotes on funnels} as it can't 
+% sample multiscale well. 
+\item \myemph{1M iterations} of 100D std.\ normal; \myemph{dashed is
+    CLT} $\textrm{se} = \textrm{sd} / \sqrt{N}$.
+\end{itemize}
+\begin{center}
+  \includegraphics[width=3in]{img/learning_curve_uniform_full_100D.pdf}
+\end{center}
+
+\sld{Encouraging longer jumps}
+\begin{itemize}
+\item Simple GIST generalizes to \myemph{initial exclusion fraction} $\psi \in 
+    (0, 1)$:
+$$p(n \mid \pos{\theta}{0}, \pos{\rho}{0}) = \textrm{uniform}(n \mid 
+1 \vee \lceil \psi \cdot  N \rceil, \ N).$$
+\item Balance \myemph{longer accepted paths} with \myemph{more rejections} from \myemph{irreversibility}
+  (zero return probability)
+\vfill
+\item \myemph{AAPS} biases \myemph{longer jumps} using clever weighting
+  (e.g., MSJD).
+  \begin{subitemize}
+%    \item Sam Livingstone pointed out AAPS; always \myemph{talk to everyone}
+    \item GIST compatible, so \myemph{our engineers} (i.e., me) are evaluating
+    \end{subitemize}
+\item Revised \myemph{NUTS} (Betancourt 2017) 
+  biases by \myemph{up-weighting second half}.
+\end{itemize}
+
+\sld{Evaluation metrics}
+\begin{itemize}
+\item Number of \myemph{leapfrog steps} (lower is better)
+\item \myemph{Mean square jump distance} (MSJD) (higher is better for
+  $\mathbb{E}[\theta]$)
+\begin{subitemize}
+\item $\displaystyle \textrm{MSJD} = \textrm{mean}_{i < N} \,
+  \left(\pos{\theta}{i + 1} - \pos{\theta}{i}\right)^2$ \hfill (inversely
+  related to lag-1 autocorr)
+\end{subitemize}
+\item \myemph{No return} is number of irreversible paths due to
+  \myemph{premature U-turns}.
+\item \myemph{Reject} is total Metropolis-Hastings rejections
+  \begin{subitemize}
+    \item includes rejections due to no return and low accept
+      probability
+    \end{subitemize}
+\item Standardized \myemph{Root mean square error} in estimation of
+  $\mathbb{E}[\theta]$ and $\mathbb{E}[\theta^2]$
+  \begin{subitemize}
+  \item root matches \myemph{units} of parameters; standardizing
+    reduces to \myemph{$Z$-scores}
+  \end{subitemize}
+\end{itemize}
+
+\sld{How does it work?\hfill (500D std.\ normal)}
+\vspace*{-9pt}
+\begin{center}
+  \includegraphics[width=3.9in]{img/uniform_prob_steps_plot.pdf}
+\end{center}
+
+\sld{RMSE for parameter estimates (lower better)}
+\vspace*{-9pt}
+\begin{center}
+  \includegraphics[width=0.95\textwidth]{img/vs_NUTS_rmse_param.pdf}
+\end{center}
+
+\sld{RMSE for squared parameter est.\ (lower better)}
+\vspace*{-9pt}
+\begin{center}
+  \includegraphics[width=0.95\textwidth]{img/vs_NUTS_rmse_param_sq.pdf}
+\end{center}
+
+\sld{MSJD (higher better for $\mathbb{E}[\theta]$)}
+\vspace*{-9pt}
+\begin{center}
+  \includegraphics[width=0.95\textwidth]{img/vs_NUTS_MSJD.pdf}
+\end{center}
+
+\sld{Leapfrog steps (lower better)}
+\vspace*{-9pt}
+\begin{center}
+  \includegraphics[width=0.95\textwidth]{img/vs_NUTS_Leapfrog_Steps.pdf}
+\end{center}
+
+\sld{Takeaway message}
+\begin{itemize}
+\item \myemph{Median}: NUTS slightly better than GIST
+\item \myemph{Variation within} systems is \myemph{much greater}
+  than \myemph{difference in medians}
+\end{itemize}
+
+\sld{Neal's funnel and varying curvature}
+\begin{itemize}
+\item \myemph{Neal's funnel} has really \myemph{nasty varying curvature}:
+$$
+    x \sim \textrm{normal}(0, 3)
+\qquad
+y_{1:D-1} \sim \textrm{normal}(0, \exp(x / 2))
+$$
+\item \myemph{Terrible condition} in neck \myemph{and} mouth w. \myemph{rotated eigenvectors}
+\item HMC (including NUTS) with any \myemph{fixed step size fails}
+\end{itemize}
+\begin{center}
+  \includegraphics[width=2.25in]{img/funnel_density_hessian.png}
+\end{center}
+
+\sld{Tuning step size with GIST}
+\begin{itemize}
+\item \myemph{Fix} integration time $T \in (0, \infty)$, mass matrix $\Sigma$
+\item \myemph{Each iteration}, \myemph{find minimum} $N \in \{ 1, 2, 3, 4, 6, 
+  8, 11, 16, 22, 32, \ldots \}$ (i.e., $\sqrt{2}^n$) s.t. with $N$ leapfrog 
+  steps of size $\epsilon = T / N$, Hamiltonian \myemph{error is bounded}
+  to accept probability $ > p$
+  $$
+  N = \textrm{arg min}_n \ H^{\textrm{max}} - H^{\textrm{min}} > \log p, 
+  $$
+  where 
+  $$
+  H^{\textrm{max}} = \textrm{arg max}_n \ H \circ \Phi^{n}_{\epsilon,\Sigma}(\pos{\theta}{n}, \pos{\rho}{n}) 
+  $$
+  $$
+  H^{\textrm{min}} = \textrm{arg min}_n \ H \circ \Phi^{n}_{\epsilon,\Sigma}(\pos{\theta}{n}, \pos{\rho}{n}) 
+  $$
+\item \myemph{Sample steps} $N \sim \textrm{poisson}(L)$ \hfill (perhaps use
+  more dispersed?)
+\end{itemize}
+
+\sld{GIST fits the tails of the funnel}
+\begin{itemize}
+\item Here's a \myemph{histogram of 20K draws} of log scale ($y$); marginal is $\textrm{normal}(0, 3)$
+\end{itemize}
+\begin{center}
+\includegraphics[width=1.5in]{img/funnel-step-size-GIST.png}
+\end{center}
+\begin{itemize}
+\item Learning curve \myemph{unit tests pass}
+\item 1M iteration histogram \myemph{looks perfect} ($\chi$ by eye)
+\end{itemize}
+
+  
+\sld{Alternative: delayed rejection HMC}
+\begin{itemize}
+\item I've been working on this problem for \myemph{three years}
+\item \myemph{Delayed rejection HMC} w. Chirag
+  Modi, Alex Barnett ({\slshape Bayesian Analysis})
+  \begin{subitemize}
+  \item if proposal \myemph{fails, try again} with smaller step size
+  \item requires matching ``ghost proposals'' for balance, which are \myemph{costly}
+    \end{subitemize}
+\item \myemph{Delayed rejection generalized HMC} w.\ Gilad
+      Turok, Chirag Modi ({\slshape NeurIPS} submission)
+    \item \myemph{DR works}, but \myemph{costly and complicated} and not clear how
+      to generalize.
+    \item DR-G-HMC \myemph{tunes locally} within a trajectory and
+      dominates DR-HMC
+      \item Chirag's exploring \myemph{combining GIST \& DR-G-HMC}
+\end{itemize}
+
+
+\sld{Step size and number of steps adaptation?}
+\begin{itemize}
+\item Idea: set \myemph{step size in outer loop} and \myemph{number of steps} in
+  inner loop, then randomize
+  \begin{subitemize}
+    \item i.e., find max stepsize $\epsilon$ such that trajectory to
+      U-turn has bounded error
+  \end{subitemize}
+\item Nawaf Bou-Rabee has a \myemph{prototype implementation} and it \myemph{appears to work}
+\end{itemize}
+
+\sld{Mass matrix adaptation?}
+\begin{itemize}
+\item Use a local (negative inverse) Hessian estimate $M$ as local 
+  mass matrix 
+\begin{subitemize}
+\item perfect pre-conditioner with multivariate normal 
+\end{subitemize}
+\item Randomization: $\Sigma \sim \textrm{invWishart}(M, \nu)$
+\begin{subitemize}
+\item $\nu$ controls concentration around $M$ and hence reversibility 
+\end{subitemize}
+\item Trick will be making this \myemph{``implicit''} to use more than
+  initial position.
+\item \myemph{Haven't evaluated} yet. 
+\end{itemize}
+
+\sld{What's next}
+\begin{itemize}
+\item \myemph{One GIST sampler to rule them all}, which
+\begin{subitemize}
+\item locally adapts \myemph{step size} (stability condition)
+\item locally adapts \myemph{number of steps} (no-U-turn condition)
+\item locally adapts \myemph{mass matrix} (wide open)
+\item uses \myemph{generalized HMC} (for per-step adaptation) 
+\end{subitemize}
+\end{itemize}
+  
+\sld{\textit{arXiv} paper;\, public GitHub}
+\begin{itemize}
+\item Nawaf Bou-Rabee, Milo Marsden, and Bob Carpenter. 2024. \myemph{GIST: Gibbs
+self-tuning for locally adaptive Hamiltonian Monte
+Carlo}. \textit{arXiv} 2404.15253.
+\item GitHub: \texttt{https://github.com/bob-carpenter/\myemph{adaptive-hmc}}
+\vfill
+\item We would \myemph{appreciate feedback} on paper and
+  Python code \myemph{before journal submission}.
+\end{itemize}
+\end{document}
+
+
