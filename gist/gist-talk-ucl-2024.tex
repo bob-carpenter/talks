@@ -89,9 +89,9 @@
   $\epsilon$, positive definite mass matrix $\Sigma$, 
 \item \myemph{Leapfrog step}: $\Phi_{\epsilon, \Sigma}(\theta, \rho) = \theta'', \rho''$, where
   \begin{subitemize}
-    \item a. $\rho' = \rho + \nabla \log p(\theta \mid y)$
-    \item b. $\theta'' = \theta + \Sigma^{-1} \cdot \rho'$
-    \item c. $\rho'' = \rho' + \nabla \log p(\theta' \mid y)$
+    \item a. $\rho' = \rho + \frac{\epsilon}{2} \cdot \nabla \log p(\theta \mid y)$
+    \item b. $\theta'' = \theta + \frac{\epsilon} \cdot \Sigma^{-1} \cdot \rho'$
+    \item c. $\rho'' = \rho' + \frac{\epsilon}{2} \cdot \nabla \log p(\theta' \mid y)$
     \end{subitemize}
 \item \myemph{Multiple steps}: $\Phi^0_{\epsilon, \Sigma}$ is the
   identity; \quad $\Phi^{t + 1}_{\epsilon, \Sigma} = \Phi^t_{\epsilon,\Sigma} \circ
