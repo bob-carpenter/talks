@@ -371,7 +371,7 @@ $\dfrac{p(\pos{\theta}{0},\, \pos{\rho}{0})}
 \item Step size adaptive NUTS is \myemph{suboptimal} in that it
   \begin{subitemize}
   \item uses \myemph{one step size} for \myemph{entire trajectory}
-  \item but \myemph{trajectories vary} in \myemph{scale/curvature}
+  \item but \myemph{trajectories vary} in \myemph{scale/curvature} (e.g., flat mouth, curved neck)
   \end{subitemize}
 \item Fix is to \myemph{adapt} step size \myemph{each leapfrog} step.
   \begin{subitemize}
@@ -381,6 +381,35 @@ $\dfrac{p(\pos{\theta}{0},\, \pos{\rho}{0})}
 \item Restricts \myemph{extra work} (reduced stepsize) to \myemph{where it's needed}
 \item \myemph{Works well} on examples we've tried, even w/o stepsize randomization.
 \item GIST 3 \myemph{paper in the works}.
+\end{itemize}
+
+\sld{Delayed rejection HMC for step size adaptation}
+\begin{itemize}
+\item Use \myemph{delayed rejection} with Hamiltonian Monte Carlo
+  \begin{subitemize}
+  \item if proposal \myemph{rejected}, try again with \myemph{smaller step size}
+  \item use ``ghost states'' in reverse for Metropolis-Hastings adjustment
+  \end{subitemize}
+\item \myemph{Improves delayed rejection} by only retrying if probabilty of \myemph{acceptance is low} (additional balance).
+\item \myemph{Works} for funnel.
+\item We haven't tried \myemph{DR-NUTS}.
+\item {\small Chirag Modi, Alex Barnett, Bob Carpenter. 2024. \myemph{Delayed rejection Hamiltonian Monte Carlo for sampling multiscale distributions}. \textit{Bayesian Analysis} 19(3). {\small arXiv-ed 2021}.}
+\end{itemize}
+
+\sld{Delayed rejection {\slshape generalized} HMC}
+\begin{itemize} 
+\item Delayed rejection for \myemph{generalized HMC} (\myemph{partial momentum refresh})
+  \begin{subitemize}
+  \item G-HMC is diffusive due to \myemph{momentum flip on reject}
+  \item \myemph{alternative fix} for G-HMC to Neal's non-reversible accept
+  \end{subitemize}
+\item \myemph{Outperforms} DR-HMC---\myemph{almost competitive} with NUTS on \myemph{easy problems}.
+  \item Unlike HMC, DR-G-HMC is \myemph{robust to tuning parameters}
+    \begin{subitemize}
+    \item momentum refresh rate, max step size
+    \end{subitemize}
+\item Chirag Modi is \myemph{combining with GIST} (see poster!)
+\item {\small Gilad Turok, Chirag Modi, Bob Carpenter. 2024. \myemph{Sampling from multiscale densities with delayed rejection generalized HMC}. \textit{arXiv}:2406.02741}
 \end{itemize}
 
 \sld{Papers and reproducible code}
