@@ -20,30 +20,39 @@
 \spc{\small Flatiron Institute}
 \vfill 
 \noindent 
-\spc{\footnotesize October 2021}
+\spc{\footnotesize December 2023}
 \hfill 
 \includegraphics[width=1.5in]{img/flatiron_logo.png}
 
 \sld{Pathfinder}
 \begin{itemize}
 \item Lu Zhang, Bob Carpenter, Andrew Gelman, Aki
-  Vehtari. 2021. Pathfinder: Parallel quasi-Newton variational
-  inference. \textit{arXiv} 2108.03782.
-  \begin{subitemize}
-  \item under review at \textit{Journal of Machine Learning Research}
-    \end{subitemize}
+  Vehtari. 2022. Pathfinder: Parallel quasi-Newton variational
+  inference. \textit{JMLR}.
   \item it took about a year and a whole lot of meetings and revisions
     \begin{subitemize}
-    \item Lu did all the heavy lifting and is on the job market in biostats
+    \item Lu did all the heavy lifting
   \end{subitemize}
-\item under development for Stan \hfill (me, Lu, Steve Bronder, Brian Ward)
-\item ported (from R, pseudocode) to Julia and PyMC3 and Lu's talking to Pyro devs
 \end{itemize}
 
-\sld{Design for Stan integration}
+\sld{Available in latest Stan, Turing.jl, etc.}
 \begin{center}
 \includegraphics[width=0.9\textwidth]{img/stan-chalkboard.jpg}
 \end{center}
+
+\sld{Serialization Bottleneck}
+\begin{itemize}
+\item MCMC is \myemph{embarassingly parallelizable}
+  \begin{subitemize}
+  \item \myemph{after warmup}
+    \end{subitemize}
+\item Pathfinder targets \myemph{faster warmup}
+\item \myemph{Reduces variance} of MCMC convergence
+  \begin{subitemize}
+  \item can be an order of magnitude variation
+    \end{subitemize}
+\end{itemize}
+
 
 \sld{Why am I so excited about Pathfinder?}
 \begin{itemize}
