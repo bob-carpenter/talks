@@ -12,7 +12,7 @@
 \sf%
 \mbox{ }
 \\[12pt]
-\spc{\LARGE\bfseries \myemph{Bayesian Workflow:}}
+\spc{\LARGE\bfseries \myemph{\slshape Bayesian Workflow:}}
 \\[4pt]
 \spc{\large\bfseries \myemph{Testing models and inferences}}
 \\[24pt]
@@ -22,11 +22,9 @@
 \spc{\large Center for Computational Mathematics}
 \\[2pt]
 \spc{\large Flatiron Institute}
-\\[2pt]
-\spc{\large New York}
 \vfill
 \noindent
-\spc{\small \myemph{FWAM}, October 2024} \hfill
+\spc{\myemph{FWAM}, October 2024} \hfill
 \includegraphics[width=1.5in]{img/flatiron-logo.png}
 % \mypart{}{Motivation}
 
@@ -61,8 +59,23 @@
   \item \myemph{modifying / improving} models, and
   \item \myemph{deploying} models predictively (prospective or retrospective).
     \vfill
-\end{subitemize}
+  \end{subitemize}
 
+\sld{Doesn't matter {\slshape how}\ you get inference}
+\begin{itemize}
+\item \myemph{Statistics} methods
+\begin{subitemize}
+\item Markov chain Monte Carlo
+\item Sequential Monte Carlo
+\item Variational inference (parametric)
+\end{subitemize}
+\item \myemph{Machine learning} methods
+\begin{subitemize}
+\item Variational inference (normalizing flow, diffusion densities)
+\item Simulation-based inference (emulate likelihood with neural net)
+\item Amortized inference (neural net mapping data to parameter estimates)
+\end{subitemize}
+\end{itemize}
 
 \sld{A workflow chart}
 \begin{center}
