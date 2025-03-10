@@ -125,6 +125,7 @@ f\left( \draw{\theta}{m} \right)
     \item and $\textrm{ESS}$ is the \myemph{effective sample size} of the
       sample (as measured in independent draws).
     \item With HMC, effective sample size can exceed sample size
+    \item assumes truly sampling from posterior!
     \end{subitemize}
 \end{itemize}
 
@@ -162,9 +163,12 @@ f\left( \draw{\theta}{m} \right)
   $$
   A = Q \cdot \textrm{diag}(\lambda) \cdot Q^{-1}
   $$
-  $\lambda$ a $D$-vector of \myemph{eigenvalues}, $Q$ a
-  $D \times D$ orthonormal matrix of \myemph{eigenvectors}
-\item Eigenvalues are \myemph{inverse squared scales} in the direction of the eigenvalues
+  \begin{subitemize}
+  \item $\lambda$ a $D$-vector of \myemph{eigenvalues}, and
+    \item $Q$ a  $D \times D$ orthonormal matrix of
+      \myemph{eigenvectors}
+      \end{subitemize}
+\item Eigenvalues are \myemph{inverse squared scales} in the direction of the eigenvectors
 \end{itemize}
 
 \sld{Positive definiteness and log concavity}
@@ -196,7 +200,7 @@ f\left( \draw{\theta}{m} \right)
     \item \myemph{varying curvature} if its Hessian changes for
       different
     $\theta$, and
-    \item \myemph{varying scale} if its smallest scale changes for
+    \item \myemph{varying scale} if its scale changes for
       different $\theta$.
   \end{subitemize}
 \item Thus \myemph{varying scales require varying step sizes} (for
@@ -219,12 +223,13 @@ f\left( \draw{\theta}{m} \right)
 
 \sld{Neal's funnel has varying curvature and scale}
 \begin{itemize}
-\item Here's a plot of the (rotated) funnel and its condition number
+\item Here's a plot of the (rotated) funnel and its condition at
+  $\alpha = 0$
   vs.\ scale $\beta$
 \item central 95\% interval for constant scale $\beta$---condition
   worsens in tails
 \item Eigenvectors change orientation (biggest along $\beta$ in neck,
-  along $\alpha$ in mouth)
+  along $\alpha_n$ in mouth)
 \end{itemize}
 \begin{center}
   \includegraphics[width=3.25in]{img/funnel-condition.pdf}
@@ -236,7 +241,7 @@ f\left( \draw{\theta}{m} \right)
   \left( \strut p(\theta \mid y) \right)$.
 \item \myemph{Kinetic energy} for momentum $\rho \in \mathbb{R}^D$ is
   $V(\rho) = -\log \left( \strut \textrm{normal}(\rho \mid 0, 1) \right).$
-\item \myemph{Hamiltonian} is sum $H(\theta) = U(\theta) + V(\theta)$
+\item \myemph{Hamiltonian} is sum $H(\theta, \rho) = U(\theta) + V(\rho)$
 \item \myemph{Leapfrog step} for Hamiltonian dynamics w.\
 discretization time $\epsilon > 0$
 \begin{align*}
@@ -247,7 +252,7 @@ discretization time $\epsilon > 0$
   \rho_{t+1} &= \rho_{t + 1/2} - \frac{\epsilon}{2} \cdot \nabla U(\theta)
 \end{align*}
 \item \myemph{Precondition} with pos.\ def.\ metric $\Sigma$ by $V(\rho) =
-  -\log \left( \strut \textrm{normal}(\rho \mid 0, Sigma) \right).$
+  -\log \left( \strut \textrm{normal}(\rho \mid 0, \Sigma) \right).$
 \end{itemize}
 
 \sld{Hamiltonian Monte Carlo \hfill {\small (Duane et al.\ 1987)}}
@@ -374,7 +379,6 @@ discretization time $\epsilon > 0$
   \begin{subitemize}
     \item \myemph{Neck}: step size too big, \myemph{Hamiltonian diverges} and we \myemph{reject}.
     \item \myemph{Mouth}: step size too small, \myemph{diffusion too slow}.
-      explore.
     \item Result is \myemph{biased estimation} of quantities of interest.
     \end{subitemize}
   \item Vertical dashed lines show the left truncation (color = step size)
@@ -393,7 +397,7 @@ discretization time $\epsilon > 0$
 \item Assume first level \myemph{proposal} $F_1$ and second-level $F_2$, and so on
 \item \myemph{First level}: accept $s = F_1(x)$ $\alpha_1(x, s) =
   \textrm{min}\left(1, \ddfrac{p(s)}{p(x)} \right).$
-\item \myemph{Second level}: accept $x \mapsto z$: $\alpha_2(x, y) =
+\item \myemph{Second level}: accept $y = F_2(x)$: $\alpha_2(x, y, s) =
   \textrm{min}\left(1, \ddfrac{p(y)}{p(x)} \ddfrac{1 - \alpha_1(y, g)}{1 -
       \alpha_1(x, s)}
   \right).$

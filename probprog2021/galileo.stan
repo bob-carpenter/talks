@@ -1,5 +1,5 @@
 data {
-  real<lower=0> length, height; 
+  real<lower=0> length, height;
   int<lower=0> N;  vector<lower=0>[N] t_obs;
 }
 transformed data {
