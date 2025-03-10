@@ -7,7 +7,7 @@
  \linespread{1.02}
 }{
   % ------ if Lucida not available --------------
-  \usepackage{times}
+  \usepackage{mathpazo}
   \usepackage{amssymb}
 }
 % \usepackage{helvet}
@@ -22,11 +22,11 @@
 
 
 \setlength{\paperheight}{3in}
-\setlength{\paperwidth}{4in}
+\setlength{\paperwidth}{5.3in}
 \pdfpagewidth=\paperwidth
 \pdfpageheight=\paperheight
 
-\setlength{\textwidth}{3.75in}
+\setlength{\textwidth}{4.75in}
 \setlength{\textheight}{2.5in}
 
 \setlength{\oddsidemargin}{-1.0in}
@@ -64,9 +64,9 @@
 
 \newenvironment{subitemize}{\vspace*{-4pt}\begin{itemize}\small}{\end{itemize}}
 \newenvironment{subsubitemize}{\begin{itemize}\footnotesize}{\end{itemize}}
-\DefineVerbatimEnvironment{stancode}{Verbatim}{fontsize=\footnotesize,xleftmargin=0.225in}
-\DefineVerbatimEnvironment{codeout}{Verbatim}{fontsize=\footnotesize,fontshape=sl,xleftmargin=0.225in}
-\DefineVerbatimEnvironment{codein}{Verbatim}{fontsize=\footnotesize,xleftmargin=0.225in}
+\DefineVerbatimEnvironment{stancode}{Verbatim}{fontsize=\small,xleftmargin=0.225in}
+\DefineVerbatimEnvironment{codeout}{Verbatim}{fontsize=\normalsize,fontshape=sl,xleftmargin=0.225in}
+\DefineVerbatimEnvironment{codein}{Verbatim}{fontsize=\normalsize,xleftmargin=0.225in}
 
 \newcommand{\bigoh}[1]{{\mathcal{O}}(#1)}
 \newcommand{\distro}[1]{\text{\sf #1}}
