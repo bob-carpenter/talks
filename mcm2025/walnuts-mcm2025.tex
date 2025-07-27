@@ -50,20 +50,20 @@
 \item Hamiltonian Monte Carlo (HMC, 1985), a Markov chain Monte
   Carlo (MCMC) method, \myemph{scales well in dimension}.
   \begin{subitemize}
-  \item integrated autocorrelation time: $\mathcal{O}\left(D^{1/4}\right)$
-  \item memory: $\mathcal{O}(D)$)
+  \item \myemph{integrated autocorrelation time}: $\mathcal{O}\left(D^{1/4}\right)$
+   \qquad \myemph{memory}: $\mathcal{O}(D)$
   \item Hamiltonian \myemph{gradient flow} overcomes diffusive random walk behavior.
   \end{subitemize}
 \item Why wasn't HMC in wide use until the \myemph{no-U-turn sampler}
   (NUTS, 2012)?
+  \vspace*{-8pt}
   \begin{subitemize}
-  \item NUTS is fundamental to every probabilistic and differentiable
-    programming language: Stan, PyMC, NumPyro, Turing.jl, Blackjax, NIMBLE, ADMB, etc.
+  \item NUTS in Stan, PyMC, NumPyro, Turing.jl, Blackjax, NIMBLE, ADMB, etc.
   \end{subitemize}
   \vfill
-\item A double whammy:
+\item \myemph{Double whammy}:
   \begin{subitemize}
-  \item HMC is hard to tune; NUTS brought \myemph{self tuning}.
+  \item HMC is hard to tune; NUTS brought \myemph{self tuning} and \myemph{general software}.
   \item gradients are hard for applications; \myemph{automatic differentiation} makes it easy.
   \end{subitemize}
 \end{itemize}
@@ -104,28 +104,46 @@
   \begin{subitemize}
   \item \myemph{Target}: 1000-dim standard normal
   \item \myemph{y-axis} (log):  ESS; \\ \myemph{x-axis}: step size
-  \item \myemph{red}: $\mathbb{E}[\Theta]$; \\ \myemph{blue}:
+  \item \myemph{blue}: $\mathbb{E}[\Theta]$; \\ \myemph{red}:
     $\mathbb{E}[\Theta^2]$
   \item \myemph{top}: HMC; \\ \myemph{bottom}: jittered time HMC
   \item \myemph{solid}:~HMC,\\ \myemph{dashed}: NUTS
   \end{subitemize}
 \end{minipage}
 
+\sld{Leapfrog integrator simulates trajectories}
+\begin{itemize}
+\item \myemph{Leapfrog step} from $(\theta(t), \rho(t))$ with step $\epsilon$, mass $M$
+  \begin{eqnarray*}
+    \rho(t + 1/2) & = & \rho(t) + \epsilon / 2 \cdot \nabla \log p(\theta(t))
+    \\[4pt]
+    \theta(t+1) & = & \theta(t) + \epsilon \cdot M^{-1} \cdot \rho(t + 1/2)
+    \\[4pt]
+    \rho(t + 1) & = & \rho(t + 1/2) + \epsilon / 2 \cdot \nabla \log p(\theta(t + 1)) 
+  \end{eqnarray*}
+\item \myemph{Stabilty} (i.e., preserving Hamiltonian)
+  \begin{subitemize}
+  \item \myemph{stable}: if $\epsilon < 2 / \sqrt{\lambda^\text{max}}$, where $\lambda^\textrm{max}$ is max eigenvalue of $\nabla \nabla^\top -\log p(\theta)$
+  \item \myemph{local error}:  $\mathcal{O}(\epsilon^3)$
+  \item \myemph{global error}: $\mathcal{O}(\epsilon^2)$
+  \item $\epsilon < 1$ implies $\mathcal{O}(\epsilon^3) < \mathcal{O}(\epsilon^2)$
+  \end{subitemize}
+\end{itemize}
+
 \sld{Multinomial HMC}
 \begin{itemize}
 \item \myemph{Each iteration} from previous position $\theta(0)$:
   \begin{subitemize}
   \item generate new momentum $\rho(0) \sim \textrm{normal}(0, M)$
-  \item generate random steps forward $F \sim \textrm{uniform}(\{ 0, \ldots, L \})$
-  \item take $B = L - F$ leapfrog steps backward and $F$ forward from
+  \item generate \myemph{random steps forward} $F \sim \textrm{uniform}(\{ 0, \ldots, L \})$
+  \item take $B = L - F$ leapfrog \myemph{steps backward} and $F$ forward from
     $(\theta(0), \rho(0))$
   \item yields $(\theta(n), \rho(n))$ for $-B \leq n \leq F$
     (including initial)
-  \item select next state $(\theta(n), \rho(n))$ with probability
-    $\null \propto p(\theta(n), \rho(n))$
+  \item \myemph{randomly select next state} $(\theta(t+1), \rho(t+1))$ with probability \\ \myemph{proportional to density}, $\null \propto p(\theta(n), \rho(n))$
   \end{subitemize}
 \item \myemph{No rejection}, \myemph{no harmonics}, \myemph{no bad
-    luck} on Hamiltonian error
+    luck} on final Hamiltonian
   \vfill
 \item Straightforward to prove \myemph{detailed balance} (cf. our
   second \textit{GIST} paper)
@@ -143,20 +161,26 @@
 
 \sld{Biased-progressive NUTS}
 \begin{itemize}
-\item Keep a selected state, initially $(\theta(0), \rho(0))$
+\item Keep a selected state, initially $z(0) = (\theta(0), \rho(0))$
 \item At each doubling from $M$ to $2M$ states:
   \begin{subitemize}
-    \item Metropolis probability of updating state:
-      $$1 \wedge \dfrac{\sum_{m=M+1}^{2M} p(\theta(m), \rho(m))}
-                       {\sum_{m=1}^M p(\theta(m), \rho(m))}$$
-      \item If upding, select new state $(\theta(m), \rho(m))$
-        porportional to density $\propto p(\theta(m), \rho(m))$
-        for $M < m \leq 2M$.
+    \item Extend $z(1), \ldots, z(M)$ to $z(1), \ldots, z(M), z(M+1), \ldots, z(2M)$
+    \item Metropolis \myemph{probability of updating state}:
+      $$
+      1 \wedge
+      \dfrac{p\!\left(z(M+1)\right) + \cdots + p\!\left(z(2M)\right)}
+            {p\!\left(z(1)\right) + \cdots + p\!\left(z(M)\right)}
+            $$
+          \item If Hamiltonian simulation perfect, probability is 1.            
+      \item If updating, \myemph{select new state} $z(m)$ 
+        with probability \myemph{proportional to density},  $\propto p(z(m))$,
+        from among candidate states $z(M+1), \ldots, z(2M)$.
   \end{subitemize}
 \item Return final selected item.
 \end{itemize}
 
-\sld{QR code for GitHub: C++ \& paper link}
+\sld{QR code for C++ source, paper, and slides}
+\\[8pt]
 \spc
 \noindent
 \begin{minipage}[t]{0.35\textwidth}
