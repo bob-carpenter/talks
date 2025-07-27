@@ -179,6 +179,98 @@
 \item Return final selected item.
 \end{itemize}
 
+\sld{Biased-progressive vs. naive jump distance}
+\begin{center}
+\includegraphics[width=0.6\textwidth]{img/multinomial-hmc-L.png}
+\end{center}
+\begin{itemize}
+\item Assuming \myemph{perfect simulation} of the Hamiltonian trajectory, each state equally likely.
+\item \myemph{Naive} NUTS and multinomial sample \myemph{uniformly} along trajectory.
+\item \myemph{Biased-progressive} NUTS samples \myemph{as above}, favoring 1/4 orbits.
+\end{itemize}
+
+\sld{Preconditioning with a mass matrix}
+\begin{itemize}
+\item The positive-definite \myemph{mass matrix} $M$ acts as a \myemph{global preconditioner}
+\item If $\theta \sim \textrm{normal}(\mu, \Sigma)$, then $M = \Sigma^{-1}$ is a \myemph{perfect preconditioner}
+  \begin{subitemize}
+  \item i.e., mass-adjustment samples like standard normal
+  \end{subitemize}
+\item NUTS uses \myemph{fixed warmup iterations} before smapling to estimate $\textrm{cov}[\Theta]$
+\item \myemph{Chicken-and-egg} problem:
+  \begin{subitemize}
+  \item need to sample efficiently to estimate mass matrix effectively
+  \item need good mass matrix to sample efficiently
+  \end{subitemize}
+\end{itemize}
+
+\sld{The curse of varying geometry}
+\begin{itemize}
+\item If the Hessian varies, \myemph{global preconditioning fails}.
+\item By adjusting step size over \myemph{4 orders} of magnitude, \myemph{WALNUTS succeeds}\\[12pt]
+\includegraphics[width=0.32\textwidth]{img/funnel1.pdf}%
+\includegraphics[width=0.32\textwidth]{img/funnel2.pdf}%
+\includegraphics[width=0.32\textwidth]{img/funnel3.pdf}
+\item \myemph{Neal's funnel}: condition varies 0 to 1000+, eigenstructure varies
+\end{itemize}
+
+\sld{Gibbs self tuning (GIST)}
+\begin{itemize}
+\item On the road to WALNUTS, we came up with \myemph{Gibbs self tuning}
+\item Add \myemph{auxiliary tuning} variables, e.g., $\alpha = L, \epsilon, M$ for HMC
+\item \myemph{Gibbs sample} tuning parameters given state $\alpha \sim p(\alpha \mid \theta, rho)$
+\item Use tuning parameters $\alpha$ with NUTS to \myemph{propose} $\theta(t), \rho(t)$
+\item \myemph{Metropolis-within-Gibbs} accept:
+  $$
+  \Pr[\textrm{accept } \theta(t), \rho(t)]
+  = \dfrac{p(\theta(t), \rho(t))}{p(\theta(0), \rho(0))}
+    \cdot 
+    \dfrac{p(\alpha \mid \theta(t), \rho(t))}{p(\alpha \mid \theta(0), \rho(0))}
+    $$
+\end{itemize}
+
+\sld{GIST II}
+\begin{itemize}
+\item Start at step size $\epsilon = \epsilon^\textrm{max}$
+\item While selecting steps $L$ w.\ NUTS doesn't preserve Hamiltonian within $\tau$ between any two states on trajectory
+  \begin{subitemize}
+  \item $\epsilon = \epsilon / 2$
+    \end{subitemize}
+\item \myemph{Hastings ratio} 1 if same number of halvings forward and backward; else reject.
+\end{itemize}
+
+\sld{WALNUTS}
+\begin{itemize}
+\item Just like GIST II, but \myemph{every leapfrog step} \\[12pt]
+  \includegraphics[width=0.6\textwidth]{img/funnel_hist.pdf}
+\item \myemph{Et voila!}
+\end{itemize}
+
+\sld{Adaptation}
+\begin{itemize}
+\item Code repro uses a continuous, diagonal form of \myemph{Nutpie's mass matrix} adaptation scheme (Seyboldt et al. in prep)
+  \begin{subitemize}
+  \item Minimizes Fisher divergence (of log norm of gradients of log density, aka scores)
+  \item uses \myemph{covariance of draws}, like NUTS, and
+  \item \myemph{covariance of scores}, which is inverse covariance in multi-normal
+  \item \myemph{Initialize} at absolute gradient of log density (regularized outer product estimate)
+  \end{subitemize}
+\item Use \myemph{dual averaging} a la NUTS for setting $\epsilon^\textrm{max}$ to target optimal 2/3 accept.
+\end{itemize}
+
+\sld{Next steps}
+\begin{itemize}
+\item Local mass matrix adaptation.
+  \begin{subitemize}
+  \item For \myemph{log concave} can use GIST with inverse Wishart distribution around negative Hessian of log density
+  \item still expensive even Cholesky factored.
+  \item perhaps use \myemph{low rank plus diagona} to reduce from $\mathcal{O}(N^3)$ to $\mathcal{O}(K^2 N)$.
+    \end{subitemize}
+\item Local max step size estimation.
+\vfill
+\item We're open to suggestions.
+\end{itemize}
+
 \sld{QR code for C++ source, paper, and slides}
 \\[8pt]
 \spc
