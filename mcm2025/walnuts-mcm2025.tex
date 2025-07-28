@@ -8,15 +8,15 @@
 %
 \noindent
 \spc{\Huge\bfseries \color{MidnightBlue}{WALNUTS:}}
-\\[6pt]
+\\[12pt]
 \spc{\LARGE\bfseries \color{MidnightBlue}{Per-leapfrog step size
     adaptation for HMC}}
 \\[16pt]
 \noindent
 \spc{\Large\bfseries \color{MidnightBlue}{Bob Carpenter}}
-\\[6pt]
+\\[8pt]
 \spc{\large Center for Computational Mathematics}
-\\
+\\[4pt]
 \spc{\large Flatiron Institute}
 \\[12pt]
 \vfill
@@ -48,11 +48,11 @@
 %
 \begin{itemize}
 \item Hamiltonian Monte Carlo (HMC, 1985), a Markov chain Monte
-  Carlo (MCMC) method, \myemph{scales well in dimension}.
+  Carlo (MCMC) method that \myemph{scales well in dimension}.
   \begin{subitemize}
-  \item \myemph{integrated autocorrelation time}: $\mathcal{O}\left(D^{1/4}\right)$
-   \qquad \myemph{memory}: $\mathcal{O}(D)$
-  \item Hamiltonian \myemph{gradient flow} overcomes diffusive random walk behavior.
+  \item \myemph{integrated autocorrelation time}$^*$: $\mathcal{O}\left(D^{1/4}\right)$ \qquad \myemph{memory}: $\mathcal{O}(D)$
+    \\ \qquad $^*$: times ``constant'' based on condition number (Langmore et al.\ 2020)
+ \item Hamiltonian \myemph{gradient flow} overcomes diffusive random walk behavior.
   \end{subitemize}
 \item Why wasn't HMC in wide use until the \myemph{no-U-turn sampler}
   (NUTS, 2012)?
@@ -79,18 +79,18 @@
   \item \myemph{Hamiltonian} (total energy): $H(\theta, \rho) =
     U(\theta) + K(\rho)$, \quad $p(\theta, \rho) = \exp\left( -H(\theta, \rho)\right)$
   \end{subitemize}
-\item \myemph{HMC iteration} from position $\theta$:
+\item \myemph{HMC iteration} from position $\theta(0)$:
   \begin{subitemize}
-  \item \myemph{Sample momentum}: $\rho \sim \textrm{normal}(0, M)$
-  \item \myemph{Evolve Hamiltonian}: from $(\theta, \rho)$ for time $t$
-    to $(\theta(t), \rho(t))$ and return $\theta(t)$.
+  \item \myemph{Sample momentum}: $\rho(0) \sim \textrm{normal}(0, M)$
+  \item \myemph{Evolve Hamiltonian exactly}: $(\theta(0), \rho(0))$ 
+    to $(\theta(t), \rho(t))$, return $\theta(t)$.
   \end{subitemize}
 \item In practice, can't solve exactly, so discretize.
   \begin{subitemize}
-  \item \myemph{Simulate:} Take $L$ first-order steps of time $\epsilon = t / L$
-    to $(\theta', \rho') \approx (\theta(t), \rho(t))$.
-  \item \myemph{Metropolize:} Return $\theta'$ with probability $1 \wedge p(\theta',
-      \rho') / p(\theta, \rho)$; \ else return $\theta$.
+  \item \myemph{Simulate:} Take $L$ leapfrog steps of size $\epsilon = t / L$
+    to $(\theta'(t), \rho'(t)) \approx (\theta(t), \rho(t))$.
+  \item \myemph{Metropolize:} Return $\theta'(t)$ with probability $1 \wedge \frac{p(\theta'(t), \
+      \rho(t)')}{p(\theta(0), \ \rho(0))}$; else return $\theta(0)$.
   \end{subitemize}
 \end{itemize}
 
@@ -121,12 +121,11 @@
     \\[4pt]
     \rho(t + 1) & = & \rho(t + 1/2) + \epsilon / 2 \cdot \nabla \log p(\theta(t + 1)) 
   \end{eqnarray*}
-\item \myemph{Stabilty} (i.e., preserving Hamiltonian)
+\item \myemph{Stabile} if $\epsilon < 2 / \sqrt{\lambda^\text{max}}$, where $\lambda^\textrm{max}$ is max eigenvalue of Hessian,
+  $$H(\theta) = \nabla \nabla^\top \! -\log p(\theta)$$
   \begin{subitemize}
-  \item \myemph{stable}: if $\epsilon < 2 / \sqrt{\lambda^\text{max}}$, where $\lambda^\textrm{max}$ is max eigenvalue of $\nabla \nabla^\top -\log p(\theta)$
   \item \myemph{local error}:  $\mathcal{O}(\epsilon^3)$
   \item \myemph{global error}: $\mathcal{O}(\epsilon^2)$
-  \item $\epsilon < 1$ implies $\mathcal{O}(\epsilon^3) < \mathcal{O}(\epsilon^2)$
   \end{subitemize}
 \end{itemize}
 
@@ -140,10 +139,11 @@
     $(\theta(0), \rho(0))$
   \item yields $(\theta(n), \rho(n))$ for $-B \leq n \leq F$
     (including initial)
-  \item \myemph{randomly select next state} $(\theta(t+1), \rho(t+1))$ with probability \\ \myemph{proportional to density}, $\null \propto p(\theta(n), \rho(n))$
+  \item \myemph{randomly select next state} $(\theta(n), \rho(n))$ \\[4pt]
+    with probability \myemph{proportional to density}, $\null \propto p(\theta(n), \rho(n))$
   \end{subitemize}
-\item \myemph{No rejection}, \myemph{no harmonics}, \myemph{no bad
-    luck} on final Hamiltonian
+\item \myemph{No rejection}, \myemph{no harmonics}, and \myemph{no bad
+    luck} due to error $\pm H(\theta(0), \rho(0))$
   \vfill
 \item Straightforward to prove \myemph{detailed balance} (cf. our
   second \textit{GIST} paper)
@@ -151,12 +151,16 @@
 
 \sld{Naive no-U-turn sampler (NUTS)}
 \begin{itemize}
-\item Go forward and backward and time at random
-\item doubling number of steps each time
-\item until a U-turn between ends or a sub-U-turn within doubled steps
+\item Go forward or backward uniformly at random,
+\item doubling number of steps each time,
+\item until there is a U-turn between ends (i.e., ends heading toward each other).
+\item But, if there is a sub-U-turn in the new states, throw away new doubling.
+  \begin{subitemize}
+  \item inefficient, but necessary for detailed balance
+  \end{subitemize}
 \item select next state proportional to density (a la multinomial HMC)
   \vfill
-\item Original NUTS: slice sample rather than multinomial sample
+\item Original naive NUTS: slice sample rather than multinomial sample
 \end{itemize}
 
 \sld{Biased-progressive NUTS}
@@ -186,7 +190,7 @@
 \begin{itemize}
 \item Assuming \myemph{perfect simulation} of the Hamiltonian trajectory, each state equally likely.
 \item \myemph{Naive} NUTS and multinomial sample \myemph{uniformly} along trajectory.
-\item \myemph{Biased-progressive} NUTS samples \myemph{as above}, favoring 1/4 orbits.
+\item \myemph{Biased-progressive} NUTS samples \myemph{as above} ($N = 2^M$ total steps)
 \end{itemize}
 
 \sld{Preconditioning with a mass matrix}
@@ -196,79 +200,100 @@
   \begin{subitemize}
   \item i.e., mass-adjustment samples like standard normal
   \end{subitemize}
-\item NUTS uses \myemph{fixed warmup iterations} before smapling to estimate $\textrm{cov}[\Theta]$
+\item NUTS uses \myemph{fixed warmup iterations} with unit mass matrix before sampling to estimate $\textrm{cov}[\Theta]$
 \item \myemph{Chicken-and-egg} problem:
   \begin{subitemize}
   \item need to sample efficiently to estimate mass matrix effectively
   \item need good mass matrix to sample efficiently
   \end{subitemize}
+\item There are \myemph{better mass matrix estimators} than we used for Stan (see below).
 \end{itemize}
 
 \sld{The curse of varying geometry}
 \begin{itemize}
 \item If the Hessian varies, \myemph{global preconditioning fails}.
-\item By adjusting step size over \myemph{4 orders} of magnitude, \myemph{WALNUTS succeeds}\\[12pt]
+\item e.g., \myemph{Neal's funnel}: condition varies 0 to 1000+, eigenstructure varies 
+\item By \myemph{adjusting step size} lower in neck (color), \myemph{WALNUTS succeeds}\\[12pt]
 \includegraphics[width=0.32\textwidth]{img/funnel1.pdf}%
 \includegraphics[width=0.32\textwidth]{img/funnel2.pdf}%
 \includegraphics[width=0.32\textwidth]{img/funnel3.pdf}
-\item \myemph{Neal's funnel}: condition varies 0 to 1000+, eigenstructure varies
 \end{itemize}
 
 \sld{Gibbs self tuning (GIST)}
 \begin{itemize}
-\item On the road to WALNUTS, we came up with \myemph{Gibbs self tuning}
+\item On the road to WALNUTS, we came up with \myemph{Gibbs self tuning} (Bou-Rabee, Marsden, me)
 \item Add \myemph{auxiliary tuning} variables, e.g., $\alpha = L, \epsilon, M$ for HMC
 \item \myemph{Gibbs sample} tuning parameters given state $\alpha \sim p(\alpha \mid \theta, rho)$
+  \begin{subitemize}
+  \item need to pick a reasonable conditional distribution
+  \end{subitemize}
 \item Use tuning parameters $\alpha$ with NUTS to \myemph{propose} $\theta(t), \rho(t)$
 \item \myemph{Metropolis-within-Gibbs} accept:
   $$
   \Pr[\textrm{accept } \theta(t), \rho(t)]
-  = \dfrac{p(\theta(t), \rho(t))}{p(\theta(0), \rho(0))}
+  = \dfrac{p(\theta(t), \rho(t))}{\underbrace{p(\theta(0), \rho(0))}_\textrm{Metropolis}}
     \cdot 
-    \dfrac{p(\alpha \mid \theta(t), \rho(t))}{p(\alpha \mid \theta(0), \rho(0))}
+    \dfrac{p(\alpha \mid \theta(t), \rho(t))}{\underbrace{p(\alpha \mid \theta(0), \rho(0))}_\textrm{correction}}
     $$
 \end{itemize}
 
 \sld{GIST II}
 \begin{itemize}
+\item We applied GIST to step size tuning (Bou-Rabee, Marsden, Kleppe, me)
 \item Start at step size $\epsilon = \epsilon^\textrm{max}$
 \item While selecting steps $L$ w.\ NUTS doesn't preserve Hamiltonian within $\tau$ between any two states on trajectory
   \begin{subitemize}
   \item $\epsilon = \epsilon / 2$
     \end{subitemize}
-\item \myemph{Hastings ratio} 1 if same number of halvings forward and backward; else reject.
+  \item \myemph{Correction is 1} if same number of halvings forward and backward; else reject.
+    \vspace*{-12pt}
+    \begin{subitemize}
+    \item GIST technically allows further randomization around halvings.
+    \end{subitemize}
+  \vfill
+  \item {\small Bou-Rabee, N., Carpenter, B., Kleppe, T.S. and Marsden, M., 2024. \myemph{Incorporating local step-size adaptivity into the No-U-Turn Sampler using Gibbs self tuning}. \textit{arXiv} 2408.08259.}
 \end{itemize}
 
 \sld{WALNUTS}
 \begin{itemize}
-\item Just like GIST II, but \myemph{every leapfrog step} \\[12pt]
-  \includegraphics[width=0.6\textwidth]{img/funnel_hist.pdf}
-\item \myemph{Et voila!}
+\item Just like GIST II, but \myemph{every leapfrog step} \\[4pt]
+  \includegraphics[width=0.55\textwidth]{img/funnel_hist.pdf}
+  \vspace*{-4pt}
+\item {\small \myemph{Et voila!}}
+\item {\small Bou-Rabee, N., Carpenter, B., Kleppe, T.S. and Liu, S., 2025. \myemph{The Within-Orbit Adaptive Leapfrog No-U-Turn Sampler}. \textit{arXiv}:2506.18746.}
 \end{itemize}
 
-\sld{Adaptation}
+\sld{Adaptation in C++ code [WIP]}
 \begin{itemize}
-\item Code repro uses a continuous, diagonal form of \myemph{Nutpie's mass matrix} adaptation scheme (Seyboldt et al. in prep)
+\item \myemph{Mass matrix}: A continuous, diagonal form of \myemph{Nutpie's mass matrix} adaptation scheme (Seyboldt et al.\ in prep)
   \begin{subitemize}
-  \item Minimizes Fisher divergence (of log norm of gradients of log density, aka scores)
-  \item uses \myemph{covariance of draws}, like NUTS, and
-  \item \myemph{covariance of scores}, which is inverse covariance in multi-normal
+  \item Minimizes \myemph{Fisher divergence}, a form of \myemph{gradient divergence}
+  \item uses \myemph{covariance of draws}, like NUTS,
+  \item plus \myemph{covariance of scores}, which is inverse covariance in multi-normal
   \item \myemph{Initialize} at absolute gradient of log density (regularized outer product estimate)
   \end{subitemize}
-\item Use \myemph{dual averaging} a la NUTS for setting $\epsilon^\textrm{max}$ to target optimal 2/3 accept.
+\item \myemph{Max step size}: Use \myemph{dual averaging} a la NUTS for setting $\epsilon^\textrm{max}$ to target $2/3$ accept.
+  \begin{subitemize}
+    \item Any lower is suboptimal on computational grounds.
+  \end{subitemize}
 \end{itemize}
 
-\sld{Next steps}
+\sld{Next steps: local adaptation}
 \begin{itemize}
-\item Local mass matrix adaptation.
+\item \myemph{Local mass matrix} adaptation.
   \begin{subitemize}
   \item For \myemph{log concave} can use GIST with inverse Wishart distribution around negative Hessian of log density
-  \item still expensive even Cholesky factored.
-  \item perhaps use \myemph{low rank plus diagona} to reduce from $\mathcal{O}(N^3)$ to $\mathcal{O}(K^2 N)$.
+  \item still expensive, even Cholesky factored.
+  \item perhaps use \myemph{low rank plus diagonal} to reduce from $\mathcal{O}(N^3)$ to $\mathcal{O}(K^2 N)$.
+  \item Nawaf Bou-Rabee has been exploring \myemph{explicit Riemannian} HMC schemes (stay tuned!).
     \end{subitemize}
-\item Local max step size estimation.
+\item \myemph{Local step size} adaptation.
 \vfill
-\item We're open to suggestions.
+\begin{subitemize}
+\item Perhaps follow Matt Hoffman and Pavel Sountsov's \myemph{CheeS HMC} to efficiently approximate \myemph{max eigenvalue}.
+\end{subitemize}
+\vfill
+\item We're \myemph{open to suggestions}!
 \end{itemize}
 
 \sld{QR code for C++ source, paper, and slides}
