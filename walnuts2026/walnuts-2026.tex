@@ -205,7 +205,7 @@
 \sld{Preconditioning with a mass matrix}
 \begin{itemize}
 \item The positive-definite \myemph{mass matrix} $M$ acts as a \myemph{global preconditioner}
-\item If $\theta \sim \textrm{normal}(\mu, \Sigma)$, then $M = \Sigma^{-1}$ is a \myemph{perfect preconditioner}
+\item If $\Theta \sim \textrm{normal}(\mu, \Sigma)$, then $M = \Sigma^{-1}$ is a \myemph{perfect preconditioner}
   \begin{subitemize}
   \item i.e., mass-adjustment samples like standard normal
   \end{subitemize}
@@ -221,7 +221,10 @@
 \sld{The curse of varying geometry}
 \begin{itemize}
 \item If the Hessian varies, \myemph{global preconditioning fails}.
-\item e.g., \myemph{Neal's funnel}: condition varies 0 to 1000+, eigenstructure varies 
+  \begin{subitemize}
+  \item e.g., \myemph{Neal's funnel}: condition varies 0 to 1000+,
+    eigenstructure varies
+  \end{subitemize}
 \item By \myemph{adjusting step size} lower in neck (color), \myemph{WALNUTS succeeds}\\[12pt]
 \includegraphics[width=0.32\textwidth]{img/funnel1.pdf}%
 \includegraphics[width=0.32\textwidth]{img/funnel2.pdf}%
@@ -275,50 +278,40 @@
 
 \sld{GIST III: WALNUTS}
 \begin{itemize}
-\item Just like GIST II, but \myemph{every leapfrog step} \\[4pt]
+\item Just like GIST II, but \myemph{adjust every leapfrog step}
+  \begin{subitemize}
+    \item accept correction is product of local corrections
+  \end{subitemize}
+\begin{center}
   \includegraphics[width=0.55\textwidth]{img/funnel_hist.pdf}
-  \vspace*{-4pt}
+\end{center}
 \item {\small \myemph{Et voila!}}---this is log scale in Neal's funnel
   (marginal $\textrm{normal}(0, 3)$)
-\item {\small Bou-Rabee, N., Carpenter, B., Kleppe, T.S. and Liu, S., 2026. \myemph{The Within-Orbit Adaptive Leapfrog No-U-Turn Sampler}. \textit{JMLR}}.
 \end{itemize}
 
-\sld{Adaptation in C++ code [WIP]}
-\begin{itemize}
-\item \myemph{Mass matrix}: A continuous, diagonal form of \myemph{Nutpie's mass matrix} adaptation scheme (Seyboldt et al.\ in prep)
-  \begin{subitemize}
-  \item Minimizes \myemph{Fisher divergence}, a form of \myemph{gradient divergence}
-  \item uses \myemph{covariance of draws}, like NUTS,
-  \item plus \myemph{covariance of scores}, which is inverse covariance in multi-normal
-  \item \myemph{Initialize} at absolute gradient of log density (regularized outer product estimate)
-  \end{subitemize}
-\item \myemph{Max step size}: Use \myemph{dual averaging} a la NUTS for setting $\epsilon^\textrm{max}$ to target $2/3$ accept.
-  \begin{subitemize}
-    \item Any lower is suboptimal on computational grounds.
-  \end{subitemize}
-\end{itemize}
 
-\sld{Next steps: local adaptation}
+\sld{GIST for mass-matrix estimation}
 \begin{itemize}
 \item \myemph{Local mass matrix} adaptation.
+\item For \myemph{log concave} can use GIST with inverse Wishart
+  distribution around negative Hessian of log density
   \begin{subitemize}
-  \item For \myemph{log concave} can use GIST with inverse Wishart
-    distribution around negative Hessian of log density
   \item degrees of freedom determined by variability of Hessians
-  \item still expensive, even Cholesky factored.
-  \item perhaps use \myemph{low rank plus diagonal} to reduce from $\mathcal{O}(N^3)$ to $\mathcal{O}(K^2 N)$.
-  \item Nawaf Bou-Rabee has been exploring \myemph{explicit Riemannian} HMC schemes (stay tuned!).
-    \end{subitemize}
-\item \myemph{Local step size} adaptation.
-\vfill
-\begin{subitemize}
-\item Perhaps follow Matt Hoffman and Pavel Sountsov's \myemph{CheeS HMC} to efficiently approximate \myemph{max eigenvalue}.
-\end{subitemize}
+  \end{subitemize}
+\item \myemph{Low rank plus diagonal} reduces
+  $\mathcal{O}(N^3)$ to $\mathcal{O}(K^2 N)$.
+\item Black-box Riemannian HMC tunes locally based on
+  (positive-definite conditioned) Hessian
+  \begin{subitemize}
+  \item Implicit integrators $\mathcal{O}(N^3)$ and hard to tune
+  \item Explicit interators only require $\mathcal{O}(N^2)$
+    Hessian-vector products, but just as hard to tune
+  \end{subitemize}
 \end{itemize}
 
 \sld{Nutpie-style mass matrix estimation}
 \begin{itemize}
-\item WALNUTS needs: \myemph{mass matrix} and \myemph{macro step size}
+\item WALNUTS needs: \myemph{static mass matrix} and \myemph{static macro step size}
 \item \myemph{Nutpie} (from Adrian Seyboldt of PyMC Labs) is state of
   the art
 \item Mass matrix $M$ chosen to minimize \myemph{Fisher divergence}
@@ -328,11 +321,11 @@
   \textrm{normal}(0, 1)],
   $$
   where $q_M$ is target density preconditioned with $M$
-\item Fisher divergence minimizes \myemph{gradient discrepancy},
+\item Fisher divergence measures \myemph{gradient discrepancy},
   $$
   \textrm{D}_F[q \, || \, p] =
   \int_{\mathbb{R}^D} q(\theta) \cdot || \nabla \log q(\theta) - \nabla \log
-  p(\theta)||^2 \ \textrm{d}\theta.
+  p(\theta)||^2_2 \ \textrm{d}\theta.
   $$
 \end{itemize}
 
@@ -374,6 +367,17 @@
 \item Nutpie takes overlapping blocks of $N = 100$ draws
 \end{itemize}
 
+\sld{Fisher vs.\ variance-based mass matrices}
+\begin{subitemize}
+  \item Fisher outperforms covariance by median factor 1.3 over 100+
+    \texttt{posteriordb} models; 4.0 for low-rank plus diagonal
+  \item Log condition/dim; 1000 random spectra w.\ 10, 20, and 50 i.i.d. draws:
+  \end{subitemize}
+\vspace*{-12pt}
+\begin{center}
+\includegraphics[width=0.35\textwidth]{img/diag_condition_number3.pdf}
+\end{center}
+
 \sld{Online Nutpie}
 \begin{itemize}
 \item Nutpie \myemph{cannot converge} with a fixed window of size $N=100$
@@ -400,7 +404,7 @@
 \begin{itemize}
 \item Stan initializes with \myemph{unit} inverse mass matrix.
 \item Nutpie initializes with an approximation
-\item For normal, $\mathbb{E}[S(\Theta) \cdot S(\Theta)^\top] =
+\item For $\Theta \sim \textrm{normal}(\mu, \Sigma)$, $\mathbb{E}[S(\Theta) \cdot S(\Theta)^\top] =
   \Sigma$ (Fisher information)
 \item Use \myemph{one-sample MCMC} approximation (or more)
 \item If $\drw{\theta}{0}$ is initialization,
