@@ -45,7 +45,7 @@
 \begin{itemize}
 \item Stan is an \myemph{imperative probabilistic programming language}
   \begin{subitemize}
-  \item  cf., BUGS: declarative; \ Church: functional; \ Figaro: OO
+  \item  cf., BUGS: declarative; \ Church: functional; \ PyMC: hybrid
   \end{subitemize}
 \item Stan \myemph{program}: defines a probability model
   \begin{subitemize}
@@ -56,8 +56,8 @@
 \item Stan \myemph{inference}: fits model to data \& makes predictions
   \begin{subitemize}
   \item MCMC for full Bayesian inference (NUTS)
-  \item VB for approximate Bayesian inference (ADVI, Pathfinder)
-  \item Laplace approximation and MLE (L-BFGS)
+  \item Laplace approximation and VB (ADVI, Pathfinder) for approximate Bayes
+  \item MLE and bootstrap for confidence intervals (L-BFGS)
   \end{subitemize}
 \end{itemize}
 
@@ -113,7 +113,7 @@
 \vspace*{8pt}
 \item {\slshape Problem}:  Autodiff requires functions templated on
   all arguments.
-\item {\slshape Solution}: Our own density and special functions library, Eigen linear algebra, Boost foundation (bulk of our dev cost)
+\item {\slshape Solution}: Our own C++ density and special functions library, Eigen linear algebra, Boost foundation (bulk of our dev cost)
 %
 \vspace*{8pt}
 \item {\slshape Problem}:  Need unconstrained parameters for HMC.
@@ -129,9 +129,8 @@
 \item {\slshape Solution}: Compile a domain-specific language.
 %
 \vspace*{8pt}
-\item {\slshape Problem}:  Pure directed graphical language inflexible.
+\item {\slshape Problem}:  Pure directed graphical language inflexible (cf. BUGS).
 \item {\slshape Solution}: Imperative probabilistic/differentiable programming.
-  language.
 \vspace*{8pt}
 \item {\slshape Problem}:  Need to tune parameters for HMC.
 \item {\slshape Solution}: Tune step size and estimate mass matrix
@@ -185,19 +184,22 @@ limits at boundaries, e.g., {\small \code{multiply\_log()}}
 \sld{Why Stan? \hfill \large (6/6)}
 %
 \begin{itemize}
-\item {\slshape Problem}:  Heterogeneous user base.
-\item {\slshape Solution}: More interfaces (R, Python, MATLAB, Julia).
+\item {\slshape Problem}:  Heterogeneous user base. 
+\item {\slshape Solution}: More interfaces (R, Python, MATLAB, Julia). 
 \item {\slshape Solution}:  Domain-specific examples, tutorials.
+\vspace*{8pt}
+\item {\slshape Problem}:  Non-statistician or non-programmer users.
+\item {\slshape Solution}: High-level interfaces (brms, Prophet, rstanarm, 100+ dependent packages).
 \vspace*{8pt}
 \item {\slshape Problem}:  Restrictive licensing limits use.
 \item {\slshape Solution}: Code and doc open source (BSD, CC-BY)
 \end{itemize}
 
-\sld{\Large What Stan Computes \hfill \large (1/2)}
+\sld{\Large Stan Estimates Expectations \hfill \large (1/2)}
 %
 \begin{itemize}
 %
-\item \myemph{MCMC draws} from posterior $p(\theta \mid y)$:
+\item Uses \myemph{MCMC draws} from posterior $p(\theta \mid y)$:
 \[
 \theta^{(1)}, \ldots, \theta^{(M)} \sim p(\theta \mid y).
 \]
@@ -342,39 +344,41 @@ generated quantities {
 }
 \end{stancode}
 
-\sld{Lynxes and Hares}
-%
+\sld{The Lynx and the Hare}
+
+\begin{itemize}
+  \item \myemph{Lynx} (left) are predators who prey almost exclusively on
+    \myemph{snowshoe hares} (right) 
+\end{itemize}
 \begin{center}
-\includegraphics[height=1in]{img/lynx.jpg}
-\hspace*{0.25in}
-\includegraphics[height=1in]{img/hare.jpg}
+  \includegraphics[height=0.25\textwidth]{img/lynx.jpeg}
+  \quad
+  \includegraphics[height=0.25\textwidth]{img/hare.jpeg}
 \end{center}
 \begin{itemize}
-\item \myemph{Snowshoe hare} (prey): herbivorous cousin of rabbits
-\item \myemph{Canadian lynx} (predator): feline eating primarily hares
+  \item But it's very labor intensive to count animals with standard
+    mark/recapture techniques
 \end{itemize}
-\vfill
-{\tiny
-\mbox{ } \hfill
-Lynx image copyright 2009, Keith Williams, CC-BY 2.0.
-\\[-2pt]
-\mbox{ } \hfill
-Hare image copyright 2013 D. Gordon E. Robonson, CC-BY SA 2.0}
 
-
-\sld{Hudson Bay Co. Pelts, 1900--20}
-%
-\vspace*{6pt}
+\sld{Hudson's Bay Co.\ pelts \hfill {\large (Hewitt 1921)}}
+\begin{itemize}
+  \item A proxy is the number of animals captured for pelts.
+\end{itemize}
 \begin{center}
-\includegraphics[width=0.6\textwidth]{img/hare-lynx-pelts-1.png}
+  \includegraphics[width=0.6\textwidth]{img/hudons-bay-data.png}
 \end{center}
 
-\sld{Pelts, Phase Space}
-%
-\vspace*{6pt}
+\sld{Plotted pelt data}
 \begin{center}
-\includegraphics[width=0.6\textwidth]{img/hare-lynx-pelts-2.png}
+\includegraphics[width=0.35\textwidth]{img/lynx-hares-1.png}\qquad\includegraphics[width=0.35\textwidth]{img/lynx-hares-2.png}
 \end{center}
+\begin{itemize}
+\item {\it left)} pelts vs. time \hfill
+{\it right)} hare vs. lynx pelts
+\\
+(line per species) \hfill (over time)
+\item pelt data assumed proportional to population; \myemph{model predicts pelts}
+\end{itemize}
 
 \sld{Volterra's (1927) Model}
 %
@@ -385,208 +389,234 @@ Hare image copyright 2013 D. Gordon E. Robonson, CC-BY SA 2.0}
 \item population: $u(t)$ \myemph{prey}, \ $v(t)$ \myemph{predator}
 %
 \begin{eqnarray*}
-\frac{\mathrm{d}}{\mathrm{d}t} u
-& = &  (\alpha - \beta v) u
+\frac{\mathrm{d}}{\mathrm{d}t} u 
+& = &  (\alpha - \beta v) u 
 \\[6pt]
-\frac{\mathrm{d}}{\mathrm{d}t} v
-& = &  (-\gamma + \delta \, u) \, v
+\frac{\mathrm{d}}{\mathrm{d}t} v 
+& = &  (-\gamma + \delta \, u) \, v 
 \end{eqnarray*}
 %
 \begin{subsubitemize}
-\item $\alpha$: prey growth, intrinsic
-\item $\beta$: prey shrinkage due to predation
-\item $\gamma$: predator shrinkage, intrinsic
-\item $\delta$: predator growth from predation
+\item $\alpha$: prey growth, intrinsic 
+\item $\beta$: prey shrinkage due to predation 
+\item $\gamma$: predator shrinkage, intrinsic 
+\item $\delta$: predator growth from predation 
 \end{subsubitemize}
 \vspace*{-8pt}
-\item \footnotesize dynamics lead to \myemph{oscillation} as observed
+\item \footnotesize dynamics lead to \myemph{oscillation} as observed 
 \end{subitemize}
 \end{minipage}
 %
-\hfill
+\hfill 
 %
 \begin{minipage}[t]{0.20\textwidth}
 \mbox{ }
 \vspace*{0.5in}
-\mbox{ } \hfill
+\mbox{ } \hfill 
 \includegraphics[width=0.7\textwidth]{img/volterra-orbit.jpg}
 \\[-8pt]
 \mbox{ }
-\hfill
+\hfill 
 \includegraphics[width=0.7\textwidth]{img/hare-lynx-pelts-2.png}
 \end{minipage}
-\vfill
-\hfill
-{\tiny
-Volterra, V., 1927. {\slshape Variazioni
-e fluttuazioni del numero d'individui in specie animali
-conviventi}. C.~Ferrari.
+\vfill 
+\hfill 
+{\tiny 
+Volterra, V., 1927. {\slshape Variazioni 
+e fluttuazioni del numero d'individui in specie animali 
+conviventi}. C.~Ferrari. 
 }
 
-
-
-\sld{\Large Lotka-Volterra in Stan (dynamics)}
-%
-\vspace*{-2pt}
-{\footnotesize
+\sld{Stan dynamics \& error}
 \begin{stancode}
-  real[] dz_dt(data real t,       // time (unused)
-               real[] z,          // system state
-               real[] theta,      // parameters
-               data real[] x_r,   // real data (unused)
-               data int[] x_i) {  // integer data (unused)
-    real u = z[1];            real v = z[2];
-
-    real alpha = theta[1];    real beta = theta[2];
-    real gamma = theta[3];    real delta = theta[4];
-
-    real du_dt = (alpha - beta * v) * u;
-    real dv_dt = (-gamma + delta * u) * v;
-    return { du_dt, dv_dt };
-  }
-\end{stancode}
+real[] duv_dt(real t, real[] uv, real[] theta,
+              real[] theta, real[] x_r, int[] x_i) {
+  return { (theta[1] - theta[2] * uv[2]) * uv[1],
+           (-theta[3] + theta[4] * uv[1]) * uv[2] };
 }
+...
+real uv_hat[T, 2]
+  = integrate_ode(duv_dt, z0, t0, sol_ts[1:T], theta,
+                  rep_array(0.0, 0), rep_array(0, 0));
+...
+y[1:T, 1] ~ lognormal(uv_hat[1:T, 1], sigma_u);  // prey
+y[1:T, 2] ~ lognormal(uv_hat[1:T, 2], sigma_v);  // predator
+\end{stancode}
 
-\sld{Data-Generating Model}
-%
-\vspace*{-2pt}
-\begin{itemize}
-\item \myemph{Known} variables are observed
+\sld{Measurements \& predictions}
 \begin{subitemize}
-\item  $y_{n,k}$: pelts for species $k$ at times $t_n$ for $n \in 0:N$
+\item measured pelts (red) vs.\ fitted model and predictions (blue)
 \end{subitemize}
-\item \myemph{Unknown} variables must be inferred (\myemph{inverse problem})
-\begin{subitemize}
-\item initial state: $z^{\mathrm{init}}_k$: initial population for $k$
-\item subsequent states $z_{n,k}$: population $k$ at time $t_n$
-\item parameters $\alpha, \beta, \gamma, \delta, \sigma > 0$
-\end{subitemize}
-\item \myemph{Likelihood} assumes errors are proportional (not additive)
-\vspace*{-8pt}
-\[
-y_{n, k} \sim \mathsf{LogNormal}(\hat{z}_{n,k}, \sigma_k),
-\]
-\vspace*{-4pt}%
-{\small where $\hat{z}_n$ is \myemph{solution} at $t_n$ to L-V diff eqs for initial
-$z^{\mathrm{init}}$}
-\\[-3pt]
-\vfill
-{\small equivalently: \ $\log y_{n,k} = \log \hat{z}_{n,k} + \epsilon_{n,k}$, \ \ with
-$\epsilon_{n,k} \sim \mathsf{Normal}(0, \sigma_k)$}
-\end{itemize}
+\begin{center}
+\includegraphics[width=0.5\textwidth]{img/lotka-volterra-posterior.pdf}
+\end{center}
 
-
-\sld{L-V in Stan (solution to ODE)}
-%
-\begin{itemize}
-\item Define variables for populations predicted by ode, given
-\begin{subitemize}
-\item system function (\code{dz\_dt}), initial populations (\code{z0})
-\item initial time (\code{0.0}), solution times (\code{ts})
-\item parameters (\code{theta}), data arrays (unused: \code{rep\_array(...)})
-\item tolerances (\code{1e-6}, \code{1-e4}), max iterations (\code{1e3})
-\end{subitemize}
-\end{itemize}
-{\small
-\begin{stancode}
-transformed parameters {
-  real z[N, 2]
-    = integrate_ode_rk45(dz_dt, z0, 0.0, ts, theta,
-                         rep_array(0.0, 0), rep_array(0, 0),
-                         1e-6, 1e-4, 1e3);
-}
-\end{stancode}
-}
-
-\sld{L-V in Stan (data, parameters)}
-\begin{itemize}
-\item Variables for known constants, observed data
-{\footnotesize
-\begin{stancode}
-data {
-  int<lower = 0> N;         // num measurements
-  real ts[N];               // measurement times > 0
-  real y0[2];               // initial pelts
-  real<lower = 0> y[N, 2];  // subsequent pelts
-}
-\end{stancode}
-}
-\item Variables for unknown parameters
-{\footnotesize
-\begin{stancode}
-parameters {
-  real<lower = 0> theta[4];  // alpha, beta, gamma, delta
-  real<lower = 0> z0[2];     // initial population
-  real<lower = 0> sigma[2];  // scale of prediction error
-}
-\end{stancode}
-}
-\end{itemize}
-
-\sld{L-V in Stan (priors, likelihood)}
-%
-\vspace*{-6pt}
-\begin{itemize}
-\item Sampling statements for priors and likelihood
-\begin{stancode}
-model {
-  // priors
-  sigma ~ lognormal(0, 0.5);
-  theta[{1, 3}] ~ normal(1, 0.5);  theta[{2, 4}] ~ normal(0.05, 0.05);
-
-  z0[1] ~ lognormal(log(30), 5);  z0[2] ~ lognormal(log(5), 5);
-
-  // likelihood (lognormal)
-  for (k in 1:2) {
-    y0[k] ~ lognormal(log(z0[k]), sigma[k]);
-    y[ , k] ~ lognormal(log(z[, k]), sigma[k]);
-  }
-}
-\end{stancode}
-\end{itemize}
+\sld{100 predictive draws}
+\begin{center}
+\includegraphics[width=0.6\textwidth]{img/lotka-volterra-posterior-time.png}
+\end{center}
 
 \sld{Lotka-Volterra Parameter Estimates}
 %
-{\footnotesize
+{\footnotesize 
 \begin{stancode}
-> print(fit, c("theta", "sigma"), probs=c(0.1, 0.5, 0.9))
+> print(fit, c("theta", "sigma"), probs=c(0.1, 0.5, 0.9)) 
 \end{stancode}
 \vspace*{-2pt}
 \begin{stancode}
-         mean se_mean    sd   10%   50%   90%  n_eff Rhat
-theta[1] 0.55       0  0.07  0.46  0.54  0.64   1168    1
-theta[2] 0.03       0  0.00  0.02  0.03  0.03   1305    1
-theta[3] 0.80       0  0.10  0.68  0.80  0.94   1117    1
-theta[4] 0.02       0  0.00  0.02  0.02  0.03   1230    1
-sigma[1] 0.29       0  0.05  0.23  0.28  0.36   2673    1
-sigma[2] 0.29       0  0.06  0.23  0.29  0.37   2821    1
+         mean se_mean    sd   10%   50%   90%  n_eff Rhat 
+theta[1] 0.55       0  0.07  0.46  0.54  0.64   1168    1 
+theta[2] 0.03       0  0.00  0.02  0.03  0.03   1305    1 
+theta[3] 0.80       0  0.10  0.68  0.80  0.94   1117    1 
+theta[4] 0.02       0  0.00  0.02  0.02  0.03   1230    1 
+sigma[1] 0.29       0  0.05  0.23  0.28  0.36   2673    1 
+sigma[2] 0.29       0  0.06  0.23  0.29  0.37   2821    1 
 \end{stancode}
 }
 \vspace*{4pt}
 \begin{subitemize}
-\item \code{Rhat} near 1 signals convergence;
- \code{n\_eff} is effective sample size
+\item \code{Rhat} near 1 signals convergence; 
+ \code{n\_eff} is effective sample size 
 \item posterior mean is Bayesian point estimate: $\hat{\alpha} =
   \widehat{\theta}_1 = 0.55$
 % \item posterior median (50\%) is alternative point estimate: $0.54$
 \vspace*{-3pt}
-\item standard error in posterior mean estimate is 0 (with rounding)
+\item standard error in posterior mean estimate is 0 (with rounding) 
 \vspace*{-3pt}
-\item posterior standard deviation of $\alpha$ estimated as 0.07
+\item posterior standard deviation of $\alpha$ estimated as 0.07 
 \end{subitemize}
 
-\sld{\Large Lotka-Volterra Posterior Predictions}
-%
-\vspace*{-4pt}
-\begin{center}
-\includegraphics[width=0.525\textwidth]{img/lotka-volterra-predict.pdf}
-\end{center}
-\vspace*{-6pt}
-\begin{subsubitemize}
-\item did not include \texttt{generated quantities} block---just more of same
-\item training data (1900-1920); \ future predictions (1921+)
-\end{subsubitemize}
+\sld{Summary}
+\begin{itemize}
+\item Start with mechanistic forward model of dynamics (Lotka 1926)
+\begin{subitemize}
+\item $\hat{y} = f(\theta)$
+\end{subitemize}
+\item error model $y_{t,k} \sim \textrm{lognormal}(\hat{y}_{t,k}, \sigma_k)$
+\item added weakly informative priors $p(\theta)$ (fixing scale) 
+\item Stan turns the Bayesian crank to sample from posterior
+\begin{subitemize}
+\item $\theta^{(1)}, \ldots, \theta^{(M)} \sim p(\theta \mid y).$
+\end{subitemize}
+\item Estimates are sample means; intervals are sample quantiles;
+  predictions are plug-in estimates
+\item This methodology \myemph{works for many scientific models}.
+\end{itemize}
 
+\sld{\large Holographic coherent diffraction imaging}
+\begin{itemize}
+\item \small We like to reproduce the analyses in papers to illustrate Stan.
+\item Brian Ward (Flatiron, core Stan developer) and I reproduced David Barmherzig's
+  paper on [{\slshape Star Trek} mumbo jumbo] to illustrate Stan's complex number and fast Fourier transform (FFT) capabilities
+\item \footnotesize GitHub: \myemph{\texttt{bob-carpenter/CDI}}
+\end{itemize}
+\begin{center}
+  \includegraphics[width=0.25\textwidth]{img/barmherzig-cite.png}
+\end{center}
+
+
+\sld{Holo CDI (1)}
+\begin{itemize}
+\item \small Step 1: direct \myemph{coherent radiation} source (e.g., X-ray) at
+  biomolecule and target \& uniformly redundant array (URA)
+  \myemph{reference}, with \myemph{beam stop}; (data
+  \myemph{simulated}, but works with real)
+\end{itemize}
+\vspace*{-8pt}
+\begin{center}
+  \includegraphics[width=0.4\textwidth]{img/fft/truth-ref.png}
+\end{center}
+
+
+\sld{Holo CDI (2)}
+\vspace*{-2pt}
+\begin{itemize}
+\item \small Step 2: observe diffracted \myemph{photon counts} $\tilde{Y}_{i,j}$
+  \begin{subitemize}
+  \item beamstop visible in middle (low frequencies)
+    % \item  plot is $\log (1 + Y_{i,j})$; obs. low
+  \end{subitemize}
+  \item Known to follow a \myemph{Poisson process} according to [insert physics theory].
+\end{itemize}
+\vspace*{-8pt}
+\begin{center}
+  \includegraphics[width=0.55\textwidth]{img/fft/observed.png}
+\end{center}
+
+\sld{Holo CDI (3.a)}
+\begin{itemize}
+\item Step 3.a: code \myemph{data format} in Stan (simplified)
+  \footnotesize
+\begin{verbatim}
+data {
+  int<lower=0> N;                      // image dim
+  matrix<lower=0, upper=1>[N, N] R;    // registration img
+  int<lower=N> M1;                     // padded rows
+  int<lower=3 * N> M2;                 // padded cols
+  int<lower=1, upper=M1> r;            // beam stop size
+  real<lower=0> N_p;                   // avg photons/pixel
+  array[M1, M2] int<lower=0> Y_tilde;  // observed photons
+}
+\end{verbatim}
+\end{itemize}
+  
+\sld{Holo CDI (3.b)}
+\begin{itemize}
+\item \small Step 3.b: code \myemph{transformed data, parameters, and likelihood}
+  \footnotesize
+\begin{verbatim}
+transformed data {
+  matrix[M1, M2] B_stop = pad(M1, M2, r);  // beam stop
+}
+parameters {
+  matrix<lower=0, upper=1>[N, N] X;       // image pixels
+}
+model {
+  matrix[M1, M2] X0R_pad = pad(X, R, M1, M2);
+  matrix[M1, M2] E_Y = B_stop .* abs(fft2(X0R_pad)) .^ 2;
+  matrix[M1, M2] lambda = N_P / mean(Y) * E_Y;
+
+  Y_tilde ~ poisson(lambda);  // likelihood
+  X ~ uniform(0, 1);          // prior
+}
+\end{verbatim}
+\end{itemize}
+
+\sld{Holo CDI (4)}
+\begin{itemize}
+\item Turn Stan's crank to solve the \myemph{inverse problem}
+\item using state-of-the-art \myemph{gradient-based inference}: 
+  \begin{subitemize}
+  \item maximum likelihood via quasi-Newton optimization (L-BFGS)
+  \item full Bayes via Markov chain Monte Carlo sampling (NUTS)
+  \item approximate Bayes via black-box variational inference (ADVI)
+  \end{subitemize}
+\item For the \myemph{$256 \times 256$} pixel reconstructions in David's paper,
+  \begin{subitemize}
+  \item optimization solves inverse problem in \myemph{2 minutes} ($5 \times$ times faster than original MATLAB)
+  \item sampling solves inverse problem in \myemph{2 hours}
+  \end{subitemize}
+\item Full study considers L1 \& L2 regularizing \myemph{spatial
+    priors} (penalize diffs in adjacent pixels)
+\end{itemize}  
+
+\sld{Holo CDI (5.a)}
+\begin{itemize}
+\item Recovered images $X^*$ at $256 \times 256$ with
+  \\ 1 photon/pixel (left)
+  vs.\ 10 photons/pixel (right)
+\end{itemize}
+\begin{center}
+  \includegraphics[width=0.3\textwidth]{img/fft/recover-256-1.png}
+  \includegraphics[width=0.3\textwidth]{img/fft/recover-256-10.png}
+\end{center}
+\vspace*{-12pt}
+\begin{itemize}
+\item MLE: $X^* = \textrm{arg max}_{X} \ p(X | \tilde{Y}, N, R,
+  r)$
+\item Bayesian estimate: $\widehat{X} = \mathbb{E}[X \mid \tilde{Y},
+  N, R, r]$
+\end{itemize}
 
 \sld{Platforms and Interfaces}
 %
@@ -920,19 +950,21 @@ David Ruppert, and Matt P. Wand. (2018) {\slshape Semiparametric Regression with
 %
 \\[3pt]
 \hspace*{17pt}Variables and expressions are \myemph{strongly, statically typed}.
-\begin{itemize}
-\item \myemph{Primitive}: {\tt\small int}, \ {\tt\small real}
+\begin{subitemize}
+\item \myemph{Primitive}: {\tt\small int}, \ {\tt\small real}, \ {\tt\small complex}
 \item \myemph{Matrix}: {\tt\small matrix[M,N]}, \ {\tt\small vector[M]}, \ {\tt\small row\_vector[N]}
-\item \myemph{Bounded}: primitive or matrix, with
-  \\ {\tt\small <lower=L>}, \ {\tt\small <upper=U>}, \ {\tt\small <lower=L,upper=U>}
+  {\tt\small complex\_matrix[M,N]}, \\ {\tt\small complex\_vector[M]}, \ {\tt\small complex\_row\_vector[N]}
+\item \myemph{Bounded}: primitive/matrix, w.\
+  {\tt\small <lower=L>}, \ {\tt\small <upper=U>}, \ {\tt\small <lower=L,upper=U>}
 \item \myemph{Constrained Vectors}: {\tt\small simplex[K]}, \ {\tt\small
-    ordered[N]},
+    ordered[N]}, \ {\tt\small sum\_to\_zero\_vector[K]}
   \\ {\tt\small positive\_ordered[N]}, \ {\tt\small unit\_length[N]}
 \item \myemph{Constrained Matrices}: {\tt\small cov\_matrix[K]}, \ {\tt\small
     corr\_matrix[K]}, \\ {\tt\small cholesky\_factor\_cov[M,N]}, \
-  {\tt\small cholesky\_factor\_corr[K]}
+  {\tt\small cholesky\_factor\_corr[K]}, \\ {\tt\small left\_stochastic\_matrix[K]},
+  {\tt\small right\_stochastic\_matrix[K]}
 \item \myemph{Arrays:}  of any type (and dimensionality)
-\end{itemize}
+\end{subitemize}
 
 
 \sld{Integers vs.\ Reals}
@@ -1054,7 +1086,8 @@ David Ruppert, and Matt P. Wand. (2018) {\slshape Semiparametric Regression with
 \begin{itemize}
 \item these work with all relevant matrix types
 \begin{subitemize}
-\item e.g., \Verb|matrix *= matrix;|
+\item e.g., \Verb|complex_matrix *= matrix;|
+\item e.g., \Verb|vector *= real;|
 \end{subitemize}
 \end{itemize}
 
@@ -1104,9 +1137,8 @@ David Ruppert, and Matt P. Wand. (2018) {\slshape Semiparametric Regression with
 \item \myemph{Increment log density}: \ {\footnotesize target += lp;}
 \item \myemph{Assignment}: \  {\footnotesize \code{y\_hat = x * beta};}
 \end{itemize}
-
-
-\sld{Block of Statements}
+\vspace*{12pt}
+\spc{\LARGE\myemph{Block of Statements}}
 %
 \begin{itemize}
 \item \myemph{Block}: \ {\footnotesize \Verb|{ ...; ...; ...; }|}
